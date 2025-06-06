@@ -4,7 +4,6 @@ import { z } from "zod";
 import { loginSchema } from "@/lib/zod";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
-
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -16,7 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-
+import { loginAction } from "@/action/auth-action";
 
 
 const FormLogin = () => {
@@ -29,10 +28,8 @@ const FormLogin = () => {
     },
   })
 
-function onSubmit(values: z.infer<typeof loginSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values)
+async function onSubmit(values: z.infer<typeof loginSchema>) {
+    await loginAction(values);
   } 
   
 return ( <div className="max-w-80">
