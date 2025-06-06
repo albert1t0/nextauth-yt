@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  # Servicio de la base de datos PostgreSQL
+  db:
+    image: postgres:latest # Usamos la última versión de PostgreSQL
+    container_name: app_files_postgres_dev # Un nombre descriptivo para tu contenedor
+    environment:
+      # Variables de entorno para configurar PostgreSQL
+      # Puedes definir estas variables en un archivo .env en el mismo directorio,
+      # o exportarlas en tu terminal antes de ejecutar docker compose up.
+      POSTGRES_DB: ${POSTGRES_DB:-app-files} # Nombre de la base de datos (por defecto: app-files)
+      POSTGRES_USER: ${POSTGRES_USER:-user} # Usuario de la base de datos (por defecto: user)
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password} # Contraseña del usuario (por defecto: password)
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432} # Puerto interno de PostgreSQL (por defecto: 5432)
+    ports:
+      # Mapeo de puerto: HOST_PORT:CONTAINER_PORT
+      # Puedes configurar el puerto del host con la variable DB_PORT
+      - "${DB_PORT:-5432}:${POSTGRES_PORT:-5432}"
+    volumes:
+      # Volumen para asegurar la persistencia de los datos
+      - postgres_data:/var/lib/postgresql/data
+    restart: always # Asegura que el contenedor se reinicie si falla o se detiene
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# Definición del volumen persistente
+volumes:
+  postgres_data: 
