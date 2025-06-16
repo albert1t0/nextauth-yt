@@ -43,7 +43,5 @@ next-env.d.ts
 /lib/generated/prisma
 
 # Docker_files
-#docker-compose.yml
 
-# IDEA ides
-.idea
+#docker-compose.yml
