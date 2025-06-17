@@ -1,7 +1,7 @@
 "use client";
 
 import { z } from "zod";
-import { loginSchema } from "@/lib/zod";
+import { registerSchema } from "@/lib/zod";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
@@ -15,29 +15,30 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { loginAction } from "@/action/auth-action";
+import { registerAction } from "@/action/auth-action";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 
-const FormLogin = () => {
+const FormRegister = () => {
 
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
-    const form = useForm<z.infer<typeof loginSchema>>({
-    resolver: zodResolver(loginSchema),
+    const form = useForm<z.infer<typeof registerSchema>>({
+    resolver: zodResolver(registerSchema),
     defaultValues: {
       email: "",
       password: "",
+      name: "",
     },
   })
 
-async function onSubmit(values: z.infer<typeof loginSchema>) {
+async function onSubmit(values: z.infer<typeof registerSchema>) {
     setError(null);
     startTransition(async() => {
-      const response = await loginAction(values);
+      const response = await registerAction(values);
       if(response.error) {
         setError(response.error);
       } else {
@@ -47,9 +48,30 @@ async function onSubmit(values: z.infer<typeof loginSchema>) {
   } 
   
 return ( <div className="max-w-80">
-    <h1>Login</h1>
+    <h1>Register</h1><br />
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="name"
+                  type="text"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+              
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="email"
@@ -100,4 +122,4 @@ return ( <div className="max-w-80">
   )
 }
 
-export default FormLogin;
+export default FormRegister;
