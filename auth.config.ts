@@ -1,26 +1,88 @@
 import type { NextAuthConfig } from "next-auth"
 
 import Credentials from "next-auth/providers/credentials"
- 
-// Notice this is only an object, not a full Auth.js instance
+import { loginSchema } from "@/lib/zod";
+import { db } from "@/lib/db";
+import bcrypt from "bcryptjs";
+import { nanoid } from "nanoid";
+import { sendVerificationEmail } from "./lib/mail";
+
+// Nota: esto es solo un objeto, no una instancia completa de Auth.js
+// Configuración principal de NextAuth
 export default {
   providers: [
+    // Configuración del proveedor de autenticación por credenciales (email/password)
     Credentials({
-      // You can specify which fields should be submitted, by adding keys to the `credentials` object.
-      // e.g. domain, username, password, 2FA token, etc.
-      credentials: {
-        email: {},
-        password: {},
-      },
-      authorize: async (credentials) => {
-          console.log({credentials});
-          if(credentials.email !== "test@test.com") {
-            throw new Error("Invalid credentials");
-          }
-        return { 
-          id: "1",
-          name: "John Doe",
-          email: "alberto@alberto.com"
+      async authorize(credentials) {
+        // Validamos las credenciales usando Zod
+        // Esto asegura que tengamos email y password con el formato correcto
+        const { data, success } = loginSchema.safeParse(credentials);
+
+        // Si la validación falla, retornamos null (autenticación fallida)
+        if (!success) {
+          return null;
+        }
+
+        // Buscamos al usuario en la base de datos por su email
+        const user = await db.user.findUnique({
+          where: {
+            email: data.email
+          },
+        });
+
+        // Si no existe el usuario o no tiene contraseña configurada
+        // (por ejemplo, si se registró con OAuth), retornamos null
+        if (!user || !user.password) {
+          return null;
+        }
+
+        // Comparamos la contraseña proporcionada con el hash almacenado
+        // usando bcrypt para la verificación segura
+        const isValid = await bcrypt.compare(data.password, user.password);
+
+        // Si la contraseña no coincide, retornamos null
+        if (!isValid) {
+          return null;
+        }
+
+        // Proceso de verificación de email
+        // Solo se ejecuta si el email del usuario no está verificado
+        if (!user.emailVerified) {
+          // Antes de crear un nuevo token, eliminamos cualquier token de verificación previo
+          // asociado a este correo electrónico para evitar duplicados y confusión.
+          await db.verificationToken.deleteMany({
+            where: {
+              identifier: user.email,
+            },
+          });
+
+          // Generamos un nuevo token de verificación
+          const token = nanoid();
+          // Guardamos el token en la base de datos
+          // El token expirará en 1 hora (3600000 ms)
+          await db.verificationToken.create({
+            data: {
+              identifier: user.email,
+              token,
+              expires: new Date(Date.now() + 60 * 60 * 1000), // 1 hora
+            },
+          });
+
+          // Enviar email de verificación
+          await sendVerificationEmail(user.email, token);
+
+          throw new Error(
+            'Correo electrónico no verificado. Por favor, revisa tu bandeja de entrada para el enlace de verificación.',
+          );
+        }
+
+        // Retornamos solo los datos necesarios del usuario
+        // Estos datos estarán disponibles en la sesión
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role
         };
       },
     }),
