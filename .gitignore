@@ -45,3 +45,5 @@ next-env.d.ts
 # Docker_files
 
 #docker-compose.yml
+
+.idea/
