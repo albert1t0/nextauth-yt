@@ -73,13 +73,16 @@ export const sendEmail = async ({ to, subject, text, html }: EmailData) => {
       error: 'No se pudo enviar el correo.'
     };
   }
+
+  return { success: true };
+
 };
 
 /**
  * Envía un correo de verificación al usuario con una plantilla HTML mejorada.
  */
 export const sendVerificationEmail = async (email: string, token: string) => {
-  const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/verify?token=${token}`;
+  const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}`;
   
   const subject = 'Verifica tu dirección de correo electrónico';
   const text = `Gracias por registrarte. Por favor, haz clic en el siguiente enlace para verificar tu cuenta: ${verificationLink}`;

@@ -49,10 +49,10 @@ model Account {
 }
  
 model VerificationToken {
-  identifier String  @unique
-  token      String
+  identifier String
+  token      String   @unique
   expires    DateTime
  
-  @@id([identifier])
+  @@unique([identifier, token])
 }
- 
+
