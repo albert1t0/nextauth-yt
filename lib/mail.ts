@@ -1,162 +1,124 @@
 import sgMail from '@sendgrid/mail';
 
-// Configura tu API key de SendGrid
-// Asegúrate de tener esta variable en tu archivo .env
-console.log('Configurando SendGrid:', {
-  hasApiKey: !!process.env.SENDGRID_API_KEY,
-  envVars: process.env
-});
-
-if (!process.env.SENDGRID_API_KEY) {
-  console.error('⚠️ SENDGRID_API_KEY no está definida en las variables de entorno');
-  console.log('Variables de entorno disponibles:', Object.keys(process.env));
+// Es una mejor práctica configurar la API key una sola vez al iniciar la aplicación.
+if (process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+} else {
+  console.error('⚠️ SENDGRID_API_KEY no está definida. El servicio de correo no funcionará.');
 }
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY || '');
-
-// Dirección de correo desde la cual se enviarán los emails
 const FROM_EMAIL = process.env.FROM_EMAIL;
 
 interface EmailData {
   to: string;
   subject: string;
-  text?: string;
-  html?: string;
+  text: string;
+  html: string;
 }
 
 /**
- * Función genérica para enviar correos electrónicos
+ * Función genérica y robusta para enviar correos electrónicos usando SendGrid.
  */
 export const sendEmail = async ({ to, subject, text, html }: EmailData) => {
-  try {
-    // Validamos que tengamos una API key configurada
-    if (!process.env.SENDGRID_API_KEY) {
-      throw new Error('SENDGRID_API_KEY no está configurada en las variables de entorno');
-    }
-
-    // Validamos que tengamos un email remitente configurado
-    if (!FROM_EMAIL) {
-      throw new Error('FROM_EMAIL no está configurada en las variables de entorno');
-    }
-
-    const msg = {
-      to,
-      from: {
-        email: FROM_EMAIL,
-        name: 'Tu Aplicación' // Puedes personalizar este nombre
-      },
-      subject,
-      text: text || '',
-      html: html || ''
-    };
-
-    // Log para debugging
-    console.log('Intentando enviar email:', {
-      to,
-      from: FROM_EMAIL,
-      subject,
-      hasText: !!text,
-      hasHtml: !!html
-    });
-
-    await sgMail.send(msg);
-    return { success: true };
-  } catch (error: unknown) {
-    const errorObj = error as Error & { code?: string; response?: { body?: unknown } };
-    console.error('Error detallado al enviar email:', {
-      message: errorObj.message,
-      code: errorObj?.code,
-      response: errorObj?.response?.body,
-    });
-    return { 
-      success: false, 
-      error: {
-        message: errorObj.message,
-        code: errorObj?.code,
-        details: errorObj?.response?.body
-      }
-    };
-  }
-};
-
-/**
- * Envía un correo de verificación al usuario
- */
-export const sendVerificationEmail = async (email: string, token: string) => {
-  const confirmLink = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/verify?token=${token}`;
-
-  // Validar que tenemos todas las variables de entorno necesarias
+  // Validaciones en tiempo de ejecución para asegurar que las variables críticas existen.
   if (!process.env.SENDGRID_API_KEY) {
-    throw new Error('SENDGRID_API_KEY no está configurada');
+    console.error('Error: Intento de enviar email sin API Key de SendGrid.');
+    throw new Error('La configuración del servidor de correo está incompleta.');
+  }
+  if (!FROM_EMAIL) {
+    console.error('Error: Intento de enviar email sin un email remitente (FROM_EMAIL).');
+    throw new Error('La configuración del servidor de correo está incompleta.');
   }
 
-  if (!process.env.FROM_EMAIL) {
-    throw new Error('FROM_EMAIL no está configurada');
-  }
-
-  const emailData: EmailData = {
-    to: email,
-    subject: 'Verifica tu correo electrónico',
-    text: `Verifica tu correo electrónico haciendo clic en: ${confirmLink}`, // Siempre incluir versión texto
-    html: `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Verifica tu correo electrónico</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px;">
-          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="color: #333333; margin-bottom: 20px;">Verifica tu correo electrónico</h2>
-            <p style="color: #666666; margin-bottom: 20px;">Haz clic en el siguiente enlace para verificar tu cuenta:</p>
-            <a href="${confirmLink}" style="display: inline-block; padding: 12px 24px; background-color: #0070f3; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">
-              Verificar correo
-            </a>
-            <p style="color: #666666; margin-top: 20px;">Si no has creado una cuenta, puedes ignorar este correo.</p>
-            <p style="color: #666666;">El enlace expirará en 1 hora.</p>
-          </div>
-        </body>
-      </html>
-    `,
+  // Estructura del mensaje que cumple con los tipos de @sendgrid/mail
+  const msg: sgMail.MailDataRequired = {
+    to: to,
+    from: {
+      email: FROM_EMAIL,
+      name: 'Sistema de Autenticación', // Nombre del remitente personalizable
+    },
+    subject: subject,
+    text: text,
+    html: html,
   };
 
   try {
-    const result = await sendEmail(emailData);
-    console.log('Email de verificación enviado correctamente a:', email);
-    return result;
-  } catch (error: any) {
-    console.error('Error al enviar email de verificación:', {
-      to: email,
-      error: error.message,
-      details: error.response?.body
-    });
-    throw new Error('No se pudo enviar el email de verificación. Por favor, intenta nuevamente.');
+    console.log(`Enviando email a ${to} con asunto "${subject}"`);
+    await sgMail.send(msg);
+    console.log('✅ Email enviado correctamente.');
+    return { success: true };
+  } catch (error: unknown) {
+    console.error('❌ Error al enviar el email:');
+    
+    // Tienes toda la razón, 'unknown' es más seguro que 'any'.
+    // Hacemos una comprobación de tipo para manejar el error de forma segura.
+    if (typeof error === 'object' && error !== null) {
+      if ('response' in error) {
+        // Parece un error de SendGrid, intentamos acceder a los detalles.
+        const responseBody = (error as { response: { body: unknown } }).response.body;
+        console.error('Detalles del error de SendGrid:', JSON.stringify(responseBody, null, 2));
+      } else if ('message' in error) {
+        // Es un error más genérico, pero podemos obtener el mensaje.
+        console.error('Error general:', (error as { message: string }).message);
+      } else {
+        console.error('El objeto de error no tiene propiedades `response` o `message`:', error);
+      }
+    } else {
+      // El error no es un objeto, lo registramos tal cual.
+      console.error('Ocurrió un error de tipo no esperado:', error);
+    }
+    
+    return { 
+      success: false, 
+      error: 'No se pudo enviar el correo.'
+    };
   }
-};
 };
 
 /**
- * Envía un correo de restablecimiento de contraseña
+ * Envía un correo de verificación al usuario con una plantilla HTML mejorada.
+ */
+export const sendVerificationEmail = async (email: string, token: string) => {
+  const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/verify?token=${token}`;
+  
+  const subject = 'Verifica tu dirección de correo electrónico';
+  const text = `Gracias por registrarte. Por favor, haz clic en el siguiente enlace para verificar tu cuenta: ${verificationLink}`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+      <h2 style="text-align: center; color: #333;">Verificación de Correo Electrónico</h2>
+      <p>¡Gracias por registrarte! Para completar tu registro, por favor, verifica tu dirección de correo electrónico haciendo clic en el botón de abajo.</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${verificationLink}" style="background-color: #007bff; color: white; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-size: 16px;">Verificar mi Correo</a>
+      </div>
+      <p>Si no puedes hacer clic en el botón, copia y pega el siguiente enlace en tu navegador:</p>
+      <p><a href="${verificationLink}">${verificationLink}</a></p>
+      <hr>
+      <p style="font-size: 12px; color: #888;">Si no te registraste en nuestro sitio, por favor ignora este correo.</p>
+    </div>`;
+
+  return sendEmail({ to: email, subject, text, html });
+};
+
+/**
+ * Envía un correo de restablecimiento de contraseña.
  */
 export const sendPasswordResetEmail = async (email: string, token: string) => {
   const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`;
 
-  const emailData: EmailData = {
-    to: email,
-    subject: 'Restablece tu contraseña',
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Restablece tu contraseña</h2>
-        <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace:</p>
-        <a href="${resetLink}" style="display: inline-block; padding: 12px 24px; background-color: #0070f3; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">
-          Restablecer contraseña
-        </a>
-        <p>Si no has solicitado restablecer tu contraseña, puedes ignorar este correo.</p>
-        <p>El enlace expirará en 1 hora.</p>
+  const subject = 'Instrucciones para restablecer tu contraseña';
+  const text = `Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para continuar: ${resetLink}`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+      <h2 style="text-align: center; color: #333;">Restablecimiento de Contraseña</h2>
+      <p>Hemos recibido una solicitud para restablecer la contraseña de tu cuenta. Haz clic en el botón de abajo para elegir una nueva contraseña.</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${resetLink}" style="background-color: #28a745; color: white; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-size: 16px;">Restablecer Contraseña</a>
       </div>
-    `,
-  };
+      <p>Si no puedes hacer clic en el botón, copia y pega el siguiente enlace en tu navegador:</p>
+      <p><a href="${resetLink}">${resetLink}</a></p>
+      <hr>
+      <p style="font-size: 12px; color: #888;">Si no solicitaste un restablecimiento de contraseña, puedes ignorar este correo de forma segura.</p>
+    </div>`;
 
-  return sendEmail(emailData);
+  return sendEmail({ to: email, subject, text, html });
 };

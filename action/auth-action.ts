@@ -30,7 +30,7 @@ export const registerAction = async (
 
         const { data, success } = registerSchema.safeParse(values);
         if (!success){
-            return { error: "Invalid data" };
+            return { error: "Datos inválidos" };
         }
 
         // verificar si usuario existe
@@ -41,7 +41,7 @@ export const registerAction = async (
         });
 
         if (user) {
-            return { error: "User already exists" };
+            return { error: "El usuario ya existe" };
         }
 
         // crear usuario

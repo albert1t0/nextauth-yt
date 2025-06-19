@@ -47,7 +47,7 @@ async function onSubmit(values: z.infer<typeof loginSchema>) {
   } 
   
 return ( <div className="max-w-80">
-    <h1>Login</h1>
+    <h1>Inicio de sesión en plataforma</h1>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
@@ -75,7 +75,7 @@ return ( <div className="max-w-80">
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>Contraseña</FormLabel>
               <FormControl>
                 <Input
                   placeholder="password"
@@ -94,7 +94,7 @@ return ( <div className="max-w-80">
         {
           error && <FormMessage>{error}</FormMessage>
         }
-        <Button type="submit" disabled={isPending}>Submit</Button>
+        <Button type="submit" disabled={isPending}>Iniciar Sesión</Button>
       </form>
     </Form></div>
   )
