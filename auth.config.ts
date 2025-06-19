@@ -7,8 +7,7 @@ import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
 import { sendVerificationEmail } from "./lib/mail";
 
- 
-// Notice this is only an object, not a full Auth.js instance
+// Nota: esto es solo un objeto, no una instancia completa de Auth.js
 // Configuración principal de NextAuth
 export default {
   providers: [
@@ -49,24 +48,13 @@ export default {
         // Proceso de verificación de email
         // Solo se ejecuta si el email del usuario no está verificado
         if (!user.emailVerified) {
-          // Buscamos si existe un token de verificación previo
-          const verifyTokenExists = await db.verificationToken.findFirst({
+          // Antes de crear un nuevo token, eliminamos cualquier token de verificación previo
+          // asociado a este correo electrónico para evitar duplicados y confusión.
+          await db.verificationToken.deleteMany({
             where: {
-              identifier: user.email
-            }
+              identifier: user.email,
+            },
           });
-
-          // Si existe un token previo, lo eliminamos para evitar duplicados
-          if (verifyTokenExists) {
-            await db.verificationToken.delete({
-              where: {
-                identifier_token: {
-                  identifier: user.email,
-                  token: verifyTokenExists.token
-                }
-              }
-            });
-          }
 
           // Generamos un nuevo token de verificación
           const token = nanoid();
@@ -76,16 +64,16 @@ export default {
             data: {
               identifier: user.email,
               token,
-              expires: new Date(Date.now() + 60 * 60 * 1000) // 1 hora
-            }
+              expires: new Date(Date.now() + 60 * 60 * 1000), // 1 hora
+            },
           });
 
           // Enviar email de verificación
-          // Aquí podrías llamar a una función para enviar el email de verificación
           await sendVerificationEmail(user.email, token);
 
-          throw new Error("Email no verificado. Por favor, revisa tu bandeja de entrada para el enlace de verificación.");
-          return null; // Aseguramos que no se retorne un usuario no verificado
+          throw new Error(
+            'Correo electrónico no verificado. Por favor, revisa tu bandeja de entrada para el enlace de verificación.',
+          );
         }
 
         // Retornamos solo los datos necesarios del usuario
