@@ -19,7 +19,7 @@ export const loginAction = async (
         return { success: true };
     } catch (error) {
         console.error("Login failed:", error);
-        throw new Error("Login failed");
+        throw new Error("Error de autenticación");
     }
 };
 
