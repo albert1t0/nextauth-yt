@@ -57,7 +57,7 @@ return ( <div className="max-w-80">
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel>Nombre</FormLabel>
               <FormControl>
                 <Input 
                   placeholder="name"
@@ -97,7 +97,7 @@ return ( <div className="max-w-80">
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>Contraseña</FormLabel>
               <FormControl>
                 <Input
                   placeholder="password"
@@ -116,7 +116,7 @@ return ( <div className="max-w-80">
         {
           error && <FormMessage>{error}</FormMessage>
         }
-        <Button type="submit" disabled={isPending}>Submit</Button>
+        <Button type="submit" disabled={isPending}>Registrarse</Button>
       </form>
     </Form></div>
   )

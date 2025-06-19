@@ -8,7 +8,7 @@ const LogoutButton = () => {
         await signOut({ callbackUrl: "/login" });
     };
   return (
-    <Button onClick={handleClick}>LogOut</Button>
+    <Button onClick={handleClick}>Terminar sesión</Button>
   )
 }
 

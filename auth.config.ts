@@ -84,7 +84,7 @@ export default {
           // Aquí podrías llamar a una función para enviar el email de verificación
           await sendVerificationEmail(user.email, token);
 
-          throw new Error("Email not verified. Please check your inbox for the verification link.");
+          throw new Error("Email no verificado. Por favor, revisa tu bandeja de entrada para el enlace de verificación.");
           return null; // Aseguramos que no se retorne un usuario no verificado
         }
 
