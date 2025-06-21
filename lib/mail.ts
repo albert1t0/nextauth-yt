@@ -73,9 +73,6 @@ export const sendEmail = async ({ to, subject, text, html }: EmailData) => {
       error: 'No se pudo enviar el correo.'
     };
   }
-
-  return { success: true };
-
 };
 
 /**

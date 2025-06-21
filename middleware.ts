@@ -13,6 +13,7 @@ const publicRoutes = [
   "/about",
   "/contact",
   "/forgot-password",
+  "/api/auth/verify-email",
   "/reset-password"
 ]
 
