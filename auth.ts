@@ -1,9 +1,11 @@
 import NextAuth from "next-auth"
-
 import { PrismaAdapter } from "@auth/prisma-adapter"
+import { db } from "@/lib/db"
+
+//import { PrismaAdapter } from "@auth/prisma-adapter"
 
 import authConfig from "@/auth.config"
-import { db } from "@/lib/db"
+//import { prisma } from "@/lib/prisma"
 
 // Exportamos las funciones y handlers necesarios de NextAuth
 export const { 
