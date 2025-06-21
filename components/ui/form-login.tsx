@@ -16,15 +16,25 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { loginAction } from "@/action/auth-action";
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useTransition, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 
 const FormLogin = () => {
 
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Verificar si el usuario viene de una verificación exitosa
+  useEffect(() => {
+    const verified = searchParams.get("verified");
+    if (verified === "1") {
+      setSuccessMessage("Correo verificado. Ya puede ingresar.");
+    }
+  }, [searchParams]);
 
     const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -36,12 +46,13 @@ const FormLogin = () => {
 
 async function onSubmit(values: z.infer<typeof loginSchema>) {
     setError(null);
+    setSuccessMessage(null);
     startTransition(async() => {
-      const response = await loginAction(values);
-      if(response.error) {
-        setError(response.error);
-      } else {
+      try {
+        await loginAction(values);
         router.push("/dashboard");
+      } catch (error) {
+        setError(error instanceof Error ? error.message : "Error de autenticación");
       }
     });
   } 
@@ -93,6 +104,13 @@ return ( <div className="max-w-80">
 
         {
           error && <FormMessage>{error}</FormMessage>
+        }
+        {
+          successMessage && (
+            <div className="p-3 text-sm text-green-600 bg-green-50 border border-green-200 rounded-md">
+              {successMessage}
+            </div>
+          )
         }
         <Button type="submit" disabled={isPending}>Iniciar Sesión</Button>
       </form>
