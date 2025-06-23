@@ -21,13 +21,12 @@ interface EmailData {
  */
 export const sendEmail = async ({ to, subject, text, html }: EmailData) => {
   // Validaciones en tiempo de ejecución para asegurar que las variables críticas existen.
-  if (!process.env.SENDGRID_API_KEY) {
-    console.error('Error: Intento de enviar email sin API Key de SendGrid.');
-    throw new Error('La configuración del servidor de correo está incompleta.');
-  }
-  if (!FROM_EMAIL) {
-    console.error('Error: Intento de enviar email sin un email remitente (FROM_EMAIL).');
-    throw new Error('La configuración del servidor de correo está incompleta.');
+  if (!process.env.SENDGRID_API_KEY || !FROM_EMAIL) {
+    console.error('Error: La configuración de SendGrid (API Key o FROM_EMAIL) está incompleta. No se puede enviar el correo.');
+    return { 
+      success: false, 
+      error: 'La configuración del servidor de correo es inválida.' 
+    };
   }
 
   // Estructura del mensaje que cumple con los tipos de @sendgrid/mail
