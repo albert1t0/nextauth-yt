@@ -1,0 +1,329 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Initialize Next.js Project with TypeScript",
+        "description": "Initialize a new Next.js project with TypeScript and set up the basic project structure.",
+        "details": "Use `create-next-app` with the App Router and TypeScript template. \n```bash\nnpx create-next-app@latest my-auth-app --typescript --eslint --tailwind --src-dir --app --import-alias \"@/*\"\ncd my-auth-app\n```\nEnsure basic linting and formatting tools are configured.",
+        "testStrategy": "Verify that the Next.js application runs successfully in development mode (`npm run dev`). Check that TypeScript compilation works without errors.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Setup Prisma ORM and PostgreSQL Database",
+        "description": "Install and configure Prisma ORM with a PostgreSQL database. Define the initial User schema.",
+        "details": "Install Prisma CLI and Client: `npm install prisma --save-dev` and `npm install @prisma/client`. \nInitialize Prisma: `npx prisma init --datasource-provider postgresql`. \nConfigure `DATABASE_URL` in `.env`. \nDefine User model in `prisma/schema.prisma`:\n```prisma\nmodel User {\n  id        String   @id @default(cuid())\n  email     String   @unique\n  name      String?\n  password  String\n  emailVerified DateTime? // To store verification timestamp\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n}\n```\nRun `npx prisma migrate dev --name init` to create the initial migration and apply it.",
+        "testStrategy": "Verify that Prisma can connect to the PostgreSQL database. Check that the `User` table is created in the database with the correct columns after running migrations.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Install and Configure NextAuth.js",
+        "description": "Install and configure NextAuth.js for session management and authentication providers.",
+        "details": "Install NextAuth.js: `npm install next-auth`. \nCreate `app/api/auth/[...nextauth]/route.ts`. \nConfigure NextAuth with a Credentials provider. \n```typescript\n// app/api/auth/[...nextauth]/route.ts\nimport NextAuth from 'next-auth';\nimport CredentialsProvider from 'next-auth/providers/credentials';\n// ... (import Prisma adapter and bcrypt later)\n\nexport const authOptions = {\n  providers: [\n    CredentialsProvider({\n      name: 'Credentials',\n      credentials: {\n        email: { label: \"Email\", type: \"text\" },\n        password: { label: \"Password\", type: \"password\" }\n      },\n      async authorize(credentials) {\n        // Logic to verify credentials will be added in later tasks\n        // For now, can return null or a mock user for setup\n        if (credentials?.email && credentials?.password) {\n          // Placeholder: Actual DB lookup and password check later\n          // const user = await prisma.user.findUnique({ where: { email: credentials.email } });\n          // if (user && await bcrypt.compare(credentials.password, user.password)) return user;\n          return null; \n        }\n        return null;\n      }\n    })\n  ],\n  // session: { strategy: 'jwt' }, // Optional: JWT strategy\n  // pages: { signIn: '/login' }, // Optional: Custom login page\n};\n\nconst handler = NextAuth(authOptions);\nexport { handler as GET, handler as POST };\n```\nWrap the root layout with `<SessionProvider>` from `next-auth/react`.",
+        "testStrategy": "Verify that the NextAuth.js API route is accessible (e.g., `/api/auth/signin`). Check for any console errors related to NextAuth.js setup.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Setup shadcn/ui for UI Components",
+        "description": "Install and set up shadcn/ui for reusable UI components.",
+        "details": "Follow the shadcn/ui installation guide for Next.js: `npx shadcn-ui@latest init`. \nConfigure `tailwind.config.js` and `globals.css` as per shadcn/ui documentation. \nInstall basic components like `button`, `input`, `label`, `card`:\n`npx shadcn-ui@latest add button input label card form`.",
+        "testStrategy": "Verify that shadcn/ui components can be imported and rendered correctly in a sample page. Check that Tailwind CSS styles are applied.",
+        "priority": "medium",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Install Zod for Validation",
+        "description": "Install Zod for schema validation.",
+        "details": "Install Zod: `npm install zod`. No specific configuration needed beyond installation. It will be used in API routes and potentially forms.",
+        "testStrategy": "Create a simple Zod schema and test its validation logic in a test file or a temporary route. Ensure type inference works correctly.",
+        "priority": "medium",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Setup Email Sending Service (Resend/Nodemailer)",
+        "description": "Install and configure an email sending service (Resend or Nodemailer).",
+        "details": "Choose between Resend or Nodemailer. For Resend: `npm install resend`. \nGet API key from Resend and add it to `.env` (e.g., `RESEND_API_KEY`). \nCreate a utility function for sending emails, e.g., `lib/email.ts`.\n```typescript\n// lib/email.ts\nimport { Resend } from 'resend';\n\nconst resend = new Resend(process.env.RESEND_API_KEY);\n\nexport const sendVerificationEmail = async (email: string, token: string) => {\n  const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}`;\n  await resend.emails.send({\n    from: 'onboarding@resend.dev', // Replace with your domain\n    to: email,\n    subject: 'Verify your email address',\n    html: `<p>Click <a href=\"${verificationLink}\">here</a> to verify your email.</p>`\n  });\n};\n```\nEnsure `NEXT_PUBLIC_APP_URL` is set in `.env` (e.g., `http://localhost:3000`).",
+        "testStrategy": "Send a test email to a controlled email address using the configured service. Verify that the email is received and the content is correct.",
+        "priority": "medium",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Implement User Registration API Endpoint",
+        "description": "Implement the user registration API endpoint, including email/password validation with Zod and password hashing.",
+        "details": "Create an API route `app/api/auth/register/route.ts`. \nUse Zod to validate `email` and `password`. \nInstall bcrypt: `npm install bcryptjs` and `@types/bcryptjs`. \nHash the password using bcrypt before saving to the database. \nCheck if user already exists. \n```typescript\n// app/api/auth/register/route.ts\nimport { NextRequest, NextResponse } from 'next/server';\nimport { z } from 'zod';\nimport bcrypt from 'bcryptjs';\nimport prisma from '@/lib/prisma'; // Assuming prisma client is exported from lib/prisma\n\nconst registerSchema = z.object({\n  email: z.string().email(),\n  password: z.string().min(8),\n});\n\nexport async function POST(req: NextRequest) {\n  try {\n    const body = await req.json();\n    const { email, password } = registerSchema.parse(body);\n\n    const existingUser = await prisma.user.findUnique({ where: { email } });\n    if (existingUser) {\n      return NextResponse.json({ error: 'User already exists' }, { status: 400 });\n    }\n\n    const hashedPassword = await bcrypt.hash(password, 10);\n    const user = await prisma.user.create({\n      data: { email, password: hashedPassword },\n    });\n    // Email verification sending will be handled in a subsequent task\n    return NextResponse.json({ message: 'User registered successfully. Please verify your email.' }, { status: 201 });\n  } catch (error) {\n    if (error instanceof z.ZodError) {\n      return NextResponse.json({ error: error.errors }, { status: 400 });\n    }\n    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });\n  }\n}\n```",
+        "testStrategy": "Test the endpoint with valid and invalid data (e.g., malformed email, short password). Verify that new users are created in the database with hashed passwords and appropriate error responses are returned.",
+        "priority": "high",
+        "dependencies": [
+          2,
+          3,
+          5
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Implement User Login Logic in NextAuth.js",
+        "description": "Implement the user login API endpoint within NextAuth.js `authorize` function, including email/password validation and password comparison.",
+        "details": "Update the `authorize` function in `app/api/auth/[...nextauth]/route.ts`. \nUse Prisma to find the user by email. \nUse bcrypt to compare the provided password with the stored hashed password. \nReturn the user object if credentials are valid, otherwise return null. \n```typescript\n// app/api/auth/[...nextauth]/route.ts (update authorize function)\n// ... imports (prisma, bcrypt)\nasync authorize(credentials) {\n  if (!credentials?.email || !credentials?.password) return null;\n\n  const user = await prisma.user.findUnique({\n    where: { email: credentials.email },\n  });\n\n  if (!user || !user.password) return null;\n  // Add check for emailVerified status after verification flow is implemented\n  // if (!user.emailVerified) { throw new Error('Please verify your email before logging in.'); }\n\n  const isValidPassword = await bcrypt.compare(credentials.password, user.password);\n  if (!isValidPassword) return null;\n\n  return { id: user.id, email: user.email, name: user.name, emailVerified: user.emailVerified }; // Return necessary user fields for session\n}\n// ... rest of authOptions\n```\nEnsure NextAuth.js is configured to use Prisma Adapter if you want database sessions: `npm install @next-auth/prisma-adapter`. Then add `adapter: PrismaAdapter(prisma)` to `authOptions`.",
+        "testStrategy": "Test login with valid and invalid credentials. Verify that NextAuth.js creates a session cookie upon successful login. Check that users who are not verified (once that logic is in) cannot log in.",
+        "priority": "high",
+        "dependencies": [
+          2,
+          3,
+          5,
+          7
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Implement User Logout Functionality",
+        "description": "Implement user logout functionality using NextAuth.js `signOut` method.",
+        "details": "Use the `signOut` function from `next-auth/react` in a UI component (e.g., a logout button). \n```typescript\n// Example in a component\nimport { signOut } from 'next-auth/react';\n\nconst LogoutButton = () => {\n  return <button onClick={() => signOut({ callbackUrl: '/' })}>Sign Out</button>;\n};\n```\nNo backend API changes are typically needed as NextAuth.js handles this via its routes.",
+        "testStrategy": "Log in as a user, then click the logout button. Verify that the session is terminated and the user is redirected (e.g., to the homepage).",
+        "priority": "medium",
+        "dependencies": [
+          3
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Implement Email Verification Token Generation and Storage",
+        "description": "Implement logic to generate and store email verification tokens. This might involve adding a new model or fields to the User model.",
+        "details": "Create a new Prisma model for verification tokens or add fields to the User model. A separate model is cleaner for managing token expiry.\n```prisma\n// prisma/schema.prisma (add this model)\nmodel VerificationToken {\n  id        String   @id @default(cuid())\n  identifier String   // Typically user's email or ID\n  token     String   @unique\n  expires   DateTime\n\n  @@unique([identifier, token])\n}\n```\nRun `npx prisma migrate dev --name add_verification_token`. \nCreate a utility function to generate a unique token (e.g., using `crypto.randomBytes`). Store the token with an expiry date linked to the user.",
+        "testStrategy": "Verify that tokens can be generated, stored in the database with an expiry, and retrieved. Test uniqueness constraints.",
+        "priority": "medium",
+        "dependencies": [
+          2
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "Send Verification Email on Registration",
+        "description": "Modify the registration process to generate a verification token and send a verification email to the new user.",
+        "details": "In `app/api/auth/register/route.ts`, after successfully creating the user (but before they can log in, or mark them as unverified):\n1. Generate a verification token using the utility from task 10.\n2. Store the token associated with the user's email/ID.\n3. Use the email sending utility (task 6) to send an email containing a link with this token. The link should point to an API endpoint for verification (task 12).\n```typescript\n// In app/api/auth/register/route.ts, after user creation:\n// ...\nconst verificationToken = crypto.randomBytes(32).toString('hex');\nconst expires = new Date(Date.now() + 3600 * 1000); // 1 hour expiry\n\nawait prisma.verificationToken.create({\n  data: {\n    identifier: user.email, // or user.id\n    token: verificationToken,\n    expires,\n  },\n});\n\nawait sendVerificationEmail(user.email, verificationToken);\n// ...\n```\nUser's `emailVerified` field should initially be null or false.",
+        "testStrategy": "Register a new user. Verify that a verification token is created in the database. Verify that an email is sent to the user's email address with a correctly formatted verification link.",
+        "priority": "high",
+        "dependencies": [
+          7,
+          6,
+          10
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Implement Email Verification API Endpoint",
+        "description": "Create an API endpoint to handle email verification. This endpoint will receive the token, validate it, and mark the user's email as verified.",
+        "details": "Create `app/api/auth/verify-email/route.ts`. \nThis GET endpoint will take the `token` as a query parameter. \n1. Find the token in the `VerificationToken` table. \n2. Check if it's valid and not expired. \n3. If valid, find the associated user and update their `emailVerified` status/timestamp in the `User` table. \n4. Delete the used token. \n5. Redirect the user to the login page or a success page. \n```typescript\n// app/api/auth/verify-email/route.ts\nimport { NextRequest, NextResponse } from 'next/server';\nimport prisma from '@/lib/prisma';\n\nexport async function GET(req: NextRequest) {\n  const token = req.nextUrl.searchParams.get('token');\n  if (!token) {\n    return NextResponse.redirect(new URL('/?error=MissingToken', req.url));\n  }\n\n  const verificationToken = await prisma.verificationToken.findUnique({\n    where: { token },\n  });\n\n  if (!verificationToken || verificationToken.expires < new Date()) {\n    return NextResponse.redirect(new URL('/?error=InvalidOrExpiredToken', req.url));\n  }\n\n  await prisma.user.update({\n    where: { email: verificationToken.identifier }, // Assuming identifier is email\n    data: { emailVerified: new Date() },\n  });\n\n  await prisma.verificationToken.delete({ where: { id: verificationToken.id } });\n\n  return NextResponse.redirect(new URL('/login?verified=true', req.url));\n}\n```",
+        "testStrategy": "Generate a verification link (manually or via registration). Click the link. Verify that the user's `emailVerified` status is updated in the database and the token is deleted. Test with invalid/expired tokens.",
+        "priority": "high",
+        "dependencies": [
+          2,
+          10
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Block Login for Unverified Emails",
+        "description": "Update login logic to prevent users from logging in if their email is not verified.",
+        "details": "In `app/api/auth/[...nextauth]/route.ts`, within the `authorize` function, add a check for `user.emailVerified` before returning the user object.\n```typescript\n// In authorize function of NextAuth options:\n// ...\n  const user = await prisma.user.findUnique({ where: { email: credentials.email } });\n  if (!user || !user.password) return null;\n\n  if (!user.emailVerified) {\n    // Option 1: Return null to indicate login failure\n    // return null; \n    // Option 2: Throw a specific error that can be caught by NextAuth and displayed to user\n    throw new Error('EmailNotVerified'); \n  }\n// ... rest of password check and return user\n```\nHandle the `EmailNotVerified` error on the client-side if using the error throwing approach.",
+        "testStrategy": "Attempt to log in with a user account that has been registered but not yet verified. Verify that login fails and an appropriate message is shown. Then, verify the email and attempt login again; it should succeed.",
+        "priority": "medium",
+        "dependencies": [
+          8,
+          12
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Create Reusable Auth Form Components",
+        "description": "Create reusable React components for authentication forms (Registration, Login) using shadcn/ui and Zod for client-side validation.",
+        "details": "Create components like `AuthForm.tsx`, `RegistrationForm.tsx`, `LoginForm.tsx`. \nUse shadcn/ui components (`Input`, `Button`, `Label`, `Card`, `Form`). \nIntegrate Zod for client-side form validation using libraries like `react-hook-form` with its Zod resolver (`@hookform/resolvers/zod`). \n```typescript\n// Example structure for LoginForm.tsx\n'use client';\nimport { useForm } from 'react-hook-form';\nimport { zodResolver } from '@hookform/resolvers/zod';\nimport * as z from 'zod';\nimport { Button } from '@/components/ui/button';\nimport { Input } from '@/components/ui/input';\nimport { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';\nimport { signIn } from 'next-auth/react';\nimport { useRouter } from 'next/navigation';\n\nconst loginSchema = z.object({\n  email: z.string().email(),\n  password: z.string().min(1, 'Password is required'),\n});\n\nexport function LoginForm() {\n  const router = useRouter();\n  const form = useForm<z.infer<typeof loginSchema>>({\n    resolver: zodResolver(loginSchema),\n    defaultValues: { email: '', password: '' },\n  });\n\n  async function onSubmit(values: z.infer<typeof loginSchema>) {\n    const result = await signIn('credentials', {\n      redirect: false,\n      email: values.email,\n      password: values.password,\n    });\n    if (result?.ok) {\n      router.push('/dashboard'); // Or desired redirect path\n    } else {\n      // Handle error (e.g., display message from result.error)\n      form.setError('root', { message: result?.error || 'Login failed' });\n    }\n  }\n\n  return (\n    <Form {...form}>\n      <form onSubmit={form.handleSubmit(onSubmit)} className=\"space-y-4\">\n        {/* FormFields for email and password */}\n        <Button type=\"submit\">Login</Button>\n      </form>\n    </Form>\n  );\n}\n```\nSimilarly create `RegistrationForm.tsx` that calls the `/api/auth/register` endpoint.",
+        "testStrategy": "Verify that forms render correctly. Test client-side validation with Zod (e.g., empty fields, invalid email format). Ensure form submission calls the correct API endpoints.",
+        "priority": "high",
+        "dependencies": [
+          4,
+          5
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Develop User Registration Page",
+        "description": "Develop the User Registration page (`/register`) using the created form components.",
+        "details": "Create a Next.js page route `app/register/page.tsx`. \nImport and use the `RegistrationForm` component. \nHandle form submission, API responses, and display success/error messages to the user. \nRedirect or guide user on successful registration (e.g., message to check email).",
+        "testStrategy": "Navigate to the `/register` page. Test the registration flow end-to-end. Verify UI feedback for successful registration and for errors (e.g., user already exists, validation errors).",
+        "priority": "high",
+        "dependencies": [
+          14,
+          7
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "Develop User Login Page",
+        "description": "Develop the User Login page (`/login`) using the created form components.",
+        "details": "Create a Next.js page route `app/login/page.tsx`. \nImport and use the `LoginForm` component. \nHandle form submission using `signIn` from `next-auth/react`. \nRedirect user to a protected page (e.g., `/dashboard`) on successful login. Display error messages on login failure.",
+        "testStrategy": "Navigate to the `/login` page. Test login with valid and invalid credentials. Verify redirection on successful login and error messages on failure. Test login for unverified users (should fail with message).",
+        "priority": "high",
+        "dependencies": [
+          14,
+          8
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Implement Protected Routes Middleware",
+        "description": "Implement middleware to protect specific routes (e.g., `/dashboard`) from unauthenticated access using NextAuth.js.",
+        "details": "Create `middleware.ts` in the root or `src` directory. \nUse `withAuth` HOF from `next-auth/middleware` or check `getToken` from `next-auth/jwt`. \n```typescript\n// middleware.ts\nexport { default } from \"next-auth/middleware\"\n\nexport const config = {\n  matcher: ['/dashboard/:path*', '/profile'], // Add all routes to protect\n};\n```\nAlternatively, for more complex logic:\n```typescript\n// middleware.ts\nimport { getToken } from 'next-auth/jwt';\nimport { NextRequest, NextResponse } from 'next/server';\n\nexport async function middleware(req: NextRequest) {\n  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });\n\n  if (req.nextUrl.pathname.startsWith('/dashboard')) {\n    if (!token) {\n      const loginUrl = new URL('/login', req.url);\n      loginUrl.searchParams.set('callbackUrl', req.nextUrl.pathname);\n      return NextResponse.redirect(loginUrl);\n    }\n    // Add role-based checks if needed: if (token.role !== 'admin') return NextResponse.redirect('/');\n  }\n  return NextResponse.next();\n}\n\nexport const config = {\n  matcher: ['/dashboard/:path*', '/profile'],\n};\n```\nEnsure `NEXTAUTH_SECRET` is set in `.env`.",
+        "testStrategy": "Attempt to access a protected route (e.g., `/dashboard`) without being logged in; verify redirection to the login page. Log in and access the protected route; verify access is granted.",
+        "priority": "high",
+        "dependencies": [
+          3
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 18,
+        "title": "Create Sample Dashboard Page (Protected)",
+        "description": "Create a sample protected page (e.g., `/dashboard`) that displays user information and a logout button.",
+        "details": "Create `app/dashboard/page.tsx`. \nUse `useSession` hook from `next-auth/react` to access session data and display user information (e.g., email). \nInclude the `LogoutButton` component (from task 9). \nThis page should only be accessible to authenticated users due to the middleware (task 17).",
+        "testStrategy": "Log in and navigate to `/dashboard`. Verify that user-specific information is displayed. Test the logout button from this page. Attempt to access `/dashboard` when logged out and verify redirection.",
+        "priority": "medium",
+        "dependencies": [
+          17,
+          9
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 19,
+        "title": "Add Password Reset Token Model to Prisma Schema",
+        "description": "Update the Prisma schema to include a model for storing password reset tokens. The model should include fields for an identifier (email), the token itself, and an expiration date.",
+        "details": "Modify the `prisma/schema.prisma` file to add a new `PasswordResetToken` model. This model will store the necessary information for password reset functionality.\n\nThe model definition should be as follows:\n```prisma\nmodel PasswordResetToken {\n  id        String   @id @default(cuid())\n  email     String   // User's email address associated with the token\n  token     String   @unique // The cryptographically secure reset token\n  expires   DateTime // The timestamp when this token will expire\n\n  // Optional: If you need to quickly find tokens by email, consider adding an index:\n  // @@index([email])\n}\n```\nAfter adding the model to `prisma/schema.prisma`, run the following Prisma commands in your terminal:\n1. To create and apply a new migration: `npx prisma migrate dev --name add_password_reset_token_model`\n2. To regenerate the Prisma Client to include the new model: `npx prisma generate`\nThis will update your database schema and make the `PasswordResetToken` model available in your Prisma Client for database operations.",
+        "testStrategy": "1. After defining the model in `prisma/schema.prisma`, run `npx prisma migrate dev --name add_password_reset_token_model`. Verify that the migration applies successfully without errors.\n2. Run `npx prisma generate` to update the Prisma Client.\n3. Inspect your PostgreSQL database (e.g., using `psql` or a database GUI tool) to confirm that a new table named `PasswordResetToken` has been created.\n4. Verify that the `PasswordResetToken` table has the following columns with appropriate types: `id` (String, Primary Key), `email` (String), `token` (String, Unique), `expires` (DateTime).\n5. Write a temporary test script or use a tool like Prisma Studio (`npx prisma studio`) to interact with the new table:\n    a. Attempt to create a new record in the `PasswordResetToken` table with valid data. Verify success.\n    b. Attempt to create a second record with the same `token` value as the first. Verify that this operation fails due to the unique constraint on the `token` field.\n    c. Attempt to create a second record with a different `token` but the same `email`. Verify success (as `email` is not unique by itself).\n    d. Read the created records to ensure data integrity.\n    e. Delete the test records.",
+        "status": "done",
+        "dependencies": [
+          2,
+          10
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 20,
+        "title": "Implement Password Reset Request API Endpoint",
+        "description": "Create an API endpoint to handle password reset requests. This endpoint will receive a user's email, generate a secure password reset token, save it to the database with an expiration date, and send an email to the user with a link to reset their password.",
+        "details": "Create a new API route at `app/api/auth/request-password-reset/route.ts` to handle POST requests.\n1.  **Input Validation**: The endpoint should expect a JSON body containing an `email` field. Use Zod for validating the email format.\n2.  **User Lookup**: Query the database using Prisma to find a user matching the provided email.\n3.  **Token Generation**:\n    *   If a user is found, generate a cryptographically secure, unique token (e.g., using `crypto.randomBytes(32).toString('hex')`).\n    *   Define an expiration period for the token (e.g., 1 hour from the current time).\n4.  **Token Storage**:\n    *   Before saving a new token, check for and invalidate/delete any existing, non-expired password reset tokens for the same email in the `PasswordResetToken` table to ensure only one active reset link per user.\n    *   Store the new token, the user's email, and its expiration timestamp in the `PasswordResetToken` table (defined in Task 19).\n5.  **Email Notification**:\n    *   Construct the password reset URL (e.g., `YOUR_APP_URL/reset-password?token=<GENERATED_TOKEN>`).\n    *   Send an email to the user's email address containing this unique password reset link. This requires an email sending service (e.g., Resend, Nodemailer) to be configured. The email should clearly state the purpose of the link and its expiration.\n6.  **Security Consideration**: To prevent user enumeration, the API should always return a generic success message (e.g., \"If an account with that email exists, a password reset link has been sent.\"), regardless of whether the email was found in the database or an error occurred during email sending (unless it's a client-side validation error). Log internal errors for monitoring.\n7.  **Error Handling**: Implement try-catch blocks for database operations and email sending. Log errors server-side.\n\nExample structure for the route handler:\n```typescript\n// app/api/auth/request-password-reset/route.ts\nimport { NextRequest, NextResponse } from 'next/server';\nimport { z } from 'zod';\nimport prisma from '@/lib/prisma'; // Assuming prisma client\nimport crypto from 'crypto';\n// import { sendPasswordResetEmail } from '@/lib/email'; // Assume an email sending utility\n\nconst requestPasswordResetSchema = z.object({\n  email: z.string().email({ message: 'Invalid email address' }),\n});\n\nexport async function POST(req: NextRequest) {\n  try {\n    const body = await req.json();\n    const validation = requestPasswordResetSchema.safeParse(body);\n\n    if (!validation.success) {\n      return NextResponse.json({ errors: validation.error.flatten().fieldErrors }, { status: 400 });\n    }\n\n    const { email } = validation.data;\n\n    const user = await prisma.user.findUnique({\n      where: { email },\n    });\n\n    if (user) {\n      // Invalidate old tokens for this email\n      await prisma.passwordResetToken.deleteMany({\n        where: { email: email },\n      });\n\n      const token = crypto.randomBytes(32).toString('hex');\n      const expires = new Date(Date.now() + 3600 * 1000); // 1 hour from now\n\n      await prisma.passwordResetToken.create({\n        data: {\n          email,\n          token,\n          expires,\n        },\n      });\n\n      // const resetLink = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;\n      // await sendPasswordResetEmail(email, resetLink); // Implement this function\n    }\n\n    // Always return a generic success message to prevent user enumeration\n    return NextResponse.json({ message: 'If your email is in our system, you will receive a password reset link.' }, { status: 200 });\n\n  } catch (error) {\n    console.error('Password reset request error:', error);\n    // Return generic message even on server error for security, but log it\n    return NextResponse.json({ message: 'If your email is in our system, you will receive a password reset link.' }, { status: 200 });\n  }\n}\n```",
+        "testStrategy": "1.  **Successful Request**:\n    *   Send a POST request to `/api/auth/request-password-reset` with the email of an existing, registered user.\n    *   **Expected**: HTTP 200 OK response with a generic success message.\n    *   **Verification**:\n        *   Check the `PasswordResetToken` table in the database: a new record should exist for the user's email, containing a unique token and an expiration timestamp approximately 1 hour in the future.\n        *   (If email sending is mocked/testable) Verify that an email was dispatched to the user's address containing a link like `YOUR_APP_URL/reset-password?token=<TOKEN_VALUE>`.\n2.  **Non-Existent User Email**:\n    *   Send a POST request with an email address not registered in the system.\n    *   **Expected**: HTTP 200 OK response with the same generic success message (to prevent user enumeration).\n    *   **Verification**:\n        *   Check the `PasswordResetToken` table: no new token should be generated for this email.\n        *   No email should be sent.\n3.  **Invalid Email Format**:\n    *   Send a POST request with an invalid email format (e.g., \"testuser\", \"test@.com\").\n    *   **Expected**: HTTP 400 Bad Request response with a JSON body detailing the validation errors (e.g., `{ \"errors\": { \"email\": [\"Invalid email address\"] } }`).\n4.  **Missing Email Field**:\n    *   Send a POST request with an empty body or a body missing the `email` field.\n    *   **Expected**: HTTP 400 Bad Request response with a JSON body detailing the validation errors.\n5.  **Token Invalidation on Subsequent Request**:\n    *   Request a password reset for a user. Verify a token (Token A) is created.\n    *   Request another password reset for the same user.\n    *   **Expected**: HTTP 200 OK.\n    *   **Verification**:\n        *   Check the `PasswordResetToken` table: Token A should be deleted or marked as invalid. A new token (Token B) should be present and active for the user.\n6.  **Database/Service Error Simulation (if possible)**:\n    *   Simulate a database write failure or email sending failure (if these can be mocked).\n    *   **Expected**: The endpoint should still ideally return a generic success message (HTTP 200) to the client to prevent information leakage, but log the internal error server-side for administrators.",
+        "status": "done",
+        "dependencies": [
+          2,
+          19
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 21,
+        "title": "Create 'Forgot Password' Page",
+        "description": "Develop the 'Forgot Password' page (`/forgot-password`) where users can submit their email address to initiate the password reset process by calling the password reset request API.",
+        "details": "1. Create a new Next.js page route at `app/forgot-password/page.tsx`.\n2. Design and implement a form that includes:\n    - An input field for the user's email address.\n    - A submit button (e.g., 'Send Reset Link').\n3. Utilize reusable form components from Task 14 (e.g., `Input`, `Button`, `Form` from shadcn/ui) and client-side validation patterns using Zod and `react-hook-form`.\n    - Define a Zod schema for the email field (e.g., `z.object({ email: z.string().email({ message: 'Invalid email address' }) })`).\n4. On form submission:\n    - Prevent default form submission.\n    - Make a POST request to the `/api/auth/request-password-reset` endpoint (implemented in Task 20). The request body should be a JSON object containing the email: `{ \"email\": \"user@example.com\" }`.\n    - Use a library like `axios` or the native `fetch` API for the request.\n5. Handle API responses:\n    - On successful API response (e.g., HTTP 200), display a generic success message to the user, such as 'If an account with that email exists, a password reset link has been sent. Please check your inbox.' This is important for security to prevent email enumeration.\n    - On API error or network failure, display an appropriate error message to the user (e.g., 'An error occurred. Please try again.').\n    - Manage loading states for the form submission.\n6. Ensure the page is publicly accessible and does not require authentication.",
+        "testStrategy": "1. Navigate to the `/forgot-password` page in a browser.\n2. **UI Verification**:\n    - Verify that the page renders correctly with an email input field and a submit button.\n3. **Client-Side Validation**:\n    - Attempt to submit the form with an empty email field. Verify that a client-side validation error message is displayed (e.g., 'Email is required').\n    - Enter an improperly formatted email (e.g., 'test@invalid') and attempt to submit. Verify that a client-side validation error message for invalid email format is displayed.\n4. **Successful Password Reset Request**:\n    - Enter the email address of a known, existing user and submit the form.\n    - **Expected**: A generic success message should be displayed (e.g., 'If an account with that email exists, a password reset link has been sent.').\n    - **Verification**: Check the browser's network developer tools to confirm that a POST request was made to `/api/auth/request-password-reset` with the correct email in the payload.\n5. **Password Reset Request for Non-Existing User**:\n    - Enter an email address that is known not to be registered in the system and submit the form.\n    - **Expected**: The same generic success message as in step 4 should be displayed to prevent email enumeration.\n    - **Verification**: Check the browser's network developer tools to confirm the API call was made.\n6. **API Error Handling (if mockable or testable)**:\n    - If the `/api/auth/request-password-reset` endpoint returns an error (e.g., 500 server error), verify that an appropriate error message is displayed on the page.\n7. **Accessibility**:\n    - Perform basic accessibility checks (e.g., keyboard navigation, proper labels for form fields).",
+        "status": "done",
+        "dependencies": [
+          20,
+          14
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 22,
+        "title": "Implement Password Reset API Endpoint",
+        "description": "Implement an API endpoint to handle the actual password reset. This endpoint will receive the reset token and the new password, validate the token, hash the new password, and update the user's record in the database.",
+        "details": "1.  **API Route Creation**: Create a new API route at `app/api/auth/reset-password/route.ts` to handle POST requests.\n2.  **Input Validation**: The endpoint should expect a JSON body containing `token` (string) and `newPassword` (string). Use Zod (from Task 5) to validate the `token` (e.g., non-empty string) and `newPassword` (e.g., minimum length 8 characters, any other complexity rules).\n3.  **Token Validation**: \n    *   Query the `PasswordResetToken` table (defined in Task 19) using Prisma (from Task 2) to find the provided `token`.\n    *   If the token is not found or if `new Date() > token.expires`, return a 400 Bad Request error (e.g., \"Invalid or expired password reset token\").\n4.  **User Lookup**: \n    *   If the token is valid, retrieve the `email` associated with the token.\n    *   Query the `User` table using Prisma to find the user by this `email`.\n    *   If no user is found for the email (which should be rare if the token is valid), return a 404 Not Found error or a generic error.\n5.  **Password Hashing**: \n    *   Hash the `newPassword` using `bcryptjs` (similar to Task 7). Generate a new salt and hash the password.\n6.  **Update User Record**: \n    *   Update the user's `password` field in the `User` table with the new hashed password.\n    *   Optionally, update the user's `updatedAt` timestamp.\n7.  **Token Invalidation**: \n    *   Delete the used `PasswordResetToken` from the database to prevent it from being used again.\n8.  **Response**: \n    *   On successful password reset, return a 200 OK response with a success message (e.g., `{ message: \"Password has been reset successfully.\" }`).\n    *   Return appropriate error responses (e.g., 400 for validation errors, invalid/expired token; 404 if user not found; 500 for unexpected server errors).",
+        "testStrategy": "1.  **Successful Password Reset**:\n    *   Manually add a valid, non-expired `PasswordResetToken` to the database for an existing user.\n    *   Send a POST request to `/api/auth/reset-password` with the correct `token` and a valid `newPassword`.\n    *   **Expected**: HTTP 200 OK response.\n    *   **Verification**: Check the `User` table to confirm the password hash has changed. Attempt to log in with the new password. Verify the `PasswordResetToken` used has been deleted from the database.\n2.  **Invalid Token**:\n    *   Send a POST request with a `token` that does not exist in the `PasswordResetToken` table.\n    *   **Expected**: HTTP 400 Bad Request (or similar) error response.\n    *   **Verification**: User's password should remain unchanged.\n3.  **Expired Token**:\n    *   Manually add a `PasswordResetToken` to the database with an `expires` timestamp in the past.\n    *   Send a POST request with this expired `token`.\n    *   **Expected**: HTTP 400 Bad Request (or similar) error response indicating the token is expired.\n    *   **Verification**: User's password should remain unchanged.\n4.  **Invalid New Password (Validation Failure)**:\n    *   Send a POST request with a valid token but a `newPassword` that fails Zod validation (e.g., too short).\n    *   **Expected**: HTTP 400 Bad Request with a validation error message.\n    *   **Verification**: User's password should remain unchanged.\n5.  **Missing Token or New Password in Payload**:\n    *   Send a POST request missing the `token` or `newPassword` field in the JSON body.\n    *   **Expected**: HTTP 400 Bad Request with a validation error message.\n    *   **Verification**: User's password should remain unchanged.\n6.  **Attempt to Reuse Token**:\n    *   After a successful password reset, attempt to send another POST request using the same `token`.\n    *   **Expected**: HTTP 400 Bad Request (or similar) error, as the token should have been deleted.\n    *   **Verification**: User's password should not be affected by the second attempt.",
+        "status": "done",
+        "dependencies": [
+          2,
+          5,
+          7,
+          19
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 23,
+        "title": "Create 'Reset Password' Page",
+        "description": "Develop the 'Reset Password' page (`/reset-password/[token]`) that allows users to set a new password after verifying a reset token received via email. The page will capture the token from URL parameters and include a form for the new password.",
+        "details": "1.  **Page Route Creation**: Create a dynamic Next.js page route at `app/reset-password/[token]/page.tsx`.\n2.  **Token Extraction**: Implement logic to extract the `token` from the URL parameters. This can be done using `useParams` from `next/navigation` in a client component or the `params` prop if it's a server component rendering a client component that needs the token.\n3.  **Form Implementation**: \n    *   Design and implement a form containing two password input fields: 'New Password' and 'Confirm New Password', and a 'Reset Password' submit button.\n    *   Utilize reusable form components developed in Task 14 (e.g., `Input`, `Button`, `Form` from shadcn/ui).\n    *   Implement client-side validation using Zod (from Task 5) and `react-hook-form`. Define a Zod schema to ensure both password fields are non-empty, meet minimum length/complexity requirements, and that the 'Confirm New Password' field matches the 'New Password' field. Example schema:\n        ```typescript\n        import * as z from 'zod';\n\n        const passwordResetSchema = z.object({\n          newPassword: z.string().min(8, { message: 'Password must be at least 8 characters long' }),\n          confirmPassword: z.string().min(8, { message: 'Password must be at least 8 characters long' })\n        }).refine(data => data.newPassword === data.confirmPassword, {\n          message: \"Passwords don't match\",\n          path: [\"confirmPassword\"],\n        });\n        ```\n4.  **API Interaction**: On successful client-side validation and form submission, make a POST request to the 'Password Reset API Endpoint' (defined in Task 22). The request body should include the `token` (extracted from the URL) and the `newPassword`.\n5.  **User Feedback and Redirection**: \n    *   Upon a successful API response, display a success message to the user (e.g., \"Your password has been reset successfully. You can now log in with your new password.\").\n    *   Redirect the user to the login page (Task 16).\n    *   In case of API errors (e.g., invalid/expired token, server error), display appropriate and user-friendly error messages on the page.\n6.  **Component Structure**: It's recommended to create a dedicated client component (e.g., `ResetPasswordForm.tsx`) to encapsulate the form logic, state management (e.g., using `useState` or `react-hook-form`), validation, and API call handling. The page component (`app/reset-password/[token]/page.tsx`) would then import and render this form component.",
+        "testStrategy": "1.  **UI Rendering and Token Handling**: \n    *   Navigate to a URL like `/reset-password/test-token`.\n    *   Verify that the page renders correctly, displaying input fields for 'New Password' and 'Confirm New Password', and a 'Reset Password' button.\n    *   Ensure the `test-token` is correctly captured by the page/form component.\n2.  **Client-Side Validation**: \n    *   Attempt to submit the form with empty password fields. Verify that appropriate client-side validation messages are displayed.\n    *   Enter a password shorter than the minimum requirement in the 'New Password' field. Verify the validation error.\n    *   Enter a valid 'New Password' but a different password in 'Confirm New Password'. Verify the mismatch error.\n3.  **Successful Password Reset Scenario**: \n    *   Prerequisite: Ensure the Password Reset API (Task 22) is functional. Manually generate or use a valid, non-expired password reset token for a test user.\n    *   Navigate to `/reset-password/[valid-token]` (replace `[valid-token]` with the actual token).\n    *   Enter a new, valid password in both fields and submit the form.\n    *   **Expected**: A success message is displayed, and the user is redirected to the login page.\n    *   **Verification**: Attempt to log in as the test user with the newly set password.\n4.  **Invalid or Expired Token Scenario**: \n    *   Navigate to `/reset-password/invalid-or-expired-token` (using a token known to be invalid or expired for testing with the API from Task 22).\n    *   Enter valid passwords in the form and submit.\n    *   **Expected**: An appropriate error message (e.g., \"Invalid or expired token. Please request a new password reset link.\") is displayed on the page, originating from the API response.\n5.  **API Error Handling (General)**: \n    *   If possible, simulate other API errors (e.g., server unavailable) when the form is submitted.\n    *   Verify that generic, user-friendly error messages are displayed on the page, preventing raw error exposure.",
+        "status": "done",
+        "dependencies": [
+          14,
+          5,
+          22
+        ],
+        "priority": "high",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-06-21T22:19:07.747Z",
+      "updated": "2025-06-21T22:58:41.798Z",
+      "description": "Tasks for master context"
+    }
+  }
+}
