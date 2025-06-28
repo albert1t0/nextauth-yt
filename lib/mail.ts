@@ -102,7 +102,7 @@ export const sendVerificationEmail = async (email: string, token: string) => {
  * Envía un correo de restablecimiento de contraseña.
  */
 export const sendPasswordResetEmail = async (email: string, token: string) => {
-  const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`;
+  const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password/${token}`;
 
   const subject = 'Instrucciones para restablecer tu contraseña';
   const text = `Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para continuar: ${resetLink}`;
