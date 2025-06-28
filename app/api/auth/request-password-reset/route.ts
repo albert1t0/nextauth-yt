@@ -40,10 +40,8 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      const resetLink = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;
-      
       try {
-        await sendPasswordResetEmail(email, resetLink);
+        await sendPasswordResetEmail(email, token);
       } catch (emailError) {
         console.error('Error al enviar el correo de restablecimiento:', emailError);
         // No detener la solicitud si el correo falla, solo registrar el error.
