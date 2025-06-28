@@ -318,11 +318,71 @@
         ],
         "priority": "high",
         "subtasks": []
+      },
+      {
+        "id": 24,
+        "title": "Mejorar la Interfaz y Estructura de la Página de Inicio",
+        "description": "Rediseñar la página de inicio (`/`) para incluir un encabezado con acceso al login, un título principal, una sección de tarjetas informativas y un pie de página, creando una bienvenida moderna y funcional para el usuario.",
+        "details": "La implementación se centrará en el archivo `app/page.tsx`. 1. **Crear Encabezado (Header)**: Implementar un componente de encabezado en la parte superior de la página. Debe mostrar el título 'Multiplataforma - DIAD' y un botón o enlace 'Login' que redirija a la página `/login`. Utilizar componentes de `shadcn/ui` para consistencia visual. 2. **Sección de Tarjetas (Cards)**: Debajo del contenido principal, crear una sección que contenga tres tarjetas dispuestas horizontalmente (en escritorio) y verticalmente (en móvil). Utilizar el componente `Card` de `shadcn/ui`. Los títulos de las tarjetas serán: 'Carga archivos', 'Ingresa tus datos' y 'Revisa la documentación'. Añadir un breve texto descriptivo a cada una. 3. **Pie de Página (Footer)**: Añadir un componente de pie de página simple en la parte inferior que contenga el texto 'DIAD - 2025'. 4. **Estilo y Responsividad**: Utilizar TailwindCSS para asegurar que el diseño sea moderno, limpio y completamente responsivo en dispositivos de escritorio y móviles.",
+        "testStrategy": "1. **Verificación del Encabezado**: Navegar a la ruta raíz (`/`). Confirmar que el encabezado se muestra correctamente con el título 'Multiplataforma - DIAD'. Hacer clic en el botón 'Login' y verificar que redirige a la página `/login`. 2. **Verificación de las Tarjetas**: Desplazarse hacia abajo y confirmar la presencia de las tres tarjetas con sus respectivos títulos ('Carga archivos', 'Ingresa tus datos', 'Revisa la documentación'). 3. **Verificación del Pie de Página**: Asegurarse de que el pie de página es visible en la parte inferior de la página con el texto 'DIAD - 2025'. 4. **Pruebas de Responsividad**: Usar las herramientas de desarrollador del navegador para simular diferentes tamaños de pantalla (móvil, tableta, escritorio). Verificar que el layout se adapta correctamente, especialmente la disposición de las tarjetas y el menú de navegación.",
+        "status": "done",
+        "dependencies": [
+          1,
+          14
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Crear el Componente de Encabezado (Header)",
+            "description": "Implementar un componente de encabezado reutilizable para la parte superior de la página. Este componente mostrará el título de la aplicación y un botón de inicio de sesión.",
+            "dependencies": [],
+            "details": "Crea un nuevo archivo, por ejemplo, en `components/layout/Header.tsx`. Dentro, define un componente que renderice una etiqueta `<header>`. Utiliza un `<h2>` para el título 'Multiplataforma - DIAD' y un componente `<Button>` de `shadcn/ui` con el texto 'Login'. Envuelve el botón en un componente `<Link>` de Next.js que apunte a `/login`. Usa Flexbox (`flex justify-between items-center`) para alinear los elementos. Finalmente, importa y renderiza este componente en la parte superior de `app/page.tsx`.",
+            "status": "done",
+            "testStrategy": "Verificar que el encabezado se renderiza correctamente, que el título es visible y que el botón 'Login' redirige a la ruta `/login` al hacer clic."
+          },
+          {
+            "id": 2,
+            "title": "Estructurar el Contenido Principal y Añadir Título de Bienvenida",
+            "description": "Definir la estructura principal de la página de inicio, justo debajo del encabezado, e incluir un título principal H1 que sirva como bienvenida al usuario.",
+            "dependencies": [],
+            "details": "En `app/page.tsx`, debajo del componente `Header`, añade una etiqueta `<main>` que envuelva el resto del contenido de la página. Dentro de `<main>`, el primer elemento debe ser un `<h1>` con un texto como \"Bienvenido a la Plataforma de Análisis\". Utiliza clases de TailwindCSS para centrar el texto, aumentar su tamaño (`text-4xl`, `font-bold`) y añadir margen superior e inferior (`my-8`).",
+            "status": "done",
+            "testStrategy": "Comprobar que el título H1 aparece debajo del encabezado con el estilo y espaciado correctos."
+          },
+          {
+            "id": 3,
+            "title": "Implementar la Sección de Tarjetas Informativas",
+            "description": "Desarrollar la sección que muestra tres tarjetas con información clave sobre las funcionalidades de la aplicación, utilizando los componentes de `shadcn/ui`.",
+            "dependencies": [],
+            "details": "Dentro de la etiqueta `<main>` en `app/page.tsx`, después del título H1, crea un `<div>` que funcionará como contenedor para las tarjetas. Dentro de este div, implementa tres componentes `<Card>` de `shadcn/ui`. Cada tarjeta debe contener un `<CardHeader>` con un `<CardTitle>` ('Carga archivos', 'Ingresa tus datos', 'Revisa la documentación') y un `<CardContent>` con un párrafo descriptivo breve para cada una.",
+            "status": "done",
+            "testStrategy": "Verificar que las tres tarjetas se renderizan con sus respectivos títulos y textos descriptivos."
+          },
+          {
+            "id": 4,
+            "title": "Aplicar Diseño Responsivo a la Página y las Tarjetas",
+            "description": "Asegurar que toda la página, y en especial la sección de tarjetas, se visualice correctamente tanto en dispositivos móviles como en escritorios, ajustando su disposición de vertical a horizontal.",
+            "dependencies": [],
+            "details": "Modifica el `<div>` contenedor de las tarjetas. Aplica clases de TailwindCSS para establecer un layout de Grid: `grid grid-cols-1 md:grid-cols-3 gap-4`. Esto hará que las tarjetas se apilen verticalmente en pantallas pequeñas (`grid-cols-1`) y se muestren en tres columnas en pantallas medianas y grandes (`md:grid-cols-3`). El `gap-4` añadirá espacio entre ellas. Revisa el layout general de la página para asegurar que todos los elementos se ajustan correctamente.",
+            "status": "done",
+            "testStrategy": "Usar las herramientas de desarrollador del navegador para simular diferentes tamaños de pantalla (móvil, tablet, escritorio) y confirmar que el layout se adapta como se espera, especialmente la disposición de las tarjetas."
+          },
+          {
+            "id": 5,
+            "title": "Crear e Integrar el Pie de Página (Footer)",
+            "description": "Implementar un componente de pie de página simple y añadirlo al final de la estructura de la página de inicio para completar el diseño.",
+            "dependencies": [],
+            "details": "Crea un nuevo componente, por ejemplo, en `components/layout/Footer.tsx`. Este componente debe renderizar una etiqueta `<footer>`. Dentro, añade un `<p>` con el texto 'DIAD - 2025'. Aplica clases de TailwindCSS para añadir padding (`py-4`), un borde superior (`border-t`) y centrar el texto (`text-center`). Importa y renderiza este componente al final del layout en `app/page.tsx`, después de la etiqueta `<main>`.",
+            "status": "done",
+            "testStrategy": "Verificar que el pie de página aparece en la parte inferior de la página con el texto y estilo correctos, y que permanece en la parte inferior independientemente del contenido."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-06-21T22:19:07.747Z",
-      "updated": "2025-06-21T22:58:41.798Z",
+      "updated": "2025-06-28T22:41:47.090Z",
       "description": "Tasks for master context"
     }
   }
