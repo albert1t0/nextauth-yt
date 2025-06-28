@@ -14,15 +14,22 @@ const publicRoutes = [
   "/contact",
   "/forgot-password",
   "/api/auth/verify-email",
-  "/reset-password"
+  "/api/auth/request-password-reset",
+  "/reset-password",
+  "/api/auth/reset-password"
 ]
 
 export default middleware((req) => {
   const { nextUrl, auth } = req;
   const isLoggedIn = !!auth?.user;
 
-  // proteger /dashboard y /admin
-  if (!publicRoutes.includes(nextUrl.pathname) && !isLoggedIn) {
+  // Permitir cualquier subruta de /reset-password y rutas públicas
+  const isPublic = publicRoutes.some(route =>
+    nextUrl.pathname === route ||
+    (route !== "/" && nextUrl.pathname.startsWith(route + "/"))
+  );
+
+  if (!isPublic && !isLoggedIn) {
     // Si no está autenticado, redirigir a la página de inicio de sesión
     return NextResponse.redirect(new URL("/login", nextUrl));
   }
