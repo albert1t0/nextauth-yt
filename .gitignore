@@ -45,8 +45,7 @@ next-env.d.ts
 # Docker_files
 
 #docker-compose.yml
-
-.idea/
+/.idea/
 
 # Logs
 logs
@@ -68,4 +67,6 @@ node_modules/
 
 # Task files
 # tasks.json
-# tasks/ 
+# tasks/
+.taskmaster/config.json
+
