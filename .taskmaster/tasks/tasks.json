@@ -378,11 +378,160 @@
             "testStrategy": "Verificar que el pie de página aparece en la parte inferior de la página con el texto y estilo correctos, y que permanece en la parte inferior independientemente del contenido."
           }
         ]
+      },
+      {
+        "id": 25,
+        "title": "Implementar Funcionalidades de Gestión de Usuarios en Panel de Administración",
+        "description": "Crear una sección de administración para gestionar usuarios, incluyendo la importación masiva desde CSV, un listado con filtros y paginación, y la capacidad de modificar roles de usuario.",
+        "details": "Esta tarea se divide en tres funcionalidades principales dentro de un nuevo panel de administración en la ruta `/admin/users`. 1. **Importación de Usuarios desde CSV**: Crear una página (`/admin/users/import`) con un formulario para subir archivos CSV. Implementar un endpoint de API (`/api/admin/users/import`) que utilice `papaparse` para procesar el archivo. Validar cada fila con Zod (email, nombre, rol) y usar `prisma.user.createMany()` para la inserción masiva, omitiendo duplicados. La API debe devolver un resumen de la operación (usuarios creados, errores). 2. **Listado de Usuarios**: En la página principal `/admin/users`, implementar una tabla (usando `shadcn/ui`) para mostrar los usuarios con paginación y filtros. Crear un endpoint de API (`/api/admin/users`) que acepte parámetros de consulta para filtrar por nombre/email/rol y para la paginación (usando `skip` y `take` de Prisma). 3. **Modificación de Rol**: En la tabla de usuarios, añadir un control (ej. un dropdown) para cambiar el rol de un usuario. Este control llamará a un endpoint de API (`PATCH /api/admin/users/[userId]`) que actualizará el rol del usuario en la base de datos. Es crucial actualizar el `middleware.ts` (de la Tarea 17) para proteger todas las rutas `/admin/*` y verificar que el usuario autenticado tenga el rol de 'ADMIN'.",
+        "testStrategy": "1. **Seguridad de Rutas**: Intentar acceder a `/admin/users` sin iniciar sesión y verificar la redirección al login. Iniciar sesión como un usuario normal y verificar que el acceso es denegado. Iniciar sesión como administrador y verificar que el acceso es concedido. 2. **Importación CSV**: Subir un CSV válido y verificar que los nuevos usuarios aparecen en la base de datos y en el listado. Subir un CSV con datos inválidos (emails duplicados, formatos incorrectos) y verificar que se muestra un informe de errores preciso y que solo los datos válidos fueron procesados. 3. **Listado y Filtros**: Navegar a `/admin/users` y confirmar que la tabla se carga con la primera página de usuarios. Probar los controles de paginación. Usar los campos de filtro para buscar por email y rol, y verificar que la tabla se actualiza correctamente. 4. **Cambio de Rol**: En el listado, cambiar el rol de un usuario de 'USER' a 'ADMIN'. Verificar que el cambio se refleja en la base de datos. Iniciar sesión con la cuenta de ese usuario para confirmar que ahora tiene acceso a las rutas de administrador.",
+        "status": "in-progress",
+        "dependencies": [
+          17,
+          7
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Proteger Rutas de Administración con Middleware",
+            "description": "Actualizar el archivo `middleware.ts` para interceptar todas las peticiones a `/admin/*` y verificar que el usuario autenticado tenga el rol 'ADMIN'.",
+            "dependencies": [],
+            "details": "Modificar la función `middleware` en `middleware.ts`. Usar `next-auth` para obtener la sesión del usuario. Si la ruta coincide con `/admin/:path*` y el `session.user.role` no es 'ADMIN', redirigir a una página de no autorizado o a la página de inicio. Esta es una dependencia crítica para todas las demás tareas de administración.",
+            "status": "in-progress",
+            "testStrategy": "Intentar acceder a `/admin/users` como usuario no autenticado (debería redirigir a login), como usuario sin rol 'ADMIN' (debería redirigir o mostrar error 403), y como usuario 'ADMIN' (debería permitir el acceso)."
+          },
+          {
+            "id": 2,
+            "title": "Crear Layout y Navegación del Panel de Administración",
+            "description": "Establecer la estructura visual base para la sección de administración, incluyendo un layout persistente y enlaces de navegación.",
+            "dependencies": [
+              1
+            ],
+            "details": "Crear un nuevo componente de layout para las rutas `/admin/*`. Este layout debe incluir un encabezado o una barra lateral con enlaces de navegación, como 'Dashboard' y 'Gestión de Usuarios' (apuntando a `/admin/users`). Usar componentes de `shadcn/ui` para la estructura.",
+            "status": "pending",
+            "testStrategy": "Navegar a `/admin/users` y verificar que el layout de administración se renderiza correctamente con los enlaces de navegación visibles y funcionales."
+          },
+          {
+            "id": 3,
+            "title": "Crear API para Listado Paginado de Usuarios",
+            "description": "Implementar el endpoint `GET /api/admin/users` que devuelve una lista de usuarios con soporte para paginación.",
+            "dependencies": [
+              1
+            ],
+            "details": "Crear un nuevo `route.ts` en `app/api/admin/users`. La función `GET` debe aceptar los parámetros de consulta `page` y `limit`. Calcular `skip` (`(page - 1) * limit`) y `take` (`limit`). Usar `prisma.user.findMany({ skip, take })` y `prisma.user.count()` para obtener los datos y el total de usuarios. Devolver los usuarios y la información de paginación (total de páginas, total de usuarios).",
+            "status": "pending",
+            "testStrategy": "Realizar peticiones a `/api/admin/users?page=1&limit=10` y `/api/admin/users?page=2&limit=10` y verificar que se devuelven los conjuntos de datos correctos y la metadata de paginación."
+          },
+          {
+            "id": 4,
+            "title": "Implementar Tabla de Usuarios en el Frontend",
+            "description": "Desarrollar la interfaz de usuario en `/admin/users` para mostrar la lista de usuarios en una tabla.",
+            "dependencies": [
+              2,
+              3
+            ],
+            "details": "Crear la página `/admin/users/page.tsx`. Utilizar los componentes `Table`, `TableHeader`, `TableBody`, etc., de `shadcn/ui`. Realizar una llamada al endpoint `/api/admin/users` para obtener los datos y renderizarlos en la tabla. Las columnas deben incluir como mínimo: Nombre, Email y Rol.",
+            "status": "pending",
+            "testStrategy": "Verificar que la página `/admin/users` carga y muestra correctamente la primera página de usuarios obtenida de la API en la tabla."
+          },
+          {
+            "id": 5,
+            "title": "Añadir Controles de Paginación a la Tabla de Usuarios",
+            "description": "Integrar componentes de paginación en la interfaz de la tabla de usuarios para permitir la navegación entre páginas.",
+            "dependencies": [
+              4
+            ],
+            "details": "En la página `/admin/users`, añadir los componentes `Pagination` de `shadcn/ui` debajo de la tabla. Conectar los botones 'Siguiente', 'Anterior' y los números de página para que actualicen el estado de la página actual, realicen una nueva llamada a la API con el parámetro `page` correspondiente y refresquen los datos de la tabla.",
+            "status": "pending",
+            "testStrategy": "Hacer clic en los botones de paginación y verificar que la tabla se actualiza con los usuarios de la página correspondiente."
+          },
+          {
+            "id": 6,
+            "title": "Extender API de Usuarios con Lógica de Filtrado",
+            "description": "Mejorar el endpoint `GET /api/admin/users` para que admita filtrado por nombre, email y rol.",
+            "dependencies": [
+              3
+            ],
+            "details": "Modificar la función `GET` en `app/api/admin/users/route.ts`. Leer los parámetros de consulta opcionales `search` (para nombre/email) y `role`. Construir dinámicamente la cláusula `where` de Prisma para incluir condiciones `contains` para el `search` y `equals` para el `role` si los parámetros están presentes.",
+            "status": "pending",
+            "testStrategy": "Realizar peticiones como `/api/admin/users?search=john` y `/api/admin/users?role=USER` y verificar que la API devuelve solo los usuarios que coinciden con los filtros."
+          },
+          {
+            "id": 7,
+            "title": "Implementar Controles de Filtro en la Interfaz de Usuarios",
+            "description": "Añadir campos de entrada en la página de listado de usuarios para permitir al administrador filtrar los resultados.",
+            "dependencies": [
+              5,
+              6
+            ],
+            "details": "En la página `/admin/users`, añadir un componente `Input` de `shadcn/ui` para la búsqueda por texto (nombre/email) y un `Select` o `DropdownMenu` para filtrar por rol. Al cambiar el valor de estos controles, se debe realizar una nueva petición a la API con los parámetros `search` y/o `role` y actualizar la tabla.",
+            "status": "pending",
+            "testStrategy": "Escribir en el campo de búsqueda y seleccionar un rol en el dropdown. Verificar que la lista de usuarios en la tabla se actualiza para reflejar los filtros aplicados."
+          },
+          {
+            "id": 8,
+            "title": "Crear API para Modificar Rol de Usuario",
+            "description": "Implementar el endpoint `PATCH /api/admin/users/[userId]` para actualizar el rol de un usuario específico.",
+            "dependencies": [
+              1
+            ],
+            "details": "Crear un `route.ts` en `app/api/admin/users/[userId]`. La función `PATCH` debe leer el `userId` de los parámetros de la ruta y el nuevo `role` del cuerpo de la petición. Validar el rol entrante. Usar `prisma.user.update({ where: { id: userId }, data: { role } })` para actualizar el registro en la base de datos. Devolver el usuario actualizado.",
+            "status": "pending",
+            "testStrategy": "Enviar una petición PATCH a `/api/admin/users/some-id` con `{\"role\": \"ADMIN\"}` en el cuerpo y verificar que la base de datos se actualiza y la API devuelve el usuario con el nuevo rol."
+          },
+          {
+            "id": 9,
+            "title": "Añadir Control para Cambiar Rol en la Tabla",
+            "description": "Integrar un control en cada fila de la tabla de usuarios para permitir la modificación directa del rol.",
+            "dependencies": [
+              7,
+              8
+            ],
+            "details": "En el componente de la tabla de usuarios, añadir una nueva columna 'Acciones'. Dentro de esta columna, para cada fila, renderizar un componente `Select` o `DropdownMenu` de `shadcn/ui` con los roles disponibles. Al seleccionar un nuevo rol, se debe llamar al endpoint `PATCH /api/admin/users/[userId]` con el ID del usuario y el nuevo rol. Actualizar la UI tras una respuesta exitosa.",
+            "status": "pending",
+            "testStrategy": "En la lista de usuarios, cambiar el rol de un usuario usando el nuevo control. Refrescar la página y verificar que el cambio de rol persiste."
+          },
+          {
+            "id": 10,
+            "title": "Crear API para Importación Masiva de Usuarios desde CSV",
+            "description": "Implementar el endpoint `POST /api/admin/users/import` que procesa un archivo CSV subido.",
+            "dependencies": [
+              1
+            ],
+            "details": "Crear un `route.ts` en `app/api/admin/users/import`. La función `POST` debe manejar una petición `multipart/form-data`. Usar una librería como `papaparse` para parsear el contenido del archivo CSV a un array de objetos JSON. La API debe estar preparada para el siguiente paso de validación e inserción.",
+            "status": "pending",
+            "testStrategy": "Enviar un archivo CSV a través de una herramienta como Postman al endpoint y verificar que la API puede leer y parsear el contenido correctamente sin errores."
+          },
+          {
+            "id": 11,
+            "title": "Implementar Validación y Lógica de Inserción para Importación CSV",
+            "description": "Añadir validación de datos con Zod y la inserción en base de datos al endpoint de importación.",
+            "dependencies": [
+              10
+            ],
+            "details": "Dentro del endpoint `POST /api/admin/users/import`, después de parsear el CSV, iterar sobre cada fila. Usar un esquema de Zod para validar que cada registro tenga `email` (formato válido), `name` (string no vacío) y `role` (enum válido). Usar `prisma.user.createMany({ data: validUsers, skipDuplicates: true })` para insertar los usuarios válidos. Devolver un resumen JSON: `{ created: X, skipped: Y, errors: [...] }`.",
+            "status": "pending",
+            "testStrategy": "Subir un CSV con datos válidos, duplicados y erróneos. Verificar que la respuesta de la API refleja correctamente el número de usuarios creados, omitidos y los errores de validación específicos."
+          },
+          {
+            "id": 12,
+            "title": "Crear Página de Frontend para Subir Archivo CSV",
+            "description": "Desarrollar la interfaz en `/admin/users/import` que permita a los administradores subir un archivo CSV.",
+            "dependencies": [
+              2,
+              11
+            ],
+            "details": "Crear la página `/admin/users/import/page.tsx`. Usar componentes de `shadcn/ui` para crear un formulario con un campo de subida de archivo (`Input type='file'`) y un botón de envío. Al enviar el formulario, realizar una petición `POST` al endpoint `/api/admin/users/import` con el archivo. Mostrar un mensaje de estado (cargando, éxito, error) y presentar el resumen de la operación devuelto por la API.",
+            "status": "pending",
+            "testStrategy": "Navegar a `/admin/users/import`, seleccionar un archivo CSV y subirlo. Verificar que se muestra un feedback visual durante la subida y que el resumen de la operación (creados, errores) se muestra al usuario después."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-06-21T22:19:07.747Z",
-      "updated": "2025-06-28T22:41:47.090Z",
+      "updated": "2025-07-02T13:44:52.877Z",
       "description": "Tasks for master context"
     }
   }

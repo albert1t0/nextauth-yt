@@ -22,6 +22,7 @@ const publicRoutes = [
 export default middleware((req) => {
   const { nextUrl, auth } = req;
   const isLoggedIn = !!auth?.user;
+  const userRole = auth?.user?.role;
 
   // Permitir cualquier subruta de /reset-password y rutas públicas
   const isPublic = publicRoutes.some(route =>
@@ -29,9 +30,17 @@ export default middleware((req) => {
     (route !== "/" && nextUrl.pathname.startsWith(route + "/"))
   );
 
+  // Detectar rutas de administración (panel y API)
+  const isAdminRoute = nextUrl.pathname.startsWith("/admin") || nextUrl.pathname.startsWith("/api/admin");
+
   if (!isPublic && !isLoggedIn) {
     // Si no está autenticado, redirigir a la página de inicio de sesión
     return NextResponse.redirect(new URL("/login", nextUrl));
+  }
+
+  if (isAdminRoute && isLoggedIn && userRole !== "ADMIN") {
+    // Si es ruta de admin y el usuario no es admin, redirigir a inicio
+    return NextResponse.redirect(new URL("/", nextUrl));
   }
 })
 
