@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input"
 import { loginAction } from "@/action/auth-action";
 import { useState, useTransition, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 
 const FormLogin = () => {
@@ -58,7 +59,7 @@ async function onSubmit(values: z.infer<typeof loginSchema>) {
   } 
   
 return ( <div className="max-w-80">
-    <h1>Inicio de sesión en plataforma</h1>
+    <h1 className="text-2xl font-bold text-center my-8">Inicio de sesión en la plataforma</h1>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
@@ -112,6 +113,9 @@ return ( <div className="max-w-80">
             </div>
           )
         }
+        <div className="flex justify-end">
+          <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">¿Olvidaste tu contraseña?</Link>
+        </div>
         <Button type="submit" disabled={isPending}>Iniciar Sesión</Button>
       </form>
     </Form></div>
