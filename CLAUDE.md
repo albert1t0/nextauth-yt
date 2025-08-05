@@ -1,3 +1,110 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## NextAuth Application Overview
+
+This is a Next.js application with comprehensive authentication system using NextAuth.js v5, Prisma ORM, and PostgreSQL.
+
+### Essential Development Commands
+
+```bash
+# Development
+npm run dev                    # Start development server with turbopack
+npm run build                  # Build for production
+npm run start                  # Start production server
+npm run lint                   # Run ESLint
+
+# Database
+npx prisma generate           # Generate Prisma client
+npx prisma db push           # Push schema changes to database
+npx prisma studio            # Open Prisma Studio
+npx prisma migrate dev       # Create and apply migrations
+
+# Docker (PostgreSQL)
+docker-compose up -d         # Start PostgreSQL container
+docker-compose down          # Stop containers
+```
+
+### Architecture Overview
+
+**Authentication Stack:**
+- NextAuth.js v5 with JWT sessions
+- Credentials provider (email/password)
+- Prisma adapter for database integration
+- Email verification required before login
+- Role-based access control (USER/ADMIN)
+- Password reset with secure tokens
+
+**Database Models:**
+- `User` - Main user entity with role-based access
+- `Account` - OAuth provider data (NextAuth standard)
+- `VerificationToken` - Email verification tokens (1-hour expiry)
+- `PasswordResetToken` - Password reset tokens (1-hour expiry)
+
+**Key Directories:**
+- `app/(auth)/` - Public authentication pages (login, register, password reset)
+- `app/(protected)/` - Protected routes requiring authentication
+- `app/(protected)/admin/` - Admin-only routes (ADMIN role required)
+- `app/api/auth/` - Authentication API endpoints
+- `action/` - Server actions for form handling
+- `components/ui/` - Form components with validation
+- `lib/` - Utilities (DB connection, email, validation schemas)
+- `prisma/` - Database schema and migrations
+
+### Authentication Flow Details
+
+**Login Process:**
+1. Form validation with Zod schemas (`lib/zod.ts`)
+2. Credential verification in `auth.config.ts`
+3. Email verification check - blocks unverified users
+4. JWT token creation with user ID and role
+5. Session callbacks inject user data for client access
+
+**Registration Process:**
+1. User creation with bcrypt password hashing
+2. Automatic verification email generation
+3. Email verification required before login access
+
+**Middleware Protection:**
+- Public routes defined in `middleware.ts`
+- Admin routes require ADMIN role
+- Automatic redirects for unauthorized access
+
+### Environment Configuration
+
+Required environment variables:
+```bash
+DATABASE_URL="postgresql://..."  # PostgreSQL connection
+NEXTAUTH_SECRET="..."           # NextAuth secret key
+NEXTAUTH_URL="http://localhost:3000"  # Application URL
+# Email service configuration for verification/reset emails
+```
+
+### Common Development Patterns
+
+**Form Handling:**
+- React Hook Form + Zod validation
+- Server actions in `action/auth-action.ts`
+- Error state management in UI components
+
+**Database Operations:**
+- Prisma client imported from `lib/db.ts`
+- Transaction usage for data consistency
+- Token management with automatic cleanup
+
+**Role-Based Access:**
+- Middleware checks for admin routes
+- Session data includes user role
+- Component-level role checks available
+
+### Testing & Validation
+
+- ESLint configuration with Next.js rules
+- Zod schemas for runtime validation
+- Form validation with comprehensive error handling
+- Email verification prevents unauthorized access
+
 # Task Master AI - Claude Code Integration Guide
 
 ## Essential Commands

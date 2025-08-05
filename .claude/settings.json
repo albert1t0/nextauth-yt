@@ -1,0 +1,8 @@
+{
+  "allowedTools": [
+    "Edit",
+    "Read", 
+    "Bash",
+    "mcp__task_master_ai__*"
+  ]
+}
