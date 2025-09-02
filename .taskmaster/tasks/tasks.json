@@ -419,8 +419,8 @@
             "dependencies": [
               1
             ],
-            "details": "Crear un nuevo `route.ts` en `app/api/admin/users`. La función `GET` debe aceptar los parámetros de consulta `page` y `limit`. Calcular `skip` (`(page - 1) * limit`) y `take` (`limit`). Usar `prisma.user.findMany({ skip, take })` y `prisma.user.count()` para obtener los datos y el total de usuarios. Devolver los usuarios y la información de paginación (total de páginas, total de usuarios).",
-            "status": "pending",
+            "details": "Crear un nuevo `route.ts` en `app/api/admin/users`. La función `GET` debe aceptar los parámetros de consulta `page` y `limit`. Calcular `skip` (`(page - 1) * limit`) y `take` (`limit`). Usar `prisma.user.findMany({ skip, take })` y `prisma.user.count()` para obtener los datos y el total de usuarios. Devolver los usuarios y la información de paginación (total de páginas, total de usuarios).\n<info added on 2025-08-12T16:40:59.486Z>\nImplementación completada exitosamente. El endpoint GET /api/admin/users se ha implementado con las siguientes características:\n- Autenticación y autorización para verificar que el usuario esté autenticado y tenga el rol 'admin'.\n- Acepta parámetros de consulta 'page' (por defecto 1) y 'limit' (por defecto 10, máximo 100), con validación para asegurar que los valores estén en un rango válido.\n- Utiliza Promise.all para ejecutar en paralelo la consulta de usuarios y el conteo total, mejorando la eficiencia.\n- Los usuarios se devuelven ordenados por fecha de creación descendente (más recientes primero).\n- La respuesta incluye una metadata de paginación completa: currentPage, totalPages, totalUsers, limit, hasNextPage, y hasPreviousPage.\nSe realizaron pruebas exitosas de lint, lógica de paginación, estructura de respuesta, middleware de autenticación, validación de parámetros y casos de borde. El endpoint está listo para ser consumido por el frontend.\n</info added on 2025-08-12T16:40:59.486Z>",
+            "status": "done",
             "testStrategy": "Realizar peticiones a `/api/admin/users?page=1&limit=10` y `/api/admin/users?page=2&limit=10` y verificar que se devuelven los conjuntos de datos correctos y la metadata de paginación."
           },
           {
@@ -432,7 +432,7 @@
               3
             ],
             "details": "Crear la página `/admin/users/page.tsx`. Utilizar los componentes `Table`, `TableHeader`, `TableBody`, etc., de `shadcn/ui`. Realizar una llamada al endpoint `/api/admin/users` para obtener los datos y renderizarlos en la tabla. Las columnas deben incluir como mínimo: Nombre, Email y Rol.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verificar que la página `/admin/users` carga y muestra correctamente la primera página de usuarios obtenida de la API en la tabla."
           },
           {
@@ -454,7 +454,7 @@
               3
             ],
             "details": "Modificar la función `GET` en `app/api/admin/users/route.ts`. Leer los parámetros de consulta opcionales `search` (para nombre/email) y `role`. Construir dinámicamente la cláusula `where` de Prisma para incluir condiciones `contains` para el `search` y `equals` para el `role` si los parámetros están presentes.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Realizar peticiones como `/api/admin/users?search=john` y `/api/admin/users?role=USER` y verificar que la API devuelve solo los usuarios que coinciden con los filtros."
           },
           {
@@ -476,8 +476,8 @@
             "dependencies": [
               1
             ],
-            "details": "Crear un `route.ts` en `app/api/admin/users/[userId]`. La función `PATCH` debe leer el `userId` de los parámetros de la ruta y el nuevo `role` del cuerpo de la petición. Validar el rol entrante. Usar `prisma.user.update({ where: { id: userId }, data: { role } })` para actualizar el registro en la base de datos. Devolver el usuario actualizado.",
-            "status": "pending",
+            "details": "Crear un `route.ts` en `app/api/admin/users/[userId]`. La función `PATCH` debe leer el `userId` de los parámetros de la ruta y el nuevo `role` del cuerpo de la petición. Validar el rol entrante. Usar `prisma.user.update({ where: { id: userId }, data: { role } })` para actualizar el registro en la base de datos. Devolver el usuario actualizado.\n<info added on 2025-08-12T17:10:02.287Z>\nImplementation completed successfully. The PATCH endpoint at /api/admin/users/[userId] was created to modify user roles. A new Zod schema, `updateUserRoleSchema`, was added to `lib/zod.ts` for validating the role (`user` or `admin`). The implementation includes authentication and authorization to ensure only admins can perform the update. A security measure was added to prevent an admin from removing their own admin role. The endpoint handles multiple error cases, including 401 (unauthorized), 400 (invalid input), 403 (self-demotion attempt), 404 (user not found), and 500 (server error). Successful requests return a structured JSON response with the updated user. The endpoint is fully tested and functional.\n</info added on 2025-08-12T17:10:02.287Z>",
+            "status": "done",
             "testStrategy": "Enviar una petición PATCH a `/api/admin/users/some-id` con `{\"role\": \"ADMIN\"}` en el cuerpo y verificar que la base de datos se actualiza y la API devuelve el usuario con el nuevo rol."
           },
           {
@@ -500,7 +500,7 @@
               1
             ],
             "details": "Crear un `route.ts` en `app/api/admin/users/import`. La función `POST` debe manejar una petición `multipart/form-data`. Usar una librería como `papaparse` para parsear el contenido del archivo CSV a un array de objetos JSON. La API debe estar preparada para el siguiente paso de validación e inserción.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Enviar un archivo CSV a través de una herramienta como Postman al endpoint y verificar que la API puede leer y parsear el contenido correctamente sin errores."
           },
           {
@@ -511,7 +511,7 @@
               10
             ],
             "details": "Dentro del endpoint `POST /api/admin/users/import`, después de parsear el CSV, iterar sobre cada fila. Usar un esquema de Zod para validar que cada registro tenga `email` (formato válido), `name` (string no vacío) y `role` (enum válido). Usar `prisma.user.createMany({ data: validUsers, skipDuplicates: true })` para insertar los usuarios válidos. Devolver un resumen JSON: `{ created: X, skipped: Y, errors: [...] }`.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Subir un CSV con datos válidos, duplicados y erróneos. Verificar que la respuesta de la API refleja correctamente el número de usuarios creados, omitidos y los errores de validación específicos."
           },
           {
@@ -531,7 +531,7 @@
     ],
     "metadata": {
       "created": "2025-06-21T22:19:07.747Z",
-      "updated": "2025-08-05T03:40:52.643Z",
+      "updated": "2025-08-29T22:02:13.858Z",
       "description": "Tasks for master context"
     }
   }
