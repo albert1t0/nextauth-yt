@@ -77,12 +77,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate and process each row
-    const validUsers: any[] = [];
+    const validUsers: { name: string; email: string; role: string }[] = [];
     const errors: { row: number; errors: string[] }[] = [];
     let skipped = 0;
 
     for (let i = 0; i < parsedData.length; i++) {
-      const row = parsedData[i] as any;
+      const row = parsedData[i] as { [key: string]: string };
       
       try {
         // Validate row data with Zod schema

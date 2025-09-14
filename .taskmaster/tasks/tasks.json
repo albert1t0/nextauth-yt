@@ -385,7 +385,7 @@
         "description": "Crear una sección de administración para gestionar usuarios, incluyendo la importación masiva desde CSV, un listado con filtros y paginación, y la capacidad de modificar roles de usuario.",
         "details": "Esta tarea se divide en tres funcionalidades principales dentro de un nuevo panel de administración en la ruta `/admin/users`. 1. **Importación de Usuarios desde CSV**: Crear una página (`/admin/users/import`) con un formulario para subir archivos CSV. Implementar un endpoint de API (`/api/admin/users/import`) que utilice `papaparse` para procesar el archivo. Validar cada fila con Zod (email, nombre, rol) y usar `prisma.user.createMany()` para la inserción masiva, omitiendo duplicados. La API debe devolver un resumen de la operación (usuarios creados, errores). 2. **Listado de Usuarios**: En la página principal `/admin/users`, implementar una tabla (usando `shadcn/ui`) para mostrar los usuarios con paginación y filtros. Crear un endpoint de API (`/api/admin/users`) que acepte parámetros de consulta para filtrar por nombre/email/rol y para la paginación (usando `skip` y `take` de Prisma). 3. **Modificación de Rol**: En la tabla de usuarios, añadir un control (ej. un dropdown) para cambiar el rol de un usuario. Este control llamará a un endpoint de API (`PATCH /api/admin/users/[userId]`) que actualizará el rol del usuario en la base de datos. Es crucial actualizar el `middleware.ts` (de la Tarea 17) para proteger todas las rutas `/admin/*` y verificar que el usuario autenticado tenga el rol de 'ADMIN'.",
         "testStrategy": "1. **Seguridad de Rutas**: Intentar acceder a `/admin/users` sin iniciar sesión y verificar la redirección al login. Iniciar sesión como un usuario normal y verificar que el acceso es denegado. Iniciar sesión como administrador y verificar que el acceso es concedido. 2. **Importación CSV**: Subir un CSV válido y verificar que los nuevos usuarios aparecen en la base de datos y en el listado. Subir un CSV con datos inválidos (emails duplicados, formatos incorrectos) y verificar que se muestra un informe de errores preciso y que solo los datos válidos fueron procesados. 3. **Listado y Filtros**: Navegar a `/admin/users` y confirmar que la tabla se carga con la primera página de usuarios. Probar los controles de paginación. Usar los campos de filtro para buscar por email y rol, y verificar que la tabla se actualiza correctamente. 4. **Cambio de Rol**: En el listado, cambiar el rol de un usuario de 'USER' a 'ADMIN'. Verificar que el cambio se refleja en la base de datos. Iniciar sesión con la cuenta de ese usuario para confirmar que ahora tiene acceso a las rutas de administrador.",
-        "status": "in-progress",
+        "status": "done",
         "dependencies": [
           17,
           7
@@ -443,7 +443,7 @@
               4
             ],
             "details": "En la página `/admin/users`, añadir los componentes `Pagination` de `shadcn/ui` debajo de la tabla. Conectar los botones 'Siguiente', 'Anterior' y los números de página para que actualicen el estado de la página actual, realicen una nueva llamada a la API con el parámetro `page` correspondiente y refresquen los datos de la tabla.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Hacer clic en los botones de paginación y verificar que la tabla se actualiza con los usuarios de la página correspondiente."
           },
           {
@@ -466,7 +466,7 @@
               6
             ],
             "details": "En la página `/admin/users`, añadir un componente `Input` de `shadcn/ui` para la búsqueda por texto (nombre/email) y un `Select` o `DropdownMenu` para filtrar por rol. Al cambiar el valor de estos controles, se debe realizar una nueva petición a la API con los parámetros `search` y/o `role` y actualizar la tabla.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Escribir en el campo de búsqueda y seleccionar un rol en el dropdown. Verificar que la lista de usuarios en la tabla se actualiza para reflejar los filtros aplicados."
           },
           {
@@ -489,7 +489,7 @@
               8
             ],
             "details": "En el componente de la tabla de usuarios, añadir una nueva columna 'Acciones'. Dentro de esta columna, para cada fila, renderizar un componente `Select` o `DropdownMenu` de `shadcn/ui` con los roles disponibles. Al seleccionar un nuevo rol, se debe llamar al endpoint `PATCH /api/admin/users/[userId]` con el ID del usuario y el nuevo rol. Actualizar la UI tras una respuesta exitosa.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "En la lista de usuarios, cambiar el rol de un usuario usando el nuevo control. Refrescar la página y verificar que el cambio de rol persiste."
           },
           {
@@ -523,15 +523,358 @@
               11
             ],
             "details": "Crear la página `/admin/users/import/page.tsx`. Usar componentes de `shadcn/ui` para crear un formulario con un campo de subida de archivo (`Input type='file'`) y un botón de envío. Al enviar el formulario, realizar una petición `POST` al endpoint `/api/admin/users/import` con el archivo. Mostrar un mensaje de estado (cargando, éxito, error) y presentar el resumen de la operación devuelto por la API.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Navegar a `/admin/users/import`, seleccionar un archivo CSV y subirlo. Verificar que se muestra un feedback visual durante la subida y que el resumen de la operación (creados, errores) se muestra al usuario después."
+          }
+        ]
+      },
+      {
+        "id": 26,
+        "title": "Implement Statistics Section in Admin Dashboard",
+        "description": "Develop the main admin dashboard page to display key user statistics via summary cards and a registration trend chart. This will provide administrators with a quick overview of platform activity.",
+        "details": "This task involves creating a new API endpoint to aggregate user statistics and a new frontend page within the admin panel to display them. 1. **Backend API Endpoint**: Create a new protected API route at `/api/admin/stats`. This route should only be accessible to users with the 'ADMIN' role. The endpoint will query the database using Prisma to calculate the following metrics: Total Users (`prisma.user.count()`), New Users Today (`prisma.user.count({ where: { createdAt: ... } })`), Total Admins (`prisma.user.count({ where: { role: 'ADMIN' } })`), and Active Users (e.g., distinct users with a session in the last 30 days). For the 7-day registration trend, the endpoint must return an array of objects, each containing a date and the count of users registered on that date for the past week. 2. **Frontend Implementation**: Create a new page at `/admin/dashboard`. This page will fetch data from the `/api/admin/stats` endpoint. Use a data fetching library like SWR or React Query for client-side fetching, including loading and error states. 3. **UI Components**: Develop a reusable `StatCard` component to display each key metric. For the registration trend, install and use a charting library like 'recharts' (`npm install recharts`) to create a line or bar chart visualizing the 7-day data.",
+        "testStrategy": "1. **API Security**: Attempt to access `/api/admin/stats` as a logged-out user and as a logged-in non-admin user. Both attempts should result in a 401 Unauthorized or 403 Forbidden error. Accessing the endpoint as an admin should return a 200 OK response with the statistics payload. 2. **API Data Accuracy**: Manually add/modify users in the database with various roles and `createdAt` timestamps. Call the API and verify that all returned metrics (total users, new users today, total admins) and the 7-day trend data are accurate. 3. **Frontend Verification**: Log in as an admin and navigate to the `/admin/dashboard` page. Verify that all statistic cards and the registration chart render correctly with the data from the API. Confirm that a loading state is visible during the initial data fetch and that an error message is displayed if the API call fails.",
+        "status": "done",
+        "dependencies": [
+          7,
+          8,
+          17,
+          25
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create and Secure the Admin Statistics API Endpoint",
+            "description": "Set up the basic file structure for the `/api/admin/stats` API route and implement role-based access control to ensure only users with the 'ADMIN' role can access it. This foundational step prevents unauthorized data access before implementing the data logic.",
+            "dependencies": [],
+            "details": "Create a new route handler at `app/api/admin/stats/route.ts`. Inside the `GET` handler, use `getServerSession` from `next-auth` to retrieve the user's session. Check if `session.user.role` is equal to 'ADMIN'. If the user is not an admin or is not logged in, return a `NextResponse` with a 403 Forbidden status. If they are an admin, return a placeholder JSON object with a 200 OK status for now, e.g., `{ \"message\": \"Access granted\" }`.",
+            "status": "done",
+            "testStrategy": "1. Attempt to access `/api/admin/stats` via a tool like Postman or curl as a logged-out user (expect 401/403). 2. Log in as a regular user and attempt access (expect 403). 3. Log in as an admin and attempt access (expect 200 OK with the placeholder message)."
+          },
+          {
+            "id": 2,
+            "title": "Implement Summary Statistics Calculation in API",
+            "description": "Extend the `/api/admin/stats` endpoint to calculate and return the primary summary statistics: Total Users, New Users Today, and Total Admins. This provides the data needed for the top-level summary cards.",
+            "dependencies": [
+              "26.1"
+            ],
+            "details": "In `app/api/admin/stats/route.ts`, use Prisma to perform the database queries. Calculate the start of the current day. Use `Promise.all` to execute the following queries concurrently: `prisma.user.count()`, `prisma.user.count({ where: { role: 'ADMIN' } })`, and `prisma.user.count({ where: { createdAt: { gte: startOfDay } } })`. Structure the response to return these values in a clear JSON object, e.g., `{ \"summary\": { \"totalUsers\": 150, \"newUsersToday\": 5, \"totalAdmins\": 3 } }`.",
+            "status": "done",
+            "testStrategy": "Call the endpoint as an admin. Verify the returned counts for total users, new users, and admins match the current state of the database. Manually add a new user via your application or database client and re-run the request to confirm the 'newUsersToday' count increments."
+          },
+          {
+            "id": 3,
+            "title": "Implement 7-Day Registration Trend Calculation in API",
+            "description": "Enhance the `/api/admin/stats` endpoint to calculate and include the user registration trend for the last 7 days. This data will be used to power the registration chart.",
+            "dependencies": [
+              "26.2"
+            ],
+            "details": "In the same API route, implement logic to get user registration counts for each of the last 7 days. You can achieve this with a Prisma `groupBy` query on the `createdAt` field, filtering for records within the last 7 days. Process the results to create an array of 7 objects, one for each day, ensuring that days with zero registrations are included. The final structure should be like `[{ date: 'YYYY-MM-DD', count: 12 }, ...]`. Add this array to the API response payload under a key like `registrationTrend`.",
+            "status": "done",
+            "testStrategy": "Call the endpoint as an admin and inspect the `registrationTrend` array. Verify it contains exactly 7 entries, one for each of the past 7 days. Check that the counts for a few days are accurate based on the database records. Ensure a day with no new users shows a count of 0."
+          },
+          {
+            "id": 4,
+            "title": "Set Up Admin Dashboard Page with Data Fetching",
+            "description": "Create the new frontend page at `/admin/dashboard` and implement client-side data fetching from the `/api/admin/stats` endpoint using SWR. This includes handling loading and error states.",
+            "dependencies": [
+              "26.3"
+            ],
+            "details": "Create the page file at `app/admin/dashboard/page.tsx`. Mark it as a client component with `'use client'`. Use the `useSWR` hook to fetch data from `/api/admin/stats`. Define a simple fetcher function for SWR. Based on the hook's return values (`data`, `error`, `isLoading`), render a loading indicator (e.g., a spinner), an error message, or the main dashboard content. Initially, you can render the fetched data using `<pre>{JSON.stringify(data, null, 2)}</pre>` to confirm it's working.",
+            "status": "done",
+            "testStrategy": "Navigate to `/admin/dashboard` as an admin. Verify the loading state appears briefly, followed by the raw JSON data from the API. Test the error state by temporarily renaming the API route file and reloading the page; an error message should be displayed."
+          },
+          {
+            "id": 5,
+            "title": "Create Reusable StatCard UI Component",
+            "description": "Develop a reusable React component named `StatCard` to display a single statistic with a title and a value. This component will be used to display each of the summary metrics.",
+            "dependencies": [],
+            "details": "Create a new component file at `components/admin/StatCard.tsx`. The component should accept props for `title` (string) and `value` (string or number). Use Tailwind CSS to style it as a card with a background, padding, and distinct typography for the title and the value. The title should be smaller and less prominent than the large, bold value.",
+            "status": "done",
+            "testStrategy": "Use a tool like Storybook or a temporary test page to render the `StatCard` component with various static props (e.g., title='Total Users', value=1234) to ensure it displays correctly and is visually appealing."
+          },
+          {
+            "id": 6,
+            "title": "Integrate StatCards into Dashboard Page",
+            "description": "Use the fetched statistics data to render multiple `StatCard` components on the `/admin/dashboard` page, creating the main summary section.",
+            "dependencies": [
+              "26.4",
+              "26.5"
+            ],
+            "details": "On the `/admin/dashboard` page, once the SWR fetch is successful and `data` is available, render a grid (e.g., using CSS Grid or Flexbox). Inside the grid, render three instances of the `StatCard` component. Pass the relevant data from the API response to each card, for example: `<StatCard title=\"Total Users\" value={data.summary.totalUsers} />`, `<StatCard title=\"New Users Today\" value={data.summary.newUsersToday} />`, etc.",
+            "status": "done",
+            "testStrategy": "Load the dashboard page as an admin. Verify that three stat cards appear at the top of the page, displaying the correct titles and values fetched from the API. Check that the layout is responsive on different screen sizes."
+          },
+          {
+            "id": 7,
+            "title": "Create Registration Trend Chart Component",
+            "description": "Install 'recharts' and create a new, dedicated component that uses it to render a line chart for displaying user registration trends over time.",
+            "dependencies": [],
+            "details": "First, run `npm install recharts`. Create a new component file at `components/admin/RegistrationChart.tsx`. This component should accept the `registrationTrend` data array as a prop. Inside the component, use `recharts` components like `ResponsiveContainer`, `LineChart`, `Line`, `XAxis`, `YAxis`, `CartesianGrid`, and `Tooltip` to build the chart. The `XAxis` should use the `date` key from the data, and the `Line` should use the `count` key.",
+            "status": "done",
+            "testStrategy": "Render the `RegistrationChart` component in Storybook or a temporary page, passing it a mock array of 7-day data. Verify that the chart renders correctly with axes, a data line, and a functional tooltip that shows the count on hover."
+          },
+          {
+            "id": 8,
+            "title": "Integrate Registration Chart into Dashboard Page",
+            "description": "Add the `RegistrationChart` component to the `/admin/dashboard` page and pass the 7-day registration trend data from the API fetch to it, completing the dashboard's UI.",
+            "dependencies": [
+              "26.4",
+              "26.7"
+            ],
+            "details": "On the `/admin/dashboard` page, below the grid of `StatCard`s, render the `RegistrationChart` component. Pass the `data.registrationTrend` array from the SWR fetch to the chart component's data prop. Wrap the chart in a container with a title, such as 'New Registrations (Last 7 Days)'.",
+            "status": "done",
+            "testStrategy": "Load the dashboard page as an admin. Verify that the line chart renders below the stat cards and accurately visualizes the registration data from the API. Hover over points on the chart to ensure the tooltip displays the correct date and user count."
+          }
+        ]
+      },
+      {
+        "id": 27,
+        "title": "Implement Quick Actions Section in Admin Dashboard",
+        "description": "Create a 'Quick Actions' component for the main admin dashboard, providing administrators with one-click access to common tasks like exporting user data, copying an invitation link, viewing recent activity, and navigating to system settings.",
+        "details": "This task involves creating a new UI component on the main admin dashboard page. 1. **Component Creation**: Develop a new React component, `QuickActions.tsx`, to be placed on the dashboard page created in Task #26. The component should display four distinct actions, likely as cards or large buttons with icons. 2. **Export User Data**: Implement a new protected API endpoint at `/api/admin/users/export`. This endpoint will use Prisma to fetch all user records (selecting fields like id, name, email, role, createdAt) and convert the data to a CSV formatted string using a library like `papaparse`. The response headers must be set to `Content-Type: text/csv` and `Content-Disposition: attachment; filename=\"users-export.csv\"` to trigger a download. The frontend button will link directly to this endpoint. 3. **Copy Invitation Link**: This is a client-side feature. The button will use the `navigator.clipboard.api` to copy a static registration link (e.g., `/register?ref=admin`) to the clipboard and display a toast notification for user feedback. 4. **View Recent Activity & Configure System**: These two actions will be simple navigation links. They should point to `/admin/activity-log` and `/admin/settings` respectively. The creation of these pages is out of scope for this task.",
+        "testStrategy": "1. **UI and Security Verification**: Log in as an administrator and navigate to the main dashboard. Confirm the 'Quick Actions' section is visible and correctly rendered. Log in as a regular user and verify that the admin dashboard is inaccessible. 2. **Export Functionality**: As an admin, click the 'Export User Data' button. Verify a CSV file is downloaded. Open the file and check that its contents accurately reflect the user data in the database. Attempt to access the `/api/admin/users/export` URL directly while logged out or as a regular user and confirm access is denied with a 403 Forbidden error. 3. **Copy Link Functionality**: Click the 'Copy Invitation Link' button. Verify a success message appears. Paste the clipboard contents into a text field to ensure the correct URL has been copied. 4. **Navigation Links**: Click the 'View Recent Activity' and 'Configure System' links and verify that the browser attempts to navigate to `/admin/activity-log` and `/admin/settings` respectively.",
+        "status": "done",
+        "dependencies": [
+          17,
+          25,
+          26
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create `QuickActions.tsx` Component Shell and Integrate into Dashboard",
+            "description": "Create the basic structure for the `QuickActions` component. This includes creating the file, setting up a container (e.g., a grid), and adding placeholder elements for the four actions. This component should then be imported and rendered on the main admin dashboard page from Task #26.",
+            "dependencies": [],
+            "details": "Create a new file at `components/admin/QuickActions.tsx`. Use a `div` with CSS Grid or Flexbox to lay out four placeholder child elements. Each placeholder can be a simple `div` with a title like 'Export Users'. Import this new component into the main dashboard page component (e.g., `app/admin/dashboard/page.tsx`) and render it in the appropriate location.",
+            "status": "done",
+            "testStrategy": "Navigate to the admin dashboard page. Verify that the 'Quick Actions' section is visible with four placeholder items."
+          },
+          {
+            "id": 2,
+            "title": "Implement Protected API Endpoint for User Data Export",
+            "description": "Create a new protected API route at `/api/admin/users/export` that fetches all user data using Prisma, converts it to a CSV string, and returns it as a downloadable file.",
+            "dependencies": [],
+            "details": "Create a new route handler at `app/api/admin/users/export/route.ts`. Protect this route to ensure only authenticated admins can access it (e.g., by checking the user's session and role). Use Prisma to fetch users, selecting only necessary fields (`id`, `name`, `email`, `role`, `createdAt`). Use a library like `papaparse` to convert the JSON array to a CSV string. Set the response headers: `Content-Type: text/csv` and `Content-Disposition: attachment; filename=\"users-export.csv\"`.",
+            "status": "done",
+            "testStrategy": "While logged in as an admin, directly access `/api/admin/users/export` in the browser. Verify that a file named `users-export.csv` is downloaded. Open the file and confirm it contains the correct user data. Attempt to access the endpoint as a non-admin or unauthenticated user and verify access is denied."
+          },
+          {
+            "id": 3,
+            "title": "Implement 'Export User Data' Action on the Frontend",
+            "description": "Replace the 'Export User Data' placeholder in the `QuickActions` component with a functional link or button that directs the user to the export API endpoint, triggering a file download.",
+            "dependencies": [
+              "27.1",
+              "27.2"
+            ],
+            "details": "In `QuickActions.tsx`, replace the placeholder for the export action with an `<a>` tag. Set the `href` attribute to `'/api/admin/users/export'`. Style this link to look like a button or action card. Add an appropriate icon (e.g., a download icon).",
+            "status": "done",
+            "testStrategy": "As an admin, navigate to the dashboard and click the 'Export User Data' button. Verify that the CSV file download is initiated."
+          },
+          {
+            "id": 4,
+            "title": "Implement 'Copy Invitation Link' Client-Side Action",
+            "description": "Implement the functionality for the 'Copy Invitation Link' button. This action will be purely client-side, using the browser's Clipboard API to copy a predefined link and showing a toast notification on success.",
+            "dependencies": [
+              "27.1"
+            ],
+            "details": "In `QuickActions.tsx`, replace the placeholder for this action with a `<button>`. Create an `onClick` handler function. Inside the handler, use `navigator.clipboard.writeText('/register?ref=admin')`. After the promise resolves, trigger a toast notification (using a library like `react-hot-toast` or similar) to inform the user 'Invitation link copied!'. Add a copy icon to the button.",
+            "status": "done",
+            "testStrategy": "Click the 'Copy Invitation Link' button. Verify that a success notification appears. Paste the content into a text editor to confirm the correct link (`/register?ref=admin`) was copied."
+          },
+          {
+            "id": 5,
+            "title": "Implement Navigation Links for 'View Recent Activity' and 'System Settings'",
+            "description": "Replace the remaining two placeholders with navigation links that direct the administrator to the 'Recent Activity' and 'System Settings' pages.",
+            "dependencies": [
+              "27.1"
+            ],
+            "details": "In `QuickActions.tsx`, use the Next.js `<Link>` component for these two actions. The 'View Recent Activity' link should have an `href` of `'/admin/activity-log'`. The 'Configure System' link should have an `href` of `'/admin/settings'`. Add appropriate icons for each link (e.g., a list/log icon and a gear/settings icon).",
+            "status": "done",
+            "testStrategy": "Click the 'View Recent Activity' link and verify the URL changes to `/admin/activity-log`. Go back and click the 'Configure System' link and verify the URL changes to `/admin/settings`."
+          },
+          {
+            "id": 6,
+            "title": "Apply Final Styling and Icons to the Quick Actions Component",
+            "description": "Apply consistent styling to all four action items to make them visually appealing and cohesive with the dashboard's design. Ensure each action has a clear title and a relevant icon.",
+            "dependencies": [
+              "27.3",
+              "27.4",
+              "27.5"
+            ],
+            "details": "Use a CSS framework like Tailwind CSS or a component library to style the action items as cards or large buttons. Ensure they have hover and focus states for better UX. Use a consistent icon set (e.g., from `lucide-react` or `heroicons`). The final component should be responsive and look good on different screen sizes.",
+            "status": "done",
+            "testStrategy": "Visually inspect the Quick Actions section on the dashboard. Confirm all four actions are styled consistently, have icons, are aligned correctly, and respond well to different viewport sizes. Check hover and active states for each action."
+          }
+        ]
+      },
+      {
+        "id": 28,
+        "title": "Implement Role-Based Post-Login Redirection",
+        "description": "Update the authentication logic to redirect users to different pages based on their role after a successful login. Administrators will be sent to the admin dashboard, while regular users will be directed to their personal dashboard.",
+        "details": "The primary goal is to create a centralized redirection logic that executes immediately after a user authenticates. This will be achieved by creating a dedicated post-login handler page. 1. **Ensure Role in Session**: Verify that the `[...nextauth]` configuration file correctly includes the user's `role` in the session token. The `jwt` callback should add the role from the user object to the token, and the `session` callback should expose the role from the token to the client-side session object. 2. **Create Post-Login Handler Page**: Create a new client component at `app/auth/post-login/page.tsx`. This page will act as a router. 3. **Implement Redirection Logic**: Inside the `post-login` component, use the `useSession` hook from `next-auth/react` and the `useRouter` hook from `next/navigation`. Use a `useEffect` hook to check the session status. If the status is 'loading', display a loading indicator. Once the status is 'authenticated', inspect the `session.user.role` property. If the role is 'ADMIN', use `router.replace('/admin')`. For any other role (e.g., 'USER'), use `router.replace('/dashboard')`. If the user is unauthenticated, redirect them back to `/login`. 4. **Update Login Flow**: Modify all `signIn()` function calls (e.g., in the login form) to specify the new handler page as the destination, for example: `signIn('credentials', { ...data, callbackUrl: '/auth/post-login' })`.",
+        "testStrategy": "1. **Admin Login Test**: Log out completely. Navigate to the login page and sign in using an account with the 'ADMIN' role. Verify that you are automatically and correctly redirected to the admin dashboard (`/admin`). 2. **Regular User Login Test**: Log out completely. Navigate to the login page and sign in using a standard user account. Verify that you are automatically redirected to the main user dashboard (`/dashboard`). 3. **Manual Navigation Check**: After being logged in as a regular user, attempt to manually navigate to `/admin`. Verify that access is denied (as per existing middleware rules). 4. **Callback URL Check**: Inspect the network request during login to ensure the `callbackUrl` is being set to `/auth/post-login` correctly.",
+        "status": "pending",
+        "dependencies": [
+          18,
+          26
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Update NextAuth.js Configuration to Include User Role in Session",
+            "description": "Modify the NextAuth.js configuration to ensure the user's role is available in the client-side session object. This involves updating the `jwt` and `session` callbacks to pass the role from the user database model to the session token and then to the client.",
+            "dependencies": [],
+            "details": "1. Open the NextAuth.js configuration file (e.g., `app/api/auth/[...nextauth]/route.ts`).\n2. In the `callbacks` object, locate the `jwt` callback. Inside, ensure the `user.role` is added to the `token` object when the user first signs in.\n3. Locate the `session` callback. Inside, retrieve the `role` from the `token` object and assign it to `session.user.role`.\n4. Update the TypeScript types in `next-auth.d.ts` to include `role: string;` in the `User` and `Session` interfaces to ensure type safety.",
+            "status": "pending",
+            "testStrategy": "After logging in, use browser developer tools to inspect the session object returned by the `useSession` hook in any client component. Verify that `session.user.role` exists and contains the correct value ('ADMIN' or 'USER')."
+          },
+          {
+            "id": 2,
+            "title": "Create the Post-Login Redirection Handler Page",
+            "description": "Create a new client-side page component that will act as a central router after a user successfully logs in. This page will contain the redirection logic and display a loading state while processing.",
+            "dependencies": [],
+            "details": "1. Create a new file at `app/auth/post-login/page.tsx`.\n2. Define a React component (e.g., `PostLoginPage`) within this file.\n3. Add the `\"use client\";` directive at the top of the file.\n4. The component should render a simple loading indicator, such as a spinner or a 'Redirecting...' message, to provide user feedback.",
+            "status": "pending",
+            "testStrategy": "Manually navigate to `/auth/post-login` in the browser. Verify that the loading state UI is displayed correctly without any errors."
+          },
+          {
+            "id": 3,
+            "title": "Implement Role-Based Redirection Logic in Handler Page",
+            "description": "Add the core logic to the post-login handler page to inspect the user's session and role, then redirect them to the appropriate dashboard or back to the login page if unauthenticated.",
+            "dependencies": [
+              "28.1",
+              "28.2"
+            ],
+            "details": "1. In `app/auth/post-login/page.tsx`, import and use the `useSession` hook from `next-auth/react` and the `useRouter` hook from `next/navigation`.\n2. Implement a `useEffect` hook that triggers when the session `status` changes.\n3. Inside the `useEffect`:\n   - If `status === 'authenticated'`, check `session.user.role`.\n   - If the role is 'ADMIN', call `router.replace('/admin')`.\n   - For any other role (e.g., 'USER'), call `router.replace('/dashboard')`.\n   - If `status === 'unauthenticated'`, call `router.replace('/login')` to handle cases where a user lands here without a session.",
+            "status": "pending",
+            "testStrategy": "After logging in as an admin, manually navigate to `/auth/post-login`. Verify you are redirected to `/admin`. Log out, log in as a regular user, and manually navigate to `/auth/post-login`. Verify you are redirected to `/dashboard`."
+          },
+          {
+            "id": 4,
+            "title": "Update Login Form to Use the Post-Login Handler",
+            "description": "Modify the `signIn` function calls in the application's login form to use the new post-login handler page as the `callbackUrl`, ensuring all successful logins are routed through the new redirection logic.",
+            "dependencies": [
+              "28.3"
+            ],
+            "details": "1. Locate the component containing the login form (e.g., `components/auth/LoginForm.tsx`).\n2. Find the `signIn()` function call that is executed on form submission.\n3. Add the `callbackUrl` option to the second argument of the `signIn` call, setting its value to `'/auth/post-login'`. Example: `signIn('credentials', { ...data, callbackUrl: '/auth/post-login' });`.",
+            "status": "pending",
+            "testStrategy": "1. Log out completely. Navigate to the login page and sign in with an 'ADMIN' account. Verify you are correctly and automatically redirected to the `/admin` dashboard.\n2. Log out again. Sign in with a regular 'USER' account. Verify you are correctly and automatically redirected to the `/dashboard` page."
+          }
+        ]
+      },
+      {
+        "id": 29,
+        "title": "Implement User File Management System (Upload, List, Update, Delete)",
+        "description": "Develop a complete file management system for authenticated users. This includes creating a dedicated UI page and the necessary API endpoints to handle file uploads, display a list of user-owned files, and allow for file renaming and deletion.",
+        "details": "This task involves creating a full CRUD (Create, Read, Update, Delete) functionality for user-specific files. 1. **Database Schema**: Add a new `File` model to `prisma/schema.prisma`. It must include fields like `id`, `filename`, `storagePath`, `mimetype`, `size`, `createdAt`, and a relation to the `User` model (`userId String`, `@relation(...)`). Run `npx prisma migrate dev` to apply changes. 2. **Backend API Endpoints**: Create API routes under `app/api/files/`. All routes must be protected and verify that the user performing the action is the owner of the file. - **POST /api/files/upload**: Handle `multipart/form-data` requests. Save the uploaded file to a secure location on the server (e.g., a non-public `uploads` directory) and create a corresponding record in the `File` table, linking it to the authenticated user's ID. - **GET /api/files**: Fetch and return a list of all file records belonging to the currently authenticated user. - **PUT /api/files/[fileId]**: Handle file metadata updates, primarily renaming. It should receive a new `filename` in the request body, validate ownership, and update the database record. - **DELETE /api/files/[fileId]**: Validate ownership, then delete the physical file from the server's storage and remove its corresponding record from the database. 3. **Frontend UI**: Create a new page at `/dashboard/files`. - **File Upload Form**: Implement a form with an `<input type=\"file\">` that submits to the upload endpoint. Provide user feedback on upload progress, success, or failure. - **File List Display**: Use a data fetching hook (like SWR or React Query) to call the `GET /api/files` endpoint. Display the files in a table or grid, showing the filename, upload date, and action buttons (e.g., Rename, Delete, Download). - **Modals for Actions**: Implement modals for renaming a file (pre-filled with the current name) and for confirming deletion to prevent accidental data loss.",
+        "testStrategy": "1. **Authorization & Security**: Attempt to access the `/dashboard/files` page while logged out and verify redirection to the login page. Log in as User A, upload a file, and note its ID. Log in as User B and attempt to list, update, or delete User A's file via direct API calls; verify all attempts are rejected with a 403 Forbidden or 404 Not Found error. 2. **Upload Functionality**: Upload a file (e.g., PDF, JPG). Verify it appears in the UI list, is physically present in the server's upload directory, and a corresponding record exists in the database linked to the correct user. 3. **List Functionality**: Upload multiple files. Verify all are correctly listed for the logged-in user. Log in as a different user and confirm their file list is empty or shows only their own files. 4. **Update Functionality**: Use the UI to rename a file. Verify the name changes in the list and the database record is updated. 5. **Delete Functionality**: Use the UI to delete a file. Confirm the deletion prompt appears. After confirming, verify the file is removed from the UI list, deleted from the server's file system, and its record is removed from the database.",
+        "status": "pending",
+        "dependencies": [
+          7,
+          8,
+          17
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define and Migrate the `File` Model in Prisma Schema",
+            "description": "Create the database schema for storing file metadata. This involves adding a `File` model to `prisma/schema.prisma` and running a migration to apply the changes to the database.",
+            "dependencies": [],
+            "details": "In `prisma/schema.prisma`, define a new `File` model. It must include fields: `id` (String, @id, @default(cuid())), `filename` (String), `storagePath` (String), `mimetype` (String), `size` (Int), `createdAt` (DateTime, @default(now())), and a relation to the `User` model. Add `userId String` and the relation field `user User @relation(fields: [userId], references: [id], onDelete: Cascade)`. After defining the model, run the command `npx prisma migrate dev --name add_file_model` to generate and apply the migration.",
+            "status": "pending",
+            "testStrategy": "After migration, use a database client (like Prisma Studio) to verify that the `File` table with the correct columns and relations has been created in the database."
+          },
+          {
+            "id": 2,
+            "title": "Create API Endpoint for File Upload (POST /api/files/upload)",
+            "description": "Develop a protected API route to handle multipart/form-data file uploads. The endpoint will save the file to a designated server directory and create a corresponding record in the `File` table.",
+            "dependencies": [
+              "29.1"
+            ],
+            "details": "Create the route handler at `app/api/files/upload/route.ts`. Use a library like `formidable` or handle the stream directly to process the `multipart/form-data` request. First, verify the user is authenticated using `getServerSession` from NextAuth.js. Generate a unique name for the file to avoid collisions and save it to a non-public directory (e.g., `./uploads`). After successfully saving the file, create a new entry in the `File` table using Prisma, linking it to the authenticated user's ID and storing metadata like the original filename, the new storage path, mimetype, and size. Return a 201 Created response with the new file's data.",
+            "status": "pending",
+            "testStrategy": "Use an API client like Postman or Insomnia to send a POST request with a valid session cookie and a file in a `multipart/form-data` body. Verify that the file is saved on the server's filesystem and a corresponding record is created in the database. Test error cases like unauthenticated requests or requests without a file."
+          },
+          {
+            "id": 3,
+            "title": "Create API Endpoint to List User's Files (GET /api/files)",
+            "description": "Develop a protected API route that retrieves and returns a list of all file metadata records associated with the currently authenticated user.",
+            "dependencies": [
+              "29.1"
+            ],
+            "details": "Create the route handler at `app/api/files/route.ts`. In the `GET` handler, retrieve the user's session to get their ID. Use Prisma to query the `File` table, filtering by the `userId`. The query should be `prisma.file.findMany({ where: { userId: session.user.id }, orderBy: { createdAt: 'desc' } })`. Return the resulting array of file objects as a JSON response with a 200 OK status. Ensure the route is protected and returns a 401 Unauthorized error if no session is found.",
+            "status": "pending",
+            "testStrategy": "After uploading a few files using the endpoint from subtask 29.2, make an authenticated GET request to `/api/files`. Verify that the response is a JSON array containing the correct file records for that user. Test that an unauthenticated request receives a 401 error."
+          },
+          {
+            "id": 4,
+            "title": "Build the File Management UI Page and Display the File List",
+            "description": "Create a new page at `/dashboard/files` and implement the UI to fetch and display the user's files in a table or grid format.",
+            "dependencies": [
+              "29.3"
+            ],
+            "details": "Create a new route `app/dashboard/files/page.tsx`. This should be a client component (`'use client'`). Use a data fetching library like SWR or React Query to call the `/api/files` endpoint. While data is loading, show a loading spinner. If there's an error, display an error message. Once the data is fetched, map over the array of files and render them in a table. The table should have columns for `Filename`, `Upload Date`, `Size`, and `Actions` (which will be empty for now). Use a utility function to format the date and file size for display.",
+            "status": "pending",
+            "testStrategy": "Navigate to `/dashboard/files` while logged in. Verify that a loading state is shown initially, followed by a table displaying the files previously uploaded for the current user. Check that the page is protected by middleware and redirects to login if accessed while logged out."
+          },
+          {
+            "id": 5,
+            "title": "Implement the File Upload Form on the Frontend",
+            "description": "Add a file upload form to the `/dashboard/files` page that allows users to select and upload a file. Provide feedback on the upload status.",
+            "dependencies": [
+              "29.2",
+              "29.4"
+            ],
+            "details": "In the `app/dashboard/files/page.tsx` component, add a form with an `<input type=\"file\">` and a submit button. On form submission, prevent the default action and create a `FormData` object. Append the selected file to it. Use the `fetch` API or a library like `axios` to send a POST request to `/api/files/upload` with the `FormData` as the body. Implement state to track the upload progress (e.g., 'idle', 'uploading', 'success', 'error'). Disable the submit button while uploading. Display success or error messages to the user. Upon successful upload, re-fetch the file list to show the newly added file.",
+            "status": "pending",
+            "testStrategy": "On the `/dashboard/files` page, use the new form to select and upload a file. Verify that the UI shows an 'uploading' state. After the upload completes, confirm that a success message is shown and the file list automatically updates to include the new file."
+          },
+          {
+            "id": 6,
+            "title": "Create API Endpoint for File Deletion (DELETE /api/files/[fileId])",
+            "description": "Develop a protected API route that handles file deletion. It must verify that the user owns the file before deleting both the physical file from storage and its record from the database.",
+            "dependencies": [
+              "29.1"
+            ],
+            "details": "Create a dynamic route handler at `app/api/files/[fileId]/route.ts`. In the `DELETE` handler, get the `fileId` from the route parameters and the user's session. First, query the database for the file: `prisma.file.findUnique({ where: { id: fileId } })`. If the file doesn't exist or if `file.userId` does not match the session's `user.id`, return a 404 Not Found or 403 Forbidden error. If ownership is verified, use Node.js's `fs` module (`fs.promises.unlink`) to delete the physical file from the path specified in `file.storagePath`. After successfully deleting the file, delete the record from the database: `prisma.file.delete({ where: { id: fileId } })`. Return a 204 No Content response on success.",
+            "status": "pending",
+            "testStrategy": "Using an API client, send an authenticated DELETE request to `/api/files/[fileId]` for a file owned by the user. Verify a 204 response, and confirm the file is gone from both the filesystem and the database. Attempt to delete a file owned by another user and verify a 403/404 error is returned."
+          },
+          {
+            "id": 7,
+            "title": "Create API Endpoint for File Renaming (PUT /api/files/[fileId])",
+            "description": "Develop a protected API route to update a file's metadata, specifically its name. The endpoint must validate user ownership before updating the database record.",
+            "dependencies": [
+              "29.1"
+            ],
+            "details": "In the `app/api/files/[fileId]/route.ts` file, implement the `PUT` handler. It should expect a JSON body with a `filename` property. Get the `fileId` and user session. Find the file in the database and verify ownership, similar to the DELETE endpoint. If ownership is confirmed, use Prisma to update the record: `prisma.file.update({ where: { id: fileId }, data: { filename: newFilename } })`. Return the updated file object with a 200 OK status. Use Zod to validate the incoming `filename` to ensure it's a non-empty string.",
+            "status": "pending",
+            "testStrategy": "Using an API client, send an authenticated PUT request to `/api/files/[fileId]` with `{\"filename\": \"new-name.txt\"}` in the body. Verify a 200 response containing the updated file data. Check the database to confirm the `filename` field was updated. Test for invalid input and ownership errors."
+          },
+          {
+            "id": 8,
+            "title": "Add Rename and Delete Modals and Functionality to the UI",
+            "description": "Enhance the file list on the `/dashboard/files` page by adding 'Rename' and 'Delete' buttons. Implement modals for these actions to provide a good user experience and prevent accidental deletion.",
+            "dependencies": [
+              "29.4",
+              "29.6",
+              "29.7"
+            ],
+            "details": "In the `Actions` column of the file table in `app/dashboard/files/page.tsx`, add 'Rename' and 'Delete' buttons for each file. For 'Delete', clicking the button should open a confirmation modal asking 'Are you sure you want to delete this file?'. On confirmation, send a `DELETE` request to `/api/files/[fileId]`. For 'Rename', clicking the button should open a modal with a text input pre-filled with the current filename. On submitting the modal form, send a `PUT` request to `/api/files/[fileId]` with the new name. After either action is successful, re-fetch the file list to update the UI.",
+            "status": "pending",
+            "testStrategy": "On the file list page, click the 'Delete' button for a file. Verify the confirmation modal appears. Confirm the deletion and check that the file is removed from the list. Click the 'Rename' button for another file. Verify the modal appears with the current name. Enter a new name, submit, and verify the filename updates in the list."
           }
         ]
       }
     ],
     "metadata": {
       "created": "2025-06-21T22:19:07.747Z",
-      "updated": "2025-08-29T22:02:13.858Z",
+      "updated": "2025-09-14T17:15:28.151Z",
       "description": "Tasks for master context"
     }
   }
