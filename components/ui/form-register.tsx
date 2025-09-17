@@ -38,11 +38,12 @@ const FormRegister = () => {
 async function onSubmit(values: z.infer<typeof registerSchema>) {
     setError(null);
     startTransition(async() => {
-      const response = await registerAction(values);
+      const response = await registerAction(values, "/auth/post-login");
       if(response.error) {
         setError(response.error);
       } else {
-        router.push("/dashboard");
+        // La redirección ahora será manejada por NextAuth con el callbackUrl
+        router.push("/auth/post-login");
       }
     });
   } 

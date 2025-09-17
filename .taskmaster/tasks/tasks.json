@@ -716,7 +716,7 @@
         "description": "Update the authentication logic to redirect users to different pages based on their role after a successful login. Administrators will be sent to the admin dashboard, while regular users will be directed to their personal dashboard.",
         "details": "The primary goal is to create a centralized redirection logic that executes immediately after a user authenticates. This will be achieved by creating a dedicated post-login handler page. 1. **Ensure Role in Session**: Verify that the `[...nextauth]` configuration file correctly includes the user's `role` in the session token. The `jwt` callback should add the role from the user object to the token, and the `session` callback should expose the role from the token to the client-side session object. 2. **Create Post-Login Handler Page**: Create a new client component at `app/auth/post-login/page.tsx`. This page will act as a router. 3. **Implement Redirection Logic**: Inside the `post-login` component, use the `useSession` hook from `next-auth/react` and the `useRouter` hook from `next/navigation`. Use a `useEffect` hook to check the session status. If the status is 'loading', display a loading indicator. Once the status is 'authenticated', inspect the `session.user.role` property. If the role is 'ADMIN', use `router.replace('/admin')`. For any other role (e.g., 'USER'), use `router.replace('/dashboard')`. If the user is unauthenticated, redirect them back to `/login`. 4. **Update Login Flow**: Modify all `signIn()` function calls (e.g., in the login form) to specify the new handler page as the destination, for example: `signIn('credentials', { ...data, callbackUrl: '/auth/post-login' })`.",
         "testStrategy": "1. **Admin Login Test**: Log out completely. Navigate to the login page and sign in using an account with the 'ADMIN' role. Verify that you are automatically and correctly redirected to the admin dashboard (`/admin`). 2. **Regular User Login Test**: Log out completely. Navigate to the login page and sign in using a standard user account. Verify that you are automatically redirected to the main user dashboard (`/dashboard`). 3. **Manual Navigation Check**: After being logged in as a regular user, attempt to manually navigate to `/admin`. Verify that access is denied (as per existing middleware rules). 4. **Callback URL Check**: Inspect the network request during login to ensure the `callbackUrl` is being set to `/auth/post-login` correctly.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           18,
           26
@@ -729,7 +729,7 @@
             "description": "Modify the NextAuth.js configuration to ensure the user's role is available in the client-side session object. This involves updating the `jwt` and `session` callbacks to pass the role from the user database model to the session token and then to the client.",
             "dependencies": [],
             "details": "1. Open the NextAuth.js configuration file (e.g., `app/api/auth/[...nextauth]/route.ts`).\n2. In the `callbacks` object, locate the `jwt` callback. Inside, ensure the `user.role` is added to the `token` object when the user first signs in.\n3. Locate the `session` callback. Inside, retrieve the `role` from the `token` object and assign it to `session.user.role`.\n4. Update the TypeScript types in `next-auth.d.ts` to include `role: string;` in the `User` and `Session` interfaces to ensure type safety.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "After logging in, use browser developer tools to inspect the session object returned by the `useSession` hook in any client component. Verify that `session.user.role` exists and contains the correct value ('ADMIN' or 'USER')."
           },
           {
@@ -738,7 +738,7 @@
             "description": "Create a new client-side page component that will act as a central router after a user successfully logs in. This page will contain the redirection logic and display a loading state while processing.",
             "dependencies": [],
             "details": "1. Create a new file at `app/auth/post-login/page.tsx`.\n2. Define a React component (e.g., `PostLoginPage`) within this file.\n3. Add the `\"use client\";` directive at the top of the file.\n4. The component should render a simple loading indicator, such as a spinner or a 'Redirecting...' message, to provide user feedback.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Manually navigate to `/auth/post-login` in the browser. Verify that the loading state UI is displayed correctly without any errors."
           },
           {
@@ -750,7 +750,7 @@
               "28.2"
             ],
             "details": "1. In `app/auth/post-login/page.tsx`, import and use the `useSession` hook from `next-auth/react` and the `useRouter` hook from `next/navigation`.\n2. Implement a `useEffect` hook that triggers when the session `status` changes.\n3. Inside the `useEffect`:\n   - If `status === 'authenticated'`, check `session.user.role`.\n   - If the role is 'ADMIN', call `router.replace('/admin')`.\n   - For any other role (e.g., 'USER'), call `router.replace('/dashboard')`.\n   - If `status === 'unauthenticated'`, call `router.replace('/login')` to handle cases where a user lands here without a session.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "After logging in as an admin, manually navigate to `/auth/post-login`. Verify you are redirected to `/admin`. Log out, log in as a regular user, and manually navigate to `/auth/post-login`. Verify you are redirected to `/dashboard`."
           },
           {
@@ -761,7 +761,7 @@
               "28.3"
             ],
             "details": "1. Locate the component containing the login form (e.g., `components/auth/LoginForm.tsx`).\n2. Find the `signIn()` function call that is executed on form submission.\n3. Add the `callbackUrl` option to the second argument of the `signIn` call, setting its value to `'/auth/post-login'`. Example: `signIn('credentials', { ...data, callbackUrl: '/auth/post-login' });`.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "1. Log out completely. Navigate to the login page and sign in with an 'ADMIN' account. Verify you are correctly and automatically redirected to the `/admin` dashboard.\n2. Log out again. Sign in with a regular 'USER' account. Verify you are correctly and automatically redirected to the `/dashboard` page."
           }
         ]
@@ -874,7 +874,7 @@
     ],
     "metadata": {
       "created": "2025-06-21T22:19:07.747Z",
-      "updated": "2025-09-14T17:15:28.151Z",
+      "updated": "2025-09-17T16:35:45.716Z",
       "description": "Tasks for master context"
     }
   }
