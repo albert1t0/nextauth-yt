@@ -1,8 +1,7 @@
-import NextAuth from "next-auth"
-import authConfig from "./auth.config"
 import { NextResponse } from "next/server"
+import { auth } from "@/auth"
 
-const { auth: middleware } = NextAuth(authConfig)
+const middleware = auth
 
 const publicRoutes = [ 
   "/",
@@ -38,7 +37,7 @@ export default middleware((req) => {
     return NextResponse.redirect(new URL("/login", nextUrl));
   }
 
-  if (isAdminRoute && isLoggedIn && userRole !== "ADMIN") {
+  if (isAdminRoute && isLoggedIn && userRole !== "admin") {
     // Si es ruta de admin y el usuario no es admin, redirigir a inicio
     return NextResponse.redirect(new URL("/", nextUrl));
   }

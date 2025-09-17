@@ -8,13 +8,15 @@ import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 
 export const loginAction = async (
-    values: z.infer<typeof loginSchema> 
+    values: z.infer<typeof loginSchema>,
+    callbackUrl?: string
 ) => {
     try {
         await signIn("credentials", {
             email: values.email,
             password: values.password,
             redirect: false,
+            callbackUrl: callbackUrl || "/auth/post-login",
         });
         return { success: true };
     } catch (error) {
@@ -24,7 +26,8 @@ export const loginAction = async (
 };
 
 export const registerAction = async (
-    values: z.infer<typeof registerSchema> 
+    values: z.infer<typeof registerSchema>,
+    callbackUrl?: string
 ) => {
     try {
 
@@ -60,6 +63,7 @@ export const registerAction = async (
             email: data.email,
             password: data.password,
             redirect: false,
+            callbackUrl: callbackUrl || "/auth/post-login",
         });
 
         return { success: true };

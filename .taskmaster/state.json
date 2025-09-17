@@ -1,6 +1,11 @@
 {
+<<<<<<< HEAD
   "currentTag": "admin-section-tasks",
   "lastSwitched": "2025-09-17T16:04:04.350Z",
+=======
+  "currentTag": "master",
+  "lastSwitched": "2025-09-17T16:22:08.438Z",
+>>>>>>> admin-section
   "branchTagMapping": {},
   "migrationNoticeShown": true
 }

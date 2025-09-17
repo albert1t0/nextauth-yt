@@ -50,8 +50,9 @@ async function onSubmit(values: z.infer<typeof loginSchema>) {
     setSuccessMessage(null);
     startTransition(async() => {
       try {
-        await loginAction(values);
-        router.push("/dashboard");
+        await loginAction(values, "/auth/post-login");
+        // La redirección ahora será manejada por NextAuth con el callbackUrl
+        router.push("/auth/post-login");
       } catch (error) {
         setError(error instanceof Error ? error.message : "Error de autenticación");
       }
