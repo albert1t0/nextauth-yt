@@ -534,5 +534,888 @@
       "updated": "2025-07-02T13:44:52.877Z",
       "description": "Tasks for master context"
     }
+  },
+  "admin-section-tasks": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Initialize Next.js Project with TypeScript",
+        "description": "Initialize a new Next.js project with TypeScript and set up the basic project structure.",
+        "details": "Use `create-next-app` with the App Router and TypeScript template. \n```bash\nnpx create-next-app@latest my-auth-app --typescript --eslint --tailwind --src-dir --app --import-alias \"@/*\"\ncd my-auth-app\n```\nEnsure basic linting and formatting tools are configured.",
+        "testStrategy": "Verify that the Next.js application runs successfully in development mode (`npm run dev`). Check that TypeScript compilation works without errors.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 2,
+        "title": "Setup Prisma ORM and PostgreSQL Database",
+        "description": "Install and configure Prisma ORM with a PostgreSQL database. Define the initial User schema.",
+        "details": "Install Prisma CLI and Client: `npm install prisma --save-dev` and `npm install @prisma/client`. \nInitialize Prisma: `npx prisma init --datasource-provider postgresql`. \nConfigure `DATABASE_URL` in `.env`. \nDefine User model in `prisma/schema.prisma`:\n```prisma\nmodel User {\n  id        String   @id @default(cuid())\n  email     String   @unique\n  name      String?\n  password  String\n  emailVerified DateTime? // To store verification timestamp\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n}\n```\nRun `npx prisma migrate dev --name init` to create the initial migration and apply it.",
+        "testStrategy": "Verify that Prisma can connect to the PostgreSQL database. Check that the `User` table is created in the database with the correct columns after running migrations.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 3,
+        "title": "Install and Configure NextAuth.js",
+        "description": "Install and configure NextAuth.js for session management and authentication providers.",
+        "details": "Install NextAuth.js: `npm install next-auth`. \nCreate `app/api/auth/[...nextauth]/route.ts`. \nConfigure NextAuth with a Credentials provider. \n```typescript\n// app/api/auth/[...nextauth]/route.ts\nimport NextAuth from 'next-auth';\nimport CredentialsProvider from 'next-auth/providers/credentials';\n// ... (import Prisma adapter and bcrypt later)\n\nexport const authOptions = {\n  providers: [\n    CredentialsProvider({\n      name: 'Credentials',\n      credentials: {\n        email: { label: \"Email\", type: \"text\" },\n        password: { label: \"Password\", type: \"password\" }\n      },\n      async authorize(credentials) {\n        // Logic to verify credentials will be added in later tasks\n        // For now, can return null or a mock user for setup\n        if (credentials?.email && credentials?.password) {\n          // Placeholder: Actual DB lookup and password check later\n          // const user = await prisma.user.findUnique({ where: { email: credentials.email } });\n          // if (user && await bcrypt.compare(credentials.password, user.password)) return user;\n          return null; \n        }\n        return null;\n      }\n    })\n  ],\n  // session: { strategy: 'jwt' }, // Optional: JWT strategy\n  // pages: { signIn: '/login' }, // Optional: Custom login page\n};\n\nconst handler = NextAuth(authOptions);\nexport { handler as GET, handler as POST };\n```\nWrap the root layout with `<SessionProvider>` from `next-auth/react`.",
+        "testStrategy": "Verify that the NextAuth.js API route is accessible (e.g., `/api/auth/signin`). Check for any console errors related to NextAuth.js setup.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 4,
+        "title": "Setup shadcn/ui for UI Components",
+        "description": "Install and set up shadcn/ui for reusable UI components.",
+        "details": "Follow the shadcn/ui installation guide for Next.js: `npx shadcn-ui@latest init`. \nConfigure `tailwind.config.js` and `globals.css` as per shadcn/ui documentation. \nInstall basic components like `button`, `input`, `label`, `card`:\n`npx shadcn-ui@latest add button input label card form`.",
+        "testStrategy": "Verify that shadcn/ui components can be imported and rendered correctly in a sample page. Check that Tailwind CSS styles are applied.",
+        "priority": "medium",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 5,
+        "title": "Install Zod for Validation",
+        "description": "Install Zod for schema validation.",
+        "details": "Install Zod: `npm install zod`. No specific configuration needed beyond installation. It will be used in API routes and potentially forms.",
+        "testStrategy": "Create a simple Zod schema and test its validation logic in a test file or a temporary route. Ensure type inference works correctly.",
+        "priority": "medium",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 6,
+        "title": "Setup Email Sending Service (Resend/Nodemailer)",
+        "description": "Install and configure an email sending service (Resend or Nodemailer).",
+        "details": "Choose between Resend or Nodemailer. For Resend: `npm install resend`. \nGet API key from Resend and add it to `.env` (e.g., `RESEND_API_KEY`). \nCreate a utility function for sending emails, e.g., `lib/email.ts`.\n```typescript\n// lib/email.ts\nimport { Resend } from 'resend';\n\nconst resend = new Resend(process.env.RESEND_API_KEY);\n\nexport const sendVerificationEmail = async (email: string, token: string) => {\n  const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/verify-email?token=${token}`;\n  await resend.emails.send({\n    from: 'onboarding@resend.dev', // Replace with your domain\n    to: email,\n    subject: 'Verify your email address',\n    html: `<p>Click <a href=\"${verificationLink}\">here</a> to verify your email.</p>`\n  });\n};\n```\nEnsure `NEXT_PUBLIC_APP_URL` is set in `.env` (e.g., `http://localhost:3000`).",
+        "testStrategy": "Send a test email to a controlled email address using the configured service. Verify that the email is received and the content is correct.",
+        "priority": "medium",
+        "dependencies": [
+          1
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Implement User Registration API Endpoint",
+        "description": "Implement the user registration API endpoint, including email/password validation with Zod and password hashing.",
+        "details": "Create an API route `app/api/auth/register/route.ts`. \nUse Zod to validate `email` and `password`. \nInstall bcrypt: `npm install bcryptjs` and `@types/bcryptjs`. \nHash the password using bcrypt before saving to the database. \nCheck if user already exists. \n```typescript\n// app/api/auth/register/route.ts\nimport { NextRequest, NextResponse } from 'next/server';\nimport { z } from 'zod';\nimport bcrypt from 'bcryptjs';\nimport prisma from '@/lib/prisma'; // Assuming prisma client is exported from lib/prisma\n\nconst registerSchema = z.object({\n  email: z.string().email(),\n  password: z.string().min(8),\n});\n\nexport async function POST(req: NextRequest) {\n  try {\n    const body = await req.json();\n    const { email, password } = registerSchema.parse(body);\n\n    const existingUser = await prisma.user.findUnique({ where: { email } });\n    if (existingUser) {\n      return NextResponse.json({ error: 'User already exists' }, { status: 400 });\n    }\n\n    const hashedPassword = await bcrypt.hash(password, 10);\n    const user = await prisma.user.create({\n      data: { email, password: hashedPassword },\n    });\n    // Email verification sending will be handled in a subsequent task\n    return NextResponse.json({ message: 'User registered successfully. Please verify your email.' }, { status: 201 });\n  } catch (error) {\n    if (error instanceof z.ZodError) {\n      return NextResponse.json({ error: error.errors }, { status: 400 });\n    }\n    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });\n  }\n}\n```",
+        "testStrategy": "Test the endpoint with valid and invalid data (e.g., malformed email, short password). Verify that new users are created in the database with hashed passwords and appropriate error responses are returned.",
+        "priority": "high",
+        "dependencies": [
+          2,
+          3,
+          5
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 8,
+        "title": "Implement User Login Logic in NextAuth.js",
+        "description": "Implement the user login API endpoint within NextAuth.js `authorize` function, including email/password validation and password comparison.",
+        "details": "Update the `authorize` function in `app/api/auth/[...nextauth]/route.ts`. \nUse Prisma to find the user by email. \nUse bcrypt to compare the provided password with the stored hashed password. \nReturn the user object if credentials are valid, otherwise return null. \n```typescript\n// app/api/auth/[...nextauth]/route.ts (update authorize function)\n// ... imports (prisma, bcrypt)\nasync authorize(credentials) {\n  if (!credentials?.email || !credentials?.password) return null;\n\n  const user = await prisma.user.findUnique({\n    where: { email: credentials.email },\n  });\n\n  if (!user || !user.password) return null;\n  // Add check for emailVerified status after verification flow is implemented\n  // if (!user.emailVerified) { throw new Error('Please verify your email before logging in.'); }\n\n  const isValidPassword = await bcrypt.compare(credentials.password, user.password);\n  if (!isValidPassword) return null;\n\n  return { id: user.id, email: user.email, name: user.name, emailVerified: user.emailVerified }; // Return necessary user fields for session\n}\n// ... rest of authOptions\n```\nEnsure NextAuth.js is configured to use Prisma Adapter if you want database sessions: `npm install @next-auth/prisma-adapter`. Then add `adapter: PrismaAdapter(prisma)` to `authOptions`.",
+        "testStrategy": "Test login with valid and invalid credentials. Verify that NextAuth.js creates a session cookie upon successful login. Check that users who are not verified (once that logic is in) cannot log in.",
+        "priority": "high",
+        "dependencies": [
+          2,
+          3,
+          5,
+          7
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 9,
+        "title": "Implement User Logout Functionality",
+        "description": "Implement user logout functionality using NextAuth.js `signOut` method.",
+        "details": "Use the `signOut` function from `next-auth/react` in a UI component (e.g., a logout button). \n```typescript\n// Example in a component\nimport { signOut } from 'next-auth/react';\n\nconst LogoutButton = () => {\n  return <button onClick={() => signOut({ callbackUrl: '/' })}>Sign Out</button>;\n};\n```\nNo backend API changes are typically needed as NextAuth.js handles this via its routes.",
+        "testStrategy": "Log in as a user, then click the logout button. Verify that the session is terminated and the user is redirected (e.g., to the homepage).",
+        "priority": "medium",
+        "dependencies": [
+          3
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 10,
+        "title": "Implement Email Verification Token Generation and Storage",
+        "description": "Implement logic to generate and store email verification tokens. This might involve adding a new model or fields to the User model.",
+        "details": "Create a new Prisma model for verification tokens or add fields to the User model. A separate model is cleaner for managing token expiry.\n```prisma\n// prisma/schema.prisma (add this model)\nmodel VerificationToken {\n  id        String   @id @default(cuid())\n  identifier String   // Typically user's email or ID\n  token     String   @unique\n  expires   DateTime\n\n  @@unique([identifier, token])\n}\n```\nRun `npx prisma migrate dev --name add_verification_token`. \nCreate a utility function to generate a unique token (e.g., using `crypto.randomBytes`). Store the token with an expiry date linked to the user.",
+        "testStrategy": "Verify that tokens can be generated, stored in the database with an expiry, and retrieved. Test uniqueness constraints.",
+        "priority": "medium",
+        "dependencies": [
+          2
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 11,
+        "title": "Send Verification Email on Registration",
+        "description": "Modify the registration process to generate a verification token and send a verification email to the new user.",
+        "details": "In `app/api/auth/register/route.ts`, after successfully creating the user (but before they can log in, or mark them as unverified):\n1. Generate a verification token using the utility from task 10.\n2. Store the token associated with the user's email/ID.\n3. Use the email sending utility (task 6) to send an email containing a link with this token. The link should point to an API endpoint for verification (task 12).\n```typescript\n// In app/api/auth/register/route.ts, after user creation:\n// ...\nconst verificationToken = crypto.randomBytes(32).toString('hex');\nconst expires = new Date(Date.now() + 3600 * 1000); // 1 hour expiry\n\nawait prisma.verificationToken.create({\n  data: {\n    identifier: user.email, // or user.id\n    token: verificationToken,\n    expires,\n  },\n});\n\nawait sendVerificationEmail(user.email, verificationToken);\n// ...\n```\nUser's `emailVerified` field should initially be null or false.",
+        "testStrategy": "Register a new user. Verify that a verification token is created in the database. Verify that an email is sent to the user's email address with a correctly formatted verification link.",
+        "priority": "high",
+        "dependencies": [
+          7,
+          6,
+          10
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 12,
+        "title": "Implement Email Verification API Endpoint",
+        "description": "Create an API endpoint to handle email verification. This endpoint will receive the token, validate it, and mark the user's email as verified.",
+        "details": "Create `app/api/auth/verify-email/route.ts`. \nThis GET endpoint will take the `token` as a query parameter. \n1. Find the token in the `VerificationToken` table. \n2. Check if it's valid and not expired. \n3. If valid, find the associated user and update their `emailVerified` status/timestamp in the `User` table. \n4. Delete the used token. \n5. Redirect the user to the login page or a success page. \n```typescript\n// app/api/auth/verify-email/route.ts\nimport { NextRequest, NextResponse } from 'next/server';\nimport prisma from '@/lib/prisma';\n\nexport async function GET(req: NextRequest) {\n  const token = req.nextUrl.searchParams.get('token');\n  if (!token) {\n    return NextResponse.redirect(new URL('/?error=MissingToken', req.url));\n  }\n\n  const verificationToken = await prisma.verificationToken.findUnique({\n    where: { token },\n  });\n\n  if (!verificationToken || verificationToken.expires < new Date()) {\n    return NextResponse.redirect(new URL('/?error=InvalidOrExpiredToken', req.url));\n  }\n\n  await prisma.user.update({\n    where: { email: verificationToken.identifier }, // Assuming identifier is email\n    data: { emailVerified: new Date() },\n  });\n\n  await prisma.verificationToken.delete({ where: { id: verificationToken.id } });\n\n  return NextResponse.redirect(new URL('/login?verified=true', req.url));\n}\n```",
+        "testStrategy": "Generate a verification link (manually or via registration). Click the link. Verify that the user's `emailVerified` status is updated in the database and the token is deleted. Test with invalid/expired tokens.",
+        "priority": "high",
+        "dependencies": [
+          2,
+          10
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 13,
+        "title": "Block Login for Unverified Emails",
+        "description": "Update login logic to prevent users from logging in if their email is not verified.",
+        "details": "In `app/api/auth/[...nextauth]/route.ts`, within the `authorize` function, add a check for `user.emailVerified` before returning the user object.\n```typescript\n// In authorize function of NextAuth options:\n// ...\n  const user = await prisma.user.findUnique({ where: { email: credentials.email } });\n  if (!user || !user.password) return null;\n\n  if (!user.emailVerified) {\n    // Option 1: Return null to indicate login failure\n    // return null; \n    // Option 2: Throw a specific error that can be caught by NextAuth and displayed to user\n    throw new Error('EmailNotVerified'); \n  }\n// ... rest of password check and return user\n```\nHandle the `EmailNotVerified` error on the client-side if using the error throwing approach.",
+        "testStrategy": "Attempt to log in with a user account that has been registered but not yet verified. Verify that login fails and an appropriate message is shown. Then, verify the email and attempt login again; it should succeed.",
+        "priority": "medium",
+        "dependencies": [
+          8,
+          12
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 14,
+        "title": "Create Reusable Auth Form Components",
+        "description": "Create reusable React components for authentication forms (Registration, Login) using shadcn/ui and Zod for client-side validation.",
+        "details": "Create components like `AuthForm.tsx`, `RegistrationForm.tsx`, `LoginForm.tsx`. \nUse shadcn/ui components (`Input`, `Button`, `Label`, `Card`, `Form`). \nIntegrate Zod for client-side form validation using libraries like `react-hook-form` with its Zod resolver (`@hookform/resolvers/zod`). \n```typescript\n// Example structure for LoginForm.tsx\n'use client';\nimport { useForm } from 'react-hook-form';\nimport { zodResolver } from '@hookform/resolvers/zod';\nimport * as z from 'zod';\nimport { Button } from '@/components/ui/button';\nimport { Input } from '@/components/ui/input';\nimport { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';\nimport { signIn } from 'next-auth/react';\nimport { useRouter } from 'next/navigation';\n\nconst loginSchema = z.object({\n  email: z.string().email(),\n  password: z.string().min(1, 'Password is required'),\n});\n\nexport function LoginForm() {\n  const router = useRouter();\n  const form = useForm<z.infer<typeof loginSchema>>({\n    resolver: zodResolver(loginSchema),\n    defaultValues: { email: '', password: '' },\n  });\n\n  async function onSubmit(values: z.infer<typeof loginSchema>) {\n    const result = await signIn('credentials', {\n      redirect: false,\n      email: values.email,\n      password: values.password,\n    });\n    if (result?.ok) {\n      router.push('/dashboard'); // Or desired redirect path\n    } else {\n      // Handle error (e.g., display message from result.error)\n      form.setError('root', { message: result?.error || 'Login failed' });\n    }\n  }\n\n  return (\n    <Form {...form}>\n      <form onSubmit={form.handleSubmit(onSubmit)} className=\"space-y-4\">\n        {/* FormFields for email and password */}\n        <Button type=\"submit\">Login</Button>\n      </form>\n    </Form>\n  );\n}\n```\nSimilarly create `RegistrationForm.tsx` that calls the `/api/auth/register` endpoint.",
+        "testStrategy": "Verify that forms render correctly. Test client-side validation with Zod (e.g., empty fields, invalid email format). Ensure form submission calls the correct API endpoints.",
+        "priority": "high",
+        "dependencies": [
+          4,
+          5
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Develop User Registration Page",
+        "description": "Develop the User Registration page (`/register`) using the created form components.",
+        "details": "Create a Next.js page route `app/register/page.tsx`. \nImport and use the `RegistrationForm` component. \nHandle form submission, API responses, and display success/error messages to the user. \nRedirect or guide user on successful registration (e.g., message to check email).",
+        "testStrategy": "Navigate to the `/register` page. Test the registration flow end-to-end. Verify UI feedback for successful registration and for errors (e.g., user already exists, validation errors).",
+        "priority": "high",
+        "dependencies": [
+          14,
+          7
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "Develop User Login Page",
+        "description": "Develop the User Login page (`/login`) using the created form components.",
+        "details": "Create a Next.js page route `app/login/page.tsx`. \nImport and use the `LoginForm` component. \nHandle form submission using `signIn` from `next-auth/react`. \nRedirect user to a protected page (e.g., `/dashboard`) on successful login. Display error messages on login failure.",
+        "testStrategy": "Navigate to the `/login` page. Test login with valid and invalid credentials. Verify redirection on successful login and error messages on failure. Test login for unverified users (should fail with message).",
+        "priority": "high",
+        "dependencies": [
+          14,
+          8
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Implement Protected Routes Middleware",
+        "description": "Implement middleware to protect specific routes (e.g., `/dashboard`) from unauthenticated access using NextAuth.js.",
+        "details": "Create `middleware.ts` in the root or `src` directory. \nUse `withAuth` HOF from `next-auth/middleware` or check `getToken` from `next-auth/jwt`. \n```typescript\n// middleware.ts\nexport { default } from \"next-auth/middleware\"\n\nexport const config = {\n  matcher: ['/dashboard/:path*', '/profile'], // Add all routes to protect\n};\n```\nAlternatively, for more complex logic:\n```typescript\n// middleware.ts\nimport { getToken } from 'next-auth/jwt';\nimport { NextRequest, NextResponse } from 'next/server';\n\nexport async function middleware(req: NextRequest) {\n  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });\n\n  if (req.nextUrl.pathname.startsWith('/dashboard')) {\n    if (!token) {\n      const loginUrl = new URL('/login', req.url);\n      loginUrl.searchParams.set('callbackUrl', req.nextUrl.pathname);\n      return NextResponse.redirect(loginUrl);\n    }\n    // Add role-based checks if needed: if (token.role !== 'admin') return NextResponse.redirect('/');\n  }\n  return NextResponse.next();\n}\n\nexport const config = {\n  matcher: ['/dashboard/:path*', '/profile'],\n};\n```\nEnsure `NEXTAUTH_SECRET` is set in `.env`.",
+        "testStrategy": "Attempt to access a protected route (e.g., `/dashboard`) without being logged in; verify redirection to the login page. Log in and access the protected route; verify access is granted.",
+        "priority": "high",
+        "dependencies": [
+          3
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 18,
+        "title": "Create Sample Dashboard Page (Protected)",
+        "description": "Create a sample protected page (e.g., `/dashboard`) that displays user information and a logout button.",
+        "details": "Create `app/dashboard/page.tsx`. \nUse `useSession` hook from `next-auth/react` to access session data and display user information (e.g., email). \nInclude the `LogoutButton` component (from task 9). \nThis page should only be accessible to authenticated users due to the middleware (task 17).",
+        "testStrategy": "Log in and navigate to `/dashboard`. Verify that user-specific information is displayed. Test the logout button from this page. Attempt to access `/dashboard` when logged out and verify redirection.",
+        "priority": "medium",
+        "dependencies": [
+          17,
+          9
+        ],
+        "status": "done",
+        "subtasks": []
+      },
+      {
+        "id": 19,
+        "title": "Add Password Reset Token Model to Prisma Schema",
+        "description": "Update the Prisma schema to include a model for storing password reset tokens. The model should include fields for an identifier (email), the token itself, and an expiration date.",
+        "details": "Modify the `prisma/schema.prisma` file to add a new `PasswordResetToken` model. This model will store the necessary information for password reset functionality.\n\nThe model definition should be as follows:\n```prisma\nmodel PasswordResetToken {\n  id        String   @id @default(cuid())\n  email     String   // User's email address associated with the token\n  token     String   @unique // The cryptographically secure reset token\n  expires   DateTime // The timestamp when this token will expire\n\n  // Optional: If you need to quickly find tokens by email, consider adding an index:\n  // @@index([email])\n}\n```\nAfter adding the model to `prisma/schema.prisma`, run the following Prisma commands in your terminal:\n1. To create and apply a new migration: `npx prisma migrate dev --name add_password_reset_token_model`\n2. To regenerate the Prisma Client to include the new model: `npx prisma generate`\nThis will update your database schema and make the `PasswordResetToken` model available in your Prisma Client for database operations.",
+        "testStrategy": "1. After defining the model in `prisma/schema.prisma`, run `npx prisma migrate dev --name add_password_reset_token_model`. Verify that the migration applies successfully without errors.\n2. Run `npx prisma generate` to update the Prisma Client.\n3. Inspect your PostgreSQL database (e.g., using `psql` or a database GUI tool) to confirm that a new table named `PasswordResetToken` has been created.\n4. Verify that the `PasswordResetToken` table has the following columns with appropriate types: `id` (String, Primary Key), `email` (String), `token` (String, Unique), `expires` (DateTime).\n5. Write a temporary test script or use a tool like Prisma Studio (`npx prisma studio`) to interact with the new table:\n    a. Attempt to create a new record in the `PasswordResetToken` table with valid data. Verify success.\n    b. Attempt to create a second record with the same `token` value as the first. Verify that this operation fails due to the unique constraint on the `token` field.\n    c. Attempt to create a second record with a different `token` but the same `email`. Verify success (as `email` is not unique by itself).\n    d. Read the created records to ensure data integrity.\n    e. Delete the test records.",
+        "status": "done",
+        "dependencies": [
+          2,
+          10
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 20,
+        "title": "Implement Password Reset Request API Endpoint",
+        "description": "Create an API endpoint to handle password reset requests. This endpoint will receive a user's email, generate a secure password reset token, save it to the database with an expiration date, and send an email to the user with a link to reset their password.",
+        "details": "Create a new API route at `app/api/auth/request-password-reset/route.ts` to handle POST requests.\n1.  **Input Validation**: The endpoint should expect a JSON body containing an `email` field. Use Zod for validating the email format.\n2.  **User Lookup**: Query the database using Prisma to find a user matching the provided email.\n3.  **Token Generation**:\n    *   If a user is found, generate a cryptographically secure, unique token (e.g., using `crypto.randomBytes(32).toString('hex')`).\n    *   Define an expiration period for the token (e.g., 1 hour from the current time).\n4.  **Token Storage**:\n    *   Before saving a new token, check for and invalidate/delete any existing, non-expired password reset tokens for the same email in the `PasswordResetToken` table to ensure only one active reset link per user.\n    *   Store the new token, the user's email, and its expiration timestamp in the `PasswordResetToken` table (defined in Task 19).\n5.  **Email Notification**:\n    *   Construct the password reset URL (e.g., `YOUR_APP_URL/reset-password?token=<GENERATED_TOKEN>`).\n    *   Send an email to the user's email address containing this unique password reset link. This requires an email sending service (e.g., Resend, Nodemailer) to be configured. The email should clearly state the purpose of the link and its expiration.\n6.  **Security Consideration**: To prevent user enumeration, the API should always return a generic success message (e.g., \"If an account with that email exists, a password reset link has been sent.\"), regardless of whether the email was found in the database or an error occurred during email sending (unless it's a client-side validation error). Log internal errors for monitoring.\n7.  **Error Handling**: Implement try-catch blocks for database operations and email sending. Log errors server-side.\n\nExample structure for the route handler:\n```typescript\n// app/api/auth/request-password-reset/route.ts\nimport { NextRequest, NextResponse } from 'next/server';\nimport { z } from 'zod';\nimport prisma from '@/lib/prisma'; // Assuming prisma client\nimport crypto from 'crypto';\n// import { sendPasswordResetEmail } from '@/lib/email'; // Assume an email sending utility\n\nconst requestPasswordResetSchema = z.object({\n  email: z.string().email({ message: 'Invalid email address' }),\n});\n\nexport async function POST(req: NextRequest) {\n  try {\n    const body = await req.json();\n    const validation = requestPasswordResetSchema.safeParse(body);\n\n    if (!validation.success) {\n      return NextResponse.json({ errors: validation.error.flatten().fieldErrors }, { status: 400 });\n    }\n\n    const { email } = validation.data;\n\n    const user = await prisma.user.findUnique({\n      where: { email },\n    });\n\n    if (user) {\n      // Invalidate old tokens for this email\n      await prisma.passwordResetToken.deleteMany({\n        where: { email: email },\n      });\n\n      const token = crypto.randomBytes(32).toString('hex');\n      const expires = new Date(Date.now() + 3600 * 1000); // 1 hour from now\n\n      await prisma.passwordResetToken.create({\n        data: {\n          email,\n          token,\n          expires,\n        },\n      });\n\n      // const resetLink = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;\n      // await sendPasswordResetEmail(email, resetLink); // Implement this function\n    }\n\n    // Always return a generic success message to prevent user enumeration\n    return NextResponse.json({ message: 'If your email is in our system, you will receive a password reset link.' }, { status: 200 });\n\n  } catch (error) {\n    console.error('Password reset request error:', error);\n    // Return generic message even on server error for security, but log it\n    return NextResponse.json({ message: 'If your email is in our system, you will receive a password reset link.' }, { status: 200 });\n  }\n}\n```",
+        "testStrategy": "1.  **Successful Request**:\n    *   Send a POST request to `/api/auth/request-password-reset` with the email of an existing, registered user.\n    *   **Expected**: HTTP 200 OK response with a generic success message.\n    *   **Verification**:\n        *   Check the `PasswordResetToken` table in the database: a new record should exist for the user's email, containing a unique token and an expiration timestamp approximately 1 hour in the future.\n        *   (If email sending is mocked/testable) Verify that an email was dispatched to the user's address containing a link like `YOUR_APP_URL/reset-password?token=<TOKEN_VALUE>`.\n2.  **Non-Existent User Email**:\n    *   Send a POST request with an email address not registered in the system.\n    *   **Expected**: HTTP 200 OK response with the same generic success message (to prevent user enumeration).\n    *   **Verification**:\n        *   Check the `PasswordResetToken` table: no new token should be generated for this email.\n        *   No email should be sent.\n3.  **Invalid Email Format**:\n    *   Send a POST request with an invalid email format (e.g., \"testuser\", \"test@.com\").\n    *   **Expected**: HTTP 400 Bad Request response with a JSON body detailing the validation errors (e.g., `{ \"errors\": { \"email\": [\"Invalid email address\"] } }`).\n4.  **Missing Email Field**:\n    *   Send a POST request with an empty body or a body missing the `email` field.\n    *   **Expected**: HTTP 400 Bad Request response with a JSON body detailing the validation errors.\n5.  **Token Invalidation on Subsequent Request**:\n    *   Request a password reset for a user. Verify a token (Token A) is created.\n    *   Request another password reset for the same user.\n    *   **Expected**: HTTP 200 OK.\n    *   **Verification**:\n        *   Check the `PasswordResetToken` table: Token A should be deleted or marked as invalid. A new token (Token B) should be present and active for the user.\n6.  **Database/Service Error Simulation (if possible)**:\n    *   Simulate a database write failure or email sending failure (if these can be mocked).\n    *   **Expected**: The endpoint should still ideally return a generic success message (HTTP 200) to the client to prevent information leakage, but log the internal error server-side for administrators.",
+        "status": "done",
+        "dependencies": [
+          2,
+          19
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 21,
+        "title": "Create 'Forgot Password' Page",
+        "description": "Develop the 'Forgot Password' page (`/forgot-password`) where users can submit their email address to initiate the password reset process by calling the password reset request API.",
+        "details": "1. Create a new Next.js page route at `app/forgot-password/page.tsx`.\n2. Design and implement a form that includes:\n    - An input field for the user's email address.\n    - A submit button (e.g., 'Send Reset Link').\n3. Utilize reusable form components from Task 14 (e.g., `Input`, `Button`, `Form` from shadcn/ui) and client-side validation patterns using Zod and `react-hook-form`.\n    - Define a Zod schema for the email field (e.g., `z.object({ email: z.string().email({ message: 'Invalid email address' }) })`).\n4. On form submission:\n    - Prevent default form submission.\n    - Make a POST request to the `/api/auth/request-password-reset` endpoint (implemented in Task 20). The request body should be a JSON object containing the email: `{ \"email\": \"user@example.com\" }`.\n    - Use a library like `axios` or the native `fetch` API for the request.\n5. Handle API responses:\n    - On successful API response (e.g., HTTP 200), display a generic success message to the user, such as 'If an account with that email exists, a password reset link has been sent. Please check your inbox.' This is important for security to prevent email enumeration.\n    - On API error or network failure, display an appropriate error message to the user (e.g., 'An error occurred. Please try again.').\n    - Manage loading states for the form submission.\n6. Ensure the page is publicly accessible and does not require authentication.",
+        "testStrategy": "1. Navigate to the `/forgot-password` page in a browser.\n2. **UI Verification**:\n    - Verify that the page renders correctly with an email input field and a submit button.\n3. **Client-Side Validation**:\n    - Attempt to submit the form with an empty email field. Verify that a client-side validation error message is displayed (e.g., 'Email is required').\n    - Enter an improperly formatted email (e.g., 'test@invalid') and attempt to submit. Verify that a client-side validation error message for invalid email format is displayed.\n4. **Successful Password Reset Request**:\n    - Enter the email address of a known, existing user and submit the form.\n    - **Expected**: A generic success message should be displayed (e.g., 'If an account with that email exists, a password reset link has been sent.').\n    - **Verification**: Check the browser's network developer tools to confirm that a POST request was made to `/api/auth/request-password-reset` with the correct email in the payload.\n5. **Password Reset Request for Non-Existing User**:\n    - Enter an email address that is known not to be registered in the system and submit the form.\n    - **Expected**: The same generic success message as in step 4 should be displayed to prevent email enumeration.\n    - **Verification**: Check the browser's network developer tools to confirm the API call was made.\n6. **API Error Handling (if mockable or testable)**:\n    - If the `/api/auth/request-password-reset` endpoint returns an error (e.g., 500 server error), verify that an appropriate error message is displayed on the page.\n7. **Accessibility**:\n    - Perform basic accessibility checks (e.g., keyboard navigation, proper labels for form fields).",
+        "status": "done",
+        "dependencies": [
+          20,
+          14
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 22,
+        "title": "Implement Password Reset API Endpoint",
+        "description": "Implement an API endpoint to handle the actual password reset. This endpoint will receive the reset token and the new password, validate the token, hash the new password, and update the user's record in the database.",
+        "details": "1.  **API Route Creation**: Create a new API route at `app/api/auth/reset-password/route.ts` to handle POST requests.\n2.  **Input Validation**: The endpoint should expect a JSON body containing `token` (string) and `newPassword` (string). Use Zod (from Task 5) to validate the `token` (e.g., non-empty string) and `newPassword` (e.g., minimum length 8 characters, any other complexity rules).\n3.  **Token Validation**: \n    *   Query the `PasswordResetToken` table (defined in Task 19) using Prisma (from Task 2) to find the provided `token`.\n    *   If the token is not found or if `new Date() > token.expires`, return a 400 Bad Request error (e.g., \"Invalid or expired password reset token\").\n4.  **User Lookup**: \n    *   If the token is valid, retrieve the `email` associated with the token.\n    *   Query the `User` table using Prisma to find the user by this `email`.\n    *   If no user is found for the email (which should be rare if the token is valid), return a 404 Not Found error or a generic error.\n5.  **Password Hashing**: \n    *   Hash the `newPassword` using `bcryptjs` (similar to Task 7). Generate a new salt and hash the password.\n6.  **Update User Record**: \n    *   Update the user's `password` field in the `User` table with the new hashed password.\n    *   Optionally, update the user's `updatedAt` timestamp.\n7.  **Token Invalidation**: \n    *   Delete the used `PasswordResetToken` from the database to prevent it from being used again.\n8.  **Response**: \n    *   On successful password reset, return a 200 OK response with a success message (e.g., `{ message: \"Password has been reset successfully.\" }`).\n    *   Return appropriate error responses (e.g., 400 for validation errors, invalid/expired token; 404 if user not found; 500 for unexpected server errors).",
+        "testStrategy": "1.  **Successful Password Reset**:\n    *   Manually add a valid, non-expired `PasswordResetToken` to the database for an existing user.\n    *   Send a POST request to `/api/auth/reset-password` with the correct `token` and a valid `newPassword`.\n    *   **Expected**: HTTP 200 OK response.\n    *   **Verification**: Check the `User` table to confirm the password hash has changed. Attempt to log in with the new password. Verify the `PasswordResetToken` used has been deleted from the database.\n2.  **Invalid Token**:\n    *   Send a POST request with a `token` that does not exist in the `PasswordResetToken` table.\n    *   **Expected**: HTTP 400 Bad Request (or similar) error response.\n    *   **Verification**: User's password should remain unchanged.\n3.  **Expired Token**:\n    *   Manually add a `PasswordResetToken` to the database with an `expires` timestamp in the past.\n    *   Send a POST request with this expired `token`.\n    *   **Expected**: HTTP 400 Bad Request (or similar) error response indicating the token is expired.\n    *   **Verification**: User's password should remain unchanged.\n4.  **Invalid New Password (Validation Failure)**:\n    *   Send a POST request with a valid token but a `newPassword` that fails Zod validation (e.g., too short).\n    *   **Expected**: HTTP 400 Bad Request with a validation error message.\n    *   **Verification**: User's password should remain unchanged.\n5.  **Missing Token or New Password in Payload**:\n    *   Send a POST request missing the `token` or `newPassword` field in the JSON body.\n    *   **Expected**: HTTP 400 Bad Request with a validation error message.\n    *   **Verification**: User's password should remain unchanged.\n6.  **Attempt to Reuse Token**:\n    *   After a successful password reset, attempt to send another POST request using the same `token`.\n    *   **Expected**: HTTP 400 Bad Request (or similar) error, as the token should have been deleted.\n    *   **Verification**: User's password should not be affected by the second attempt.",
+        "status": "done",
+        "dependencies": [
+          2,
+          5,
+          7,
+          19
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 23,
+        "title": "Create 'Reset Password' Page",
+        "description": "Develop the 'Reset Password' page (`/reset-password/[token]`) that allows users to set a new password after verifying a reset token received via email. The page will capture the token from URL parameters and include a form for the new password.",
+        "details": "1.  **Page Route Creation**: Create a dynamic Next.js page route at `app/reset-password/[token]/page.tsx`.\n2.  **Token Extraction**: Implement logic to extract the `token` from the URL parameters. This can be done using `useParams` from `next/navigation` in a client component or the `params` prop if it's a server component rendering a client component that needs the token.\n3.  **Form Implementation**: \n    *   Design and implement a form containing two password input fields: 'New Password' and 'Confirm New Password', and a 'Reset Password' submit button.\n    *   Utilize reusable form components developed in Task 14 (e.g., `Input`, `Button`, `Form` from shadcn/ui).\n    *   Implement client-side validation using Zod (from Task 5) and `react-hook-form`. Define a Zod schema to ensure both password fields are non-empty, meet minimum length/complexity requirements, and that the 'Confirm New Password' field matches the 'New Password' field. Example schema:\n        ```typescript\n        import * as z from 'zod';\n\n        const passwordResetSchema = z.object({\n          newPassword: z.string().min(8, { message: 'Password must be at least 8 characters long' }),\n          confirmPassword: z.string().min(8, { message: 'Password must be at least 8 characters long' })\n        }).refine(data => data.newPassword === data.confirmPassword, {\n          message: \"Passwords don't match\",\n          path: [\"confirmPassword\"],\n        });\n        ```\n4.  **API Interaction**: On successful client-side validation and form submission, make a POST request to the 'Password Reset API Endpoint' (defined in Task 22). The request body should include the `token` (extracted from the URL) and the `newPassword`.\n5.  **User Feedback and Redirection**: \n    *   Upon a successful API response, display a success message to the user (e.g., \"Your password has been reset successfully. You can now log in with your new password.\").\n    *   Redirect the user to the login page (Task 16).\n    *   In case of API errors (e.g., invalid/expired token, server error), display appropriate and user-friendly error messages on the page.\n6.  **Component Structure**: It's recommended to create a dedicated client component (e.g., `ResetPasswordForm.tsx`) to encapsulate the form logic, state management (e.g., using `useState` or `react-hook-form`), validation, and API call handling. The page component (`app/reset-password/[token]/page.tsx`) would then import and render this form component.",
+        "testStrategy": "1.  **UI Rendering and Token Handling**: \n    *   Navigate to a URL like `/reset-password/test-token`.\n    *   Verify that the page renders correctly, displaying input fields for 'New Password' and 'Confirm New Password', and a 'Reset Password' button.\n    *   Ensure the `test-token` is correctly captured by the page/form component.\n2.  **Client-Side Validation**: \n    *   Attempt to submit the form with empty password fields. Verify that appropriate client-side validation messages are displayed.\n    *   Enter a password shorter than the minimum requirement in the 'New Password' field. Verify the validation error.\n    *   Enter a valid 'New Password' but a different password in 'Confirm New Password'. Verify the mismatch error.\n3.  **Successful Password Reset Scenario**: \n    *   Prerequisite: Ensure the Password Reset API (Task 22) is functional. Manually generate or use a valid, non-expired password reset token for a test user.\n    *   Navigate to `/reset-password/[valid-token]` (replace `[valid-token]` with the actual token).\n    *   Enter a new, valid password in both fields and submit the form.\n    *   **Expected**: A success message is displayed, and the user is redirected to the login page.\n    *   **Verification**: Attempt to log in as the test user with the newly set password.\n4.  **Invalid or Expired Token Scenario**: \n    *   Navigate to `/reset-password/invalid-or-expired-token` (using a token known to be invalid or expired for testing with the API from Task 22).\n    *   Enter valid passwords in the form and submit.\n    *   **Expected**: An appropriate error message (e.g., \"Invalid or expired token. Please request a new password reset link.\") is displayed on the page, originating from the API response.\n5.  **API Error Handling (General)**: \n    *   If possible, simulate other API errors (e.g., server unavailable) when the form is submitted.\n    *   Verify that generic, user-friendly error messages are displayed on the page, preventing raw error exposure.",
+        "status": "done",
+        "dependencies": [
+          14,
+          5,
+          22
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 24,
+        "title": "Mejorar la Interfaz y Estructura de la Página de Inicio",
+        "description": "Rediseñar la página de inicio (`/`) para incluir un encabezado con acceso al login, un título principal, una sección de tarjetas informativas y un pie de página, creando una bienvenida moderna y funcional para el usuario.",
+        "details": "La implementación se centrará en el archivo `app/page.tsx`. 1. **Crear Encabezado (Header)**: Implementar un componente de encabezado en la parte superior de la página. Debe mostrar el título 'Multiplataforma - DIAD' y un botón o enlace 'Login' que redirija a la página `/login`. Utilizar componentes de `shadcn/ui` para consistencia visual. 2. **Sección de Tarjetas (Cards)**: Debajo del contenido principal, crear una sección que contenga tres tarjetas dispuestas horizontalmente (en escritorio) y verticalmente (en móvil). Utilizar el componente `Card` de `shadcn/ui`. Los títulos de las tarjetas serán: 'Carga archivos', 'Ingresa tus datos' y 'Revisa la documentación'. Añadir un breve texto descriptivo a cada una. 3. **Pie de Página (Footer)**: Añadir un componente de pie de página simple en la parte inferior que contenga el texto 'DIAD - 2025'. 4. **Estilo y Responsividad**: Utilizar TailwindCSS para asegurar que el diseño sea moderno, limpio y completamente responsivo en dispositivos de escritorio y móviles.",
+        "testStrategy": "1. **Verificación del Encabezado**: Navegar a la ruta raíz (`/`). Confirmar que el encabezado se muestra correctamente con el título 'Multiplataforma - DIAD'. Hacer clic en el botón 'Login' y verificar que redirige a la página `/login`. 2. **Verificación de las Tarjetas**: Desplazarse hacia abajo y confirmar la presencia de las tres tarjetas con sus respectivos títulos ('Carga archivos', 'Ingresa tus datos', 'Revisa la documentación'). 3. **Verificación del Pie de Página**: Asegurarse de que el pie de página es visible en la parte inferior de la página con el texto 'DIAD - 2025'. 4. **Pruebas de Responsividad**: Usar las herramientas de desarrollador del navegador para simular diferentes tamaños de pantalla (móvil, tableta, escritorio). Verificar que el layout se adapta correctamente, especialmente la disposición de las tarjetas y el menú de navegación.",
+        "status": "done",
+        "dependencies": [
+          1,
+          14
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Crear el Componente de Encabezado (Header)",
+            "description": "Implementar un componente de encabezado reutilizable para la parte superior de la página. Este componente mostrará el título de la aplicación y un botón de inicio de sesión.",
+            "dependencies": [],
+            "details": "Crea un nuevo archivo, por ejemplo, en `components/layout/Header.tsx`. Dentro, define un componente que renderice una etiqueta `<header>`. Utiliza un `<h2>` para el título 'Multiplataforma - DIAD' y un componente `<Button>` de `shadcn/ui` con el texto 'Login'. Envuelve el botón en un componente `<Link>` de Next.js que apunte a `/login`. Usa Flexbox (`flex justify-between items-center`) para alinear los elementos. Finalmente, importa y renderiza este componente en la parte superior de `app/page.tsx`.",
+            "status": "done",
+            "testStrategy": "Verificar que el encabezado se renderiza correctamente, que el título es visible y que el botón 'Login' redirige a la ruta `/login` al hacer clic."
+          },
+          {
+            "id": 2,
+            "title": "Estructurar el Contenido Principal y Añadir Título de Bienvenida",
+            "description": "Definir la estructura principal de la página de inicio, justo debajo del encabezado, e incluir un título principal H1 que sirva como bienvenida al usuario.",
+            "dependencies": [],
+            "details": "En `app/page.tsx`, debajo del componente `Header`, añade una etiqueta `<main>` que envuelva el resto del contenido de la página. Dentro de `<main>`, el primer elemento debe ser un `<h1>` con un texto como \"Bienvenido a la Plataforma de Análisis\". Utiliza clases de TailwindCSS para centrar el texto, aumentar su tamaño (`text-4xl`, `font-bold`) y añadir margen superior e inferior (`my-8`).",
+            "status": "done",
+            "testStrategy": "Comprobar que el título H1 aparece debajo del encabezado con el estilo y espaciado correctos."
+          },
+          {
+            "id": 3,
+            "title": "Implementar la Sección de Tarjetas Informativas",
+            "description": "Desarrollar la sección que muestra tres tarjetas con información clave sobre las funcionalidades de la aplicación, utilizando los componentes de `shadcn/ui`.",
+            "dependencies": [],
+            "details": "Dentro de la etiqueta `<main>` en `app/page.tsx`, después del título H1, crea un `<div>` que funcionará como contenedor para las tarjetas. Dentro de este div, implementa tres componentes `<Card>` de `shadcn/ui`. Cada tarjeta debe contener un `<CardHeader>` con un `<CardTitle>` ('Carga archivos', 'Ingresa tus datos', 'Revisa la documentación') y un `<CardContent>` con un párrafo descriptivo breve para cada una.",
+            "status": "done",
+            "testStrategy": "Verificar que las tres tarjetas se renderizan con sus respectivos títulos y textos descriptivos."
+          },
+          {
+            "id": 4,
+            "title": "Aplicar Diseño Responsivo a la Página y las Tarjetas",
+            "description": "Asegurar que toda la página, y en especial la sección de tarjetas, se visualice correctamente tanto en dispositivos móviles como en escritorios, ajustando su disposición de vertical a horizontal.",
+            "dependencies": [],
+            "details": "Modifica el `<div>` contenedor de las tarjetas. Aplica clases de TailwindCSS para establecer un layout de Grid: `grid grid-cols-1 md:grid-cols-3 gap-4`. Esto hará que las tarjetas se apilen verticalmente en pantallas pequeñas (`grid-cols-1`) y se muestren en tres columnas en pantallas medianas y grandes (`md:grid-cols-3`). El `gap-4` añadirá espacio entre ellas. Revisa el layout general de la página para asegurar que todos los elementos se ajustan correctamente.",
+            "status": "done",
+            "testStrategy": "Usar las herramientas de desarrollador del navegador para simular diferentes tamaños de pantalla (móvil, tablet, escritorio) y confirmar que el layout se adapta como se espera, especialmente la disposición de las tarjetas."
+          },
+          {
+            "id": 5,
+            "title": "Crear e Integrar el Pie de Página (Footer)",
+            "description": "Implementar un componente de pie de página simple y añadirlo al final de la estructura de la página de inicio para completar el diseño.",
+            "dependencies": [],
+            "details": "Crea un nuevo componente, por ejemplo, en `components/layout/Footer.tsx`. Este componente debe renderizar una etiqueta `<footer>`. Dentro, añade un `<p>` con el texto 'DIAD - 2025'. Aplica clases de TailwindCSS para añadir padding (`py-4`), un borde superior (`border-t`) y centrar el texto (`text-center`). Importa y renderiza este componente al final del layout en `app/page.tsx`, después de la etiqueta `<main>`.",
+            "status": "done",
+            "testStrategy": "Verificar que el pie de página aparece en la parte inferior de la página con el texto y estilo correctos, y que permanece en la parte inferior independientemente del contenido."
+          }
+        ]
+      },
+      {
+        "id": 25,
+        "title": "Implementar Funcionalidades de Gestión de Usuarios en Panel de Administración",
+        "description": "Crear una sección de administración para gestionar usuarios, incluyendo la importación masiva desde CSV, un listado con filtros y paginación, y la capacidad de modificar roles de usuario.",
+        "details": "Esta tarea se divide en tres funcionalidades principales dentro de un nuevo panel de administración en la ruta `/admin/users`. 1. **Importación de Usuarios desde CSV**: Crear una página (`/admin/users/import`) con un formulario para subir archivos CSV. Implementar un endpoint de API (`/api/admin/users/import`) que utilice `papaparse` para procesar el archivo. Validar cada fila con Zod (email, nombre, rol) y usar `prisma.user.createMany()` para la inserción masiva, omitiendo duplicados. La API debe devolver un resumen de la operación (usuarios creados, errores). 2. **Listado de Usuarios**: En la página principal `/admin/users`, implementar una tabla (usando `shadcn/ui`) para mostrar los usuarios con paginación y filtros. Crear un endpoint de API (`/api/admin/users`) que acepte parámetros de consulta para filtrar por nombre/email/rol y para la paginación (usando `skip` y `take` de Prisma). 3. **Modificación de Rol**: En la tabla de usuarios, añadir un control (ej. un dropdown) para cambiar el rol de un usuario. Este control llamará a un endpoint de API (`PATCH /api/admin/users/[userId]`) que actualizará el rol del usuario en la base de datos. Es crucial actualizar el `middleware.ts` (de la Tarea 17) para proteger todas las rutas `/admin/*` y verificar que el usuario autenticado tenga el rol de 'ADMIN'.",
+        "testStrategy": "1. **Seguridad de Rutas**: Intentar acceder a `/admin/users` sin iniciar sesión y verificar la redirección al login. Iniciar sesión como un usuario normal y verificar que el acceso es denegado. Iniciar sesión como administrador y verificar que el acceso es concedido. 2. **Importación CSV**: Subir un CSV válido y verificar que los nuevos usuarios aparecen en la base de datos y en el listado. Subir un CSV con datos inválidos (emails duplicados, formatos incorrectos) y verificar que se muestra un informe de errores preciso y que solo los datos válidos fueron procesados. 3. **Listado y Filtros**: Navegar a `/admin/users` y confirmar que la tabla se carga con la primera página de usuarios. Probar los controles de paginación. Usar los campos de filtro para buscar por email y rol, y verificar que la tabla se actualiza correctamente. 4. **Cambio de Rol**: En el listado, cambiar el rol de un usuario de 'USER' a 'ADMIN'. Verificar que el cambio se refleja en la base de datos. Iniciar sesión con la cuenta de ese usuario para confirmar que ahora tiene acceso a las rutas de administrador.",
+        "status": "done",
+        "dependencies": [
+          17,
+          7
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Proteger Rutas de Administración con Middleware",
+            "description": "Actualizar el archivo `middleware.ts` para interceptar todas las peticiones a `/admin/*` y verificar que el usuario autenticado tenga el rol 'ADMIN'.",
+            "dependencies": [],
+            "details": "Modificar la función `middleware` en `middleware.ts`. Usar `next-auth` para obtener la sesión del usuario. Si la ruta coincide con `/admin/:path*` y el `session.user.role` no es 'ADMIN', redirigir a una página de no autorizado o a la página de inicio. Esta es una dependencia crítica para todas las demás tareas de administración.\n<info added on 2025-08-05T02:57:59.806Z>\nTarea completada exitosamente. Se corrigió el middleware.ts para proteger correctamente las rutas de administración:\n\n1. Se identificó que el middleware ya tenía la lógica de protección implementada:\n   - Detecta rutas /admin/* y /api/admin/* (línea 34)\n   - Verifica autenticación y rol de usuario (líneas 41-44)\n   - Redirige usuarios no autorizados a la página de inicio\n\n2. Se corrigió un problema crítico de mayúsculas/minúsculas:\n   - En el esquema de Prisma los roles son: 'user' y 'admin' (minúsculas).\n   - En el middleware se verificaba userRole !== \"ADMIN\" (mayúsculas).\n   - Se cambió a userRole !== \"admin\" para mantener la consistencia.\n\n3. Verificación funcional:\n   - El middleware ahora bloquea correctamente el acceso a las rutas de administración.\n   - Solo los usuarios con rol 'admin' pueden acceder a /admin/* y /api/admin/*.\n   - Los usuarios no autenticados son redirigidos a /login.\n   - Los usuarios autenticados sin rol de administrador son redirigidos a /.\n\nLa protección de rutas de administración está completamente funcional y lista para las siguientes subtareas del panel de administración.\n</info added on 2025-08-05T02:57:59.806Z>",
+            "status": "done",
+            "testStrategy": "Intentar acceder a `/admin/users` como usuario no autenticado (debería redirigir a login), como usuario sin rol 'ADMIN' (debería redirigir o mostrar error 403), y como usuario 'ADMIN' (debería permitir el acceso)."
+          },
+          {
+            "id": 2,
+            "title": "Crear Layout y Navegación del Panel de Administración",
+            "description": "Establecer la estructura visual base para la sección de administración, incluyendo un layout persistente y enlaces de navegación.",
+            "dependencies": [
+              1
+            ],
+            "details": "Crear un nuevo componente de layout para las rutas `/admin/*`. Este layout debe incluir un encabezado o una barra lateral con enlaces de navegación, como 'Dashboard' y 'Gestión de Usuarios' (apuntando a `/admin/users`). Usar componentes de `shadcn/ui` para la estructura.\n<info added on 2025-08-05T03:40:43.411Z>\nArchivos creados/modificados:\n1. Creado `app/(protected)/admin/layout.tsx` - Layout persistente para todas las rutas admin con:\n   - Header con título \"Panel de Administración\", badge \"Admin\" y botón logout\n   - Sidebar de navegación con enlaces a Dashboard, Gestión de Usuarios y Configuración\n   - Diseño responsivo usando componentes shadcn/ui (Button, Badge)\n   - Íconos de Lucide React para mejor UX\n\n2. Actualizado `app/(protected)/admin/page.tsx` - Dashboard principal con:\n   - Cards de estadísticas para Total Usuarios, Verificados, Pendientes y Administradores\n   - Diseño moderno con grid responsivo\n   - Placeholders preparados para futuras APIs\n   - Componentes Card de shadcn/ui\n\nDependencias instaladas:\n- `npx shadcn add card` - Para las tarjetas de estadísticas\n- `npx shadcn add badge` - Para el indicador de rol admin\n\nEstructura implementada:\n- Header fijo con información de usuario y logout\n- Sidebar de navegación con 3 enlaces principales\n- Área de contenido principal responsive\n- Diseño profesional con Tailwind CSS y shadcn/ui\n\nVerificaciones:\n- ✅ Lint: Sin errores\n- ✅ Componentes funcionan correctamente\n- ✅ Layout se aplica a todas las rutas `/admin/*`\n- ✅ Navegación lista para futuras páginas\n</info added on 2025-08-05T03:40:43.411Z>\n<info added on 2025-08-05T04:06:27.181Z>\nProblema de middleware resuelto exitosamente.\n\nProblema identificado: El middleware estaba usando `NextAuth(authConfig)` que no incluía los callbacks necesarios para el campo `role` en la sesión.\n\nSolución implementada:\n1. Se cambió el middleware para usar `import { auth } from \"@/auth\"` en lugar de `NextAuth(authConfig)`.\n2. Esto asegura que el middleware use la configuración completa de NextAuth con todos los callbacks.\n\nResultado: El panel de administración ahora es accesible para usuarios con rol `admin`. La protección de rutas funciona correctamente:\n- Usuarios no autenticados son redirigidos a `/login`.\n- Usuarios sin rol admin son redirigidos a `/`.\n- Usuarios con rol admin tienen acceso permitido a `/admin/*`.\n\nEl layout y navegación del panel admin están completamente funcionales.\n</info added on 2025-08-05T04:06:27.181Z>",
+            "status": "done",
+            "testStrategy": "Navegar a `/admin/users` y verificar que el layout de administración se renderiza correctamente con los enlaces de navegación visibles y funcionales."
+          },
+          {
+            "id": 3,
+            "title": "Crear API para Listado Paginado de Usuarios",
+            "description": "Implementar el endpoint `GET /api/admin/users` que devuelve una lista de usuarios con soporte para paginación.",
+            "dependencies": [
+              1
+            ],
+            "details": "Crear un nuevo `route.ts` en `app/api/admin/users`. La función `GET` debe aceptar los parámetros de consulta `page` y `limit`. Calcular `skip` (`(page - 1) * limit`) y `take` (`limit`). Usar `prisma.user.findMany({ skip, take })` y `prisma.user.count()` para obtener los datos y el total de usuarios. Devolver los usuarios y la información de paginación (total de páginas, total de usuarios).\n<info added on 2025-08-12T16:40:59.486Z>\nImplementación completada exitosamente. El endpoint GET /api/admin/users se ha implementado con las siguientes características:\n- Autenticación y autorización para verificar que el usuario esté autenticado y tenga el rol 'admin'.\n- Acepta parámetros de consulta 'page' (por defecto 1) y 'limit' (por defecto 10, máximo 100), con validación para asegurar que los valores estén en un rango válido.\n- Utiliza Promise.all para ejecutar en paralelo la consulta de usuarios y el conteo total, mejorando la eficiencia.\n- Los usuarios se devuelven ordenados por fecha de creación descendente (más recientes primero).\n- La respuesta incluye una metadata de paginación completa: currentPage, totalPages, totalUsers, limit, hasNextPage, y hasPreviousPage.\nSe realizaron pruebas exitosas de lint, lógica de paginación, estructura de respuesta, middleware de autenticación, validación de parámetros y casos de borde. El endpoint está listo para ser consumido por el frontend.\n</info added on 2025-08-12T16:40:59.486Z>",
+            "status": "done",
+            "testStrategy": "Realizar peticiones a `/api/admin/users?page=1&limit=10` y `/api/admin/users?page=2&limit=10` y verificar que se devuelven los conjuntos de datos correctos y la metadata de paginación."
+          },
+          {
+            "id": 4,
+            "title": "Implementar Tabla de Usuarios en el Frontend",
+            "description": "Desarrollar la interfaz de usuario en `/admin/users` para mostrar la lista de usuarios en una tabla.",
+            "dependencies": [
+              2,
+              3
+            ],
+            "details": "Crear la página `/admin/users/page.tsx`. Utilizar los componentes `Table`, `TableHeader`, `TableBody`, etc., de `shadcn/ui`. Realizar una llamada al endpoint `/api/admin/users` para obtener los datos y renderizarlos en la tabla. Las columnas deben incluir como mínimo: Nombre, Email y Rol.",
+            "status": "done",
+            "testStrategy": "Verificar que la página `/admin/users` carga y muestra correctamente la primera página de usuarios obtenida de la API en la tabla."
+          },
+          {
+            "id": 5,
+            "title": "Añadir Controles de Paginación a la Tabla de Usuarios",
+            "description": "Integrar componentes de paginación en la interfaz de la tabla de usuarios para permitir la navegación entre páginas.",
+            "dependencies": [
+              4
+            ],
+            "details": "En la página `/admin/users`, añadir los componentes `Pagination` de `shadcn/ui` debajo de la tabla. Conectar los botones 'Siguiente', 'Anterior' y los números de página para que actualicen el estado de la página actual, realicen una nueva llamada a la API con el parámetro `page` correspondiente y refresquen los datos de la tabla.",
+            "status": "done",
+            "testStrategy": "Hacer clic en los botones de paginación y verificar que la tabla se actualiza con los usuarios de la página correspondiente."
+          },
+          {
+            "id": 6,
+            "title": "Extender API de Usuarios con Lógica de Filtrado",
+            "description": "Mejorar el endpoint `GET /api/admin/users` para que admita filtrado por nombre, email y rol.",
+            "dependencies": [
+              3
+            ],
+            "details": "Modificar la función `GET` en `app/api/admin/users/route.ts`. Leer los parámetros de consulta opcionales `search` (para nombre/email) y `role`. Construir dinámicamente la cláusula `where` de Prisma para incluir condiciones `contains` para el `search` y `equals` para el `role` si los parámetros están presentes.",
+            "status": "done",
+            "testStrategy": "Realizar peticiones como `/api/admin/users?search=john` y `/api/admin/users?role=USER` y verificar que la API devuelve solo los usuarios que coinciden con los filtros."
+          },
+          {
+            "id": 7,
+            "title": "Implementar Controles de Filtro en la Interfaz de Usuarios",
+            "description": "Añadir campos de entrada en la página de listado de usuarios para permitir al administrador filtrar los resultados.",
+            "dependencies": [
+              5,
+              6
+            ],
+            "details": "En la página `/admin/users`, añadir un componente `Input` de `shadcn/ui` para la búsqueda por texto (nombre/email) y un `Select` o `DropdownMenu` para filtrar por rol. Al cambiar el valor de estos controles, se debe realizar una nueva petición a la API con los parámetros `search` y/o `role` y actualizar la tabla.",
+            "status": "done",
+            "testStrategy": "Escribir en el campo de búsqueda y seleccionar un rol en el dropdown. Verificar que la lista de usuarios en la tabla se actualiza para reflejar los filtros aplicados."
+          },
+          {
+            "id": 8,
+            "title": "Crear API para Modificar Rol de Usuario",
+            "description": "Implementar el endpoint `PATCH /api/admin/users/[userId]` para actualizar el rol de un usuario específico.",
+            "dependencies": [
+              1
+            ],
+            "details": "Crear un `route.ts` en `app/api/admin/users/[userId]`. La función `PATCH` debe leer el `userId` de los parámetros de la ruta y el nuevo `role` del cuerpo de la petición. Validar el rol entrante. Usar `prisma.user.update({ where: { id: userId }, data: { role } })` para actualizar el registro en la base de datos. Devolver el usuario actualizado.\n<info added on 2025-08-12T17:10:02.287Z>\nImplementation completed successfully. The PATCH endpoint at /api/admin/users/[userId] was created to modify user roles. A new Zod schema, `updateUserRoleSchema`, was added to `lib/zod.ts` for validating the role (`user` or `admin`). The implementation includes authentication and authorization to ensure only admins can perform the update. A security measure was added to prevent an admin from removing their own admin role. The endpoint handles multiple error cases, including 401 (unauthorized), 400 (invalid input), 403 (self-demotion attempt), 404 (user not found), and 500 (server error). Successful requests return a structured JSON response with the updated user. The endpoint is fully tested and functional.\n</info added on 2025-08-12T17:10:02.287Z>",
+            "status": "done",
+            "testStrategy": "Enviar una petición PATCH a `/api/admin/users/some-id` con `{\"role\": \"ADMIN\"}` en el cuerpo y verificar que la base de datos se actualiza y la API devuelve el usuario con el nuevo rol."
+          },
+          {
+            "id": 9,
+            "title": "Añadir Control para Cambiar Rol en la Tabla",
+            "description": "Integrar un control en cada fila de la tabla de usuarios para permitir la modificación directa del rol.",
+            "dependencies": [
+              7,
+              8
+            ],
+            "details": "En el componente de la tabla de usuarios, añadir una nueva columna 'Acciones'. Dentro de esta columna, para cada fila, renderizar un componente `Select` o `DropdownMenu` de `shadcn/ui` con los roles disponibles. Al seleccionar un nuevo rol, se debe llamar al endpoint `PATCH /api/admin/users/[userId]` con el ID del usuario y el nuevo rol. Actualizar la UI tras una respuesta exitosa.",
+            "status": "done",
+            "testStrategy": "En la lista de usuarios, cambiar el rol de un usuario usando el nuevo control. Refrescar la página y verificar que el cambio de rol persiste."
+          },
+          {
+            "id": 10,
+            "title": "Crear API para Importación Masiva de Usuarios desde CSV",
+            "description": "Implementar el endpoint `POST /api/admin/users/import` que procesa un archivo CSV subido.",
+            "dependencies": [
+              1
+            ],
+            "details": "Crear un `route.ts` en `app/api/admin/users/import`. La función `POST` debe manejar una petición `multipart/form-data`. Usar una librería como `papaparse` para parsear el contenido del archivo CSV a un array de objetos JSON. La API debe estar preparada para el siguiente paso de validación e inserción.",
+            "status": "done",
+            "testStrategy": "Enviar un archivo CSV a través de una herramienta como Postman al endpoint y verificar que la API puede leer y parsear el contenido correctamente sin errores."
+          },
+          {
+            "id": 11,
+            "title": "Implementar Validación y Lógica de Inserción para Importación CSV",
+            "description": "Añadir validación de datos con Zod y la inserción en base de datos al endpoint de importación.",
+            "dependencies": [
+              10
+            ],
+            "details": "Dentro del endpoint `POST /api/admin/users/import`, después de parsear el CSV, iterar sobre cada fila. Usar un esquema de Zod para validar que cada registro tenga `email` (formato válido), `name` (string no vacío) y `role` (enum válido). Usar `prisma.user.createMany({ data: validUsers, skipDuplicates: true })` para insertar los usuarios válidos. Devolver un resumen JSON: `{ created: X, skipped: Y, errors: [...] }`.",
+            "status": "done",
+            "testStrategy": "Subir un CSV con datos válidos, duplicados y erróneos. Verificar que la respuesta de la API refleja correctamente el número de usuarios creados, omitidos y los errores de validación específicos."
+          },
+          {
+            "id": 12,
+            "title": "Crear Página de Frontend para Subir Archivo CSV",
+            "description": "Desarrollar la interfaz en `/admin/users/import` que permita a los administradores subir un archivo CSV.",
+            "dependencies": [
+              2,
+              11
+            ],
+            "details": "Crear la página `/admin/users/import/page.tsx`. Usar componentes de `shadcn/ui` para crear un formulario con un campo de subida de archivo (`Input type='file'`) y un botón de envío. Al enviar el formulario, realizar una petición `POST` al endpoint `/api/admin/users/import` con el archivo. Mostrar un mensaje de estado (cargando, éxito, error) y presentar el resumen de la operación devuelto por la API.",
+            "status": "done",
+            "testStrategy": "Navegar a `/admin/users/import`, seleccionar un archivo CSV y subirlo. Verificar que se muestra un feedback visual durante la subida y que el resumen de la operación (creados, errores) se muestra al usuario después."
+          }
+        ]
+      },
+      {
+        "id": 26,
+        "title": "Implement Statistics Section in Admin Dashboard",
+        "description": "Develop the main admin dashboard page to display key user statistics via summary cards and a registration trend chart. This will provide administrators with a quick overview of platform activity.",
+        "details": "This task involves creating a new API endpoint to aggregate user statistics and a new frontend page within the admin panel to display them. 1. **Backend API Endpoint**: Create a new protected API route at `/api/admin/stats`. This route should only be accessible to users with the 'ADMIN' role. The endpoint will query the database using Prisma to calculate the following metrics: Total Users (`prisma.user.count()`), New Users Today (`prisma.user.count({ where: { createdAt: ... } })`), Total Admins (`prisma.user.count({ where: { role: 'ADMIN' } })`), and Active Users (e.g., distinct users with a session in the last 30 days). For the 7-day registration trend, the endpoint must return an array of objects, each containing a date and the count of users registered on that date for the past week. 2. **Frontend Implementation**: Create a new page at `/admin/dashboard`. This page will fetch data from the `/api/admin/stats` endpoint. Use a data fetching library like SWR or React Query for client-side fetching, including loading and error states. 3. **UI Components**: Develop a reusable `StatCard` component to display each key metric. For the registration trend, install and use a charting library like 'recharts' (`npm install recharts`) to create a line or bar chart visualizing the 7-day data.",
+        "testStrategy": "1. **API Security**: Attempt to access `/api/admin/stats` as a logged-out user and as a logged-in non-admin user. Both attempts should result in a 401 Unauthorized or 403 Forbidden error. Accessing the endpoint as an admin should return a 200 OK response with the statistics payload. 2. **API Data Accuracy**: Manually add/modify users in the database with various roles and `createdAt` timestamps. Call the API and verify that all returned metrics (total users, new users today, total admins) and the 7-day trend data are accurate. 3. **Frontend Verification**: Log in as an admin and navigate to the `/admin/dashboard` page. Verify that all statistic cards and the registration chart render correctly with the data from the API. Confirm that a loading state is visible during the initial data fetch and that an error message is displayed if the API call fails.",
+        "status": "done",
+        "dependencies": [
+          7,
+          8,
+          17,
+          25
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create and Secure the Admin Statistics API Endpoint",
+            "description": "Set up the basic file structure for the `/api/admin/stats` API route and implement role-based access control to ensure only users with the 'ADMIN' role can access it. This foundational step prevents unauthorized data access before implementing the data logic.",
+            "dependencies": [],
+            "details": "Create a new route handler at `app/api/admin/stats/route.ts`. Inside the `GET` handler, use `getServerSession` from `next-auth` to retrieve the user's session. Check if `session.user.role` is equal to 'ADMIN'. If the user is not an admin or is not logged in, return a `NextResponse` with a 403 Forbidden status. If they are an admin, return a placeholder JSON object with a 200 OK status for now, e.g., `{ \"message\": \"Access granted\" }`.",
+            "status": "done",
+            "testStrategy": "1. Attempt to access `/api/admin/stats` via a tool like Postman or curl as a logged-out user (expect 401/403). 2. Log in as a regular user and attempt access (expect 403). 3. Log in as an admin and attempt access (expect 200 OK with the placeholder message)."
+          },
+          {
+            "id": 2,
+            "title": "Implement Summary Statistics Calculation in API",
+            "description": "Extend the `/api/admin/stats` endpoint to calculate and return the primary summary statistics: Total Users, New Users Today, and Total Admins. This provides the data needed for the top-level summary cards.",
+            "dependencies": [
+              "26.1"
+            ],
+            "details": "In `app/api/admin/stats/route.ts`, use Prisma to perform the database queries. Calculate the start of the current day. Use `Promise.all` to execute the following queries concurrently: `prisma.user.count()`, `prisma.user.count({ where: { role: 'ADMIN' } })`, and `prisma.user.count({ where: { createdAt: { gte: startOfDay } } })`. Structure the response to return these values in a clear JSON object, e.g., `{ \"summary\": { \"totalUsers\": 150, \"newUsersToday\": 5, \"totalAdmins\": 3 } }`.",
+            "status": "done",
+            "testStrategy": "Call the endpoint as an admin. Verify the returned counts for total users, new users, and admins match the current state of the database. Manually add a new user via your application or database client and re-run the request to confirm the 'newUsersToday' count increments."
+          },
+          {
+            "id": 3,
+            "title": "Implement 7-Day Registration Trend Calculation in API",
+            "description": "Enhance the `/api/admin/stats` endpoint to calculate and include the user registration trend for the last 7 days. This data will be used to power the registration chart.",
+            "dependencies": [
+              "26.2"
+            ],
+            "details": "In the same API route, implement logic to get user registration counts for each of the last 7 days. You can achieve this with a Prisma `groupBy` query on the `createdAt` field, filtering for records within the last 7 days. Process the results to create an array of 7 objects, one for each day, ensuring that days with zero registrations are included. The final structure should be like `[{ date: 'YYYY-MM-DD', count: 12 }, ...]`. Add this array to the API response payload under a key like `registrationTrend`.",
+            "status": "done",
+            "testStrategy": "Call the endpoint as an admin and inspect the `registrationTrend` array. Verify it contains exactly 7 entries, one for each of the past 7 days. Check that the counts for a few days are accurate based on the database records. Ensure a day with no new users shows a count of 0."
+          },
+          {
+            "id": 4,
+            "title": "Set Up Admin Dashboard Page with Data Fetching",
+            "description": "Create the new frontend page at `/admin/dashboard` and implement client-side data fetching from the `/api/admin/stats` endpoint using SWR. This includes handling loading and error states.",
+            "dependencies": [
+              "26.3"
+            ],
+            "details": "Create the page file at `app/admin/dashboard/page.tsx`. Mark it as a client component with `'use client'`. Use the `useSWR` hook to fetch data from `/api/admin/stats`. Define a simple fetcher function for SWR. Based on the hook's return values (`data`, `error`, `isLoading`), render a loading indicator (e.g., a spinner), an error message, or the main dashboard content. Initially, you can render the fetched data using `<pre>{JSON.stringify(data, null, 2)}</pre>` to confirm it's working.",
+            "status": "done",
+            "testStrategy": "Navigate to `/admin/dashboard` as an admin. Verify the loading state appears briefly, followed by the raw JSON data from the API. Test the error state by temporarily renaming the API route file and reloading the page; an error message should be displayed."
+          },
+          {
+            "id": 5,
+            "title": "Create Reusable StatCard UI Component",
+            "description": "Develop a reusable React component named `StatCard` to display a single statistic with a title and a value. This component will be used to display each of the summary metrics.",
+            "dependencies": [],
+            "details": "Create a new component file at `components/admin/StatCard.tsx`. The component should accept props for `title` (string) and `value` (string or number). Use Tailwind CSS to style it as a card with a background, padding, and distinct typography for the title and the value. The title should be smaller and less prominent than the large, bold value.",
+            "status": "done",
+            "testStrategy": "Use a tool like Storybook or a temporary test page to render the `StatCard` component with various static props (e.g., title='Total Users', value=1234) to ensure it displays correctly and is visually appealing."
+          },
+          {
+            "id": 6,
+            "title": "Integrate StatCards into Dashboard Page",
+            "description": "Use the fetched statistics data to render multiple `StatCard` components on the `/admin/dashboard` page, creating the main summary section.",
+            "dependencies": [
+              "26.4",
+              "26.5"
+            ],
+            "details": "On the `/admin/dashboard` page, once the SWR fetch is successful and `data` is available, render a grid (e.g., using CSS Grid or Flexbox). Inside the grid, render three instances of the `StatCard` component. Pass the relevant data from the API response to each card, for example: `<StatCard title=\"Total Users\" value={data.summary.totalUsers} />`, `<StatCard title=\"New Users Today\" value={data.summary.newUsersToday} />`, etc.",
+            "status": "done",
+            "testStrategy": "Load the dashboard page as an admin. Verify that three stat cards appear at the top of the page, displaying the correct titles and values fetched from the API. Check that the layout is responsive on different screen sizes."
+          },
+          {
+            "id": 7,
+            "title": "Create Registration Trend Chart Component",
+            "description": "Install 'recharts' and create a new, dedicated component that uses it to render a line chart for displaying user registration trends over time.",
+            "dependencies": [],
+            "details": "First, run `npm install recharts`. Create a new component file at `components/admin/RegistrationChart.tsx`. This component should accept the `registrationTrend` data array as a prop. Inside the component, use `recharts` components like `ResponsiveContainer`, `LineChart`, `Line`, `XAxis`, `YAxis`, `CartesianGrid`, and `Tooltip` to build the chart. The `XAxis` should use the `date` key from the data, and the `Line` should use the `count` key.",
+            "status": "done",
+            "testStrategy": "Render the `RegistrationChart` component in Storybook or a temporary page, passing it a mock array of 7-day data. Verify that the chart renders correctly with axes, a data line, and a functional tooltip that shows the count on hover."
+          },
+          {
+            "id": 8,
+            "title": "Integrate Registration Chart into Dashboard Page",
+            "description": "Add the `RegistrationChart` component to the `/admin/dashboard` page and pass the 7-day registration trend data from the API fetch to it, completing the dashboard's UI.",
+            "dependencies": [
+              "26.4",
+              "26.7"
+            ],
+            "details": "On the `/admin/dashboard` page, below the grid of `StatCard`s, render the `RegistrationChart` component. Pass the `data.registrationTrend` array from the SWR fetch to the chart component's data prop. Wrap the chart in a container with a title, such as 'New Registrations (Last 7 Days)'.",
+            "status": "done",
+            "testStrategy": "Load the dashboard page as an admin. Verify that the line chart renders below the stat cards and accurately visualizes the registration data from the API. Hover over points on the chart to ensure the tooltip displays the correct date and user count."
+          }
+        ]
+      },
+      {
+        "id": 27,
+        "title": "Implement Quick Actions Section in Admin Dashboard",
+        "description": "Create a 'Quick Actions' component for the main admin dashboard, providing administrators with one-click access to common tasks like exporting user data, copying an invitation link, viewing recent activity, and navigating to system settings.",
+        "details": "This task involves creating a new UI component on the main admin dashboard page. 1. **Component Creation**: Develop a new React component, `QuickActions.tsx`, to be placed on the dashboard page created in Task #26. The component should display four distinct actions, likely as cards or large buttons with icons. 2. **Export User Data**: Implement a new protected API endpoint at `/api/admin/users/export`. This endpoint will use Prisma to fetch all user records (selecting fields like id, name, email, role, createdAt) and convert the data to a CSV formatted string using a library like `papaparse`. The response headers must be set to `Content-Type: text/csv` and `Content-Disposition: attachment; filename=\"users-export.csv\"` to trigger a download. The frontend button will link directly to this endpoint. 3. **Copy Invitation Link**: This is a client-side feature. The button will use the `navigator.clipboard.api` to copy a static registration link (e.g., `/register?ref=admin`) to the clipboard and display a toast notification for user feedback. 4. **View Recent Activity & Configure System**: These two actions will be simple navigation links. They should point to `/admin/activity-log` and `/admin/settings` respectively. The creation of these pages is out of scope for this task.",
+        "testStrategy": "1. **UI and Security Verification**: Log in as an administrator and navigate to the main dashboard. Confirm the 'Quick Actions' section is visible and correctly rendered. Log in as a regular user and verify that the admin dashboard is inaccessible. 2. **Export Functionality**: As an admin, click the 'Export User Data' button. Verify a CSV file is downloaded. Open the file and check that its contents accurately reflect the user data in the database. Attempt to access the `/api/admin/users/export` URL directly while logged out or as a regular user and confirm access is denied with a 403 Forbidden error. 3. **Copy Link Functionality**: Click the 'Copy Invitation Link' button. Verify a success message appears. Paste the clipboard contents into a text field to ensure the correct URL has been copied. 4. **Navigation Links**: Click the 'View Recent Activity' and 'Configure System' links and verify that the browser attempts to navigate to `/admin/activity-log` and `/admin/settings` respectively.",
+        "status": "done",
+        "dependencies": [
+          17,
+          25,
+          26
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create `QuickActions.tsx` Component Shell and Integrate into Dashboard",
+            "description": "Create the basic structure for the `QuickActions` component. This includes creating the file, setting up a container (e.g., a grid), and adding placeholder elements for the four actions. This component should then be imported and rendered on the main admin dashboard page from Task #26.",
+            "dependencies": [],
+            "details": "Create a new file at `components/admin/QuickActions.tsx`. Use a `div` with CSS Grid or Flexbox to lay out four placeholder child elements. Each placeholder can be a simple `div` with a title like 'Export Users'. Import this new component into the main dashboard page component (e.g., `app/admin/dashboard/page.tsx`) and render it in the appropriate location.",
+            "status": "done",
+            "testStrategy": "Navigate to the admin dashboard page. Verify that the 'Quick Actions' section is visible with four placeholder items."
+          },
+          {
+            "id": 2,
+            "title": "Implement Protected API Endpoint for User Data Export",
+            "description": "Create a new protected API route at `/api/admin/users/export` that fetches all user data using Prisma, converts it to a CSV string, and returns it as a downloadable file.",
+            "dependencies": [],
+            "details": "Create a new route handler at `app/api/admin/users/export/route.ts`. Protect this route to ensure only authenticated admins can access it (e.g., by checking the user's session and role). Use Prisma to fetch users, selecting only necessary fields (`id`, `name`, `email`, `role`, `createdAt`). Use a library like `papaparse` to convert the JSON array to a CSV string. Set the response headers: `Content-Type: text/csv` and `Content-Disposition: attachment; filename=\"users-export.csv\"`.",
+            "status": "done",
+            "testStrategy": "While logged in as an admin, directly access `/api/admin/users/export` in the browser. Verify that a file named `users-export.csv` is downloaded. Open the file and confirm it contains the correct user data. Attempt to access the endpoint as a non-admin or unauthenticated user and verify access is denied."
+          },
+          {
+            "id": 3,
+            "title": "Implement 'Export User Data' Action on the Frontend",
+            "description": "Replace the 'Export User Data' placeholder in the `QuickActions` component with a functional link or button that directs the user to the export API endpoint, triggering a file download.",
+            "dependencies": [
+              "27.1",
+              "27.2"
+            ],
+            "details": "In `QuickActions.tsx`, replace the placeholder for the export action with an `<a>` tag. Set the `href` attribute to `'/api/admin/users/export'`. Style this link to look like a button or action card. Add an appropriate icon (e.g., a download icon).",
+            "status": "done",
+            "testStrategy": "As an admin, navigate to the dashboard and click the 'Export User Data' button. Verify that the CSV file download is initiated."
+          },
+          {
+            "id": 4,
+            "title": "Implement 'Copy Invitation Link' Client-Side Action",
+            "description": "Implement the functionality for the 'Copy Invitation Link' button. This action will be purely client-side, using the browser's Clipboard API to copy a predefined link and showing a toast notification on success.",
+            "dependencies": [
+              "27.1"
+            ],
+            "details": "In `QuickActions.tsx`, replace the placeholder for this action with a `<button>`. Create an `onClick` handler function. Inside the handler, use `navigator.clipboard.writeText('/register?ref=admin')`. After the promise resolves, trigger a toast notification (using a library like `react-hot-toast` or similar) to inform the user 'Invitation link copied!'. Add a copy icon to the button.",
+            "status": "done",
+            "testStrategy": "Click the 'Copy Invitation Link' button. Verify that a success notification appears. Paste the content into a text editor to confirm the correct link (`/register?ref=admin`) was copied."
+          },
+          {
+            "id": 5,
+            "title": "Implement Navigation Links for 'View Recent Activity' and 'System Settings'",
+            "description": "Replace the remaining two placeholders with navigation links that direct the administrator to the 'Recent Activity' and 'System Settings' pages.",
+            "dependencies": [
+              "27.1"
+            ],
+            "details": "In `QuickActions.tsx`, use the Next.js `<Link>` component for these two actions. The 'View Recent Activity' link should have an `href` of `'/admin/activity-log'`. The 'Configure System' link should have an `href` of `'/admin/settings'`. Add appropriate icons for each link (e.g., a list/log icon and a gear/settings icon).",
+            "status": "done",
+            "testStrategy": "Click the 'View Recent Activity' link and verify the URL changes to `/admin/activity-log`. Go back and click the 'Configure System' link and verify the URL changes to `/admin/settings`."
+          },
+          {
+            "id": 6,
+            "title": "Apply Final Styling and Icons to the Quick Actions Component",
+            "description": "Apply consistent styling to all four action items to make them visually appealing and cohesive with the dashboard's design. Ensure each action has a clear title and a relevant icon.",
+            "dependencies": [
+              "27.3",
+              "27.4",
+              "27.5"
+            ],
+            "details": "Use a CSS framework like Tailwind CSS or a component library to style the action items as cards or large buttons. Ensure they have hover and focus states for better UX. Use a consistent icon set (e.g., from `lucide-react` or `heroicons`). The final component should be responsive and look good on different screen sizes.",
+            "status": "done",
+            "testStrategy": "Visually inspect the Quick Actions section on the dashboard. Confirm all four actions are styled consistently, have icons, are aligned correctly, and respond well to different viewport sizes. Check hover and active states for each action."
+          }
+        ]
+      },
+      {
+        "id": 28,
+        "title": "Implement Role-Based Post-Login Redirection",
+        "description": "Update the authentication logic to redirect users to different pages based on their role after a successful login. Administrators will be sent to the admin dashboard, while regular users will be directed to their personal dashboard.",
+        "details": "The primary goal is to create a centralized redirection logic that executes immediately after a user authenticates. This will be achieved by creating a dedicated post-login handler page. 1. **Ensure Role in Session**: Verify that the `[...nextauth]` configuration file correctly includes the user's `role` in the session token. The `jwt` callback should add the role from the user object to the token, and the `session` callback should expose the role from the token to the client-side session object. 2. **Create Post-Login Handler Page**: Create a new client component at `app/auth/post-login/page.tsx`. This page will act as a router. 3. **Implement Redirection Logic**: Inside the `post-login` component, use the `useSession` hook from `next-auth/react` and the `useRouter` hook from `next/navigation`. Use a `useEffect` hook to check the session status. If the status is 'loading', display a loading indicator. Once the status is 'authenticated', inspect the `session.user.role` property. If the role is 'ADMIN', use `router.replace('/admin')`. For any other role (e.g., 'USER'), use `router.replace('/dashboard')`. If the user is unauthenticated, redirect them back to `/login`. 4. **Update Login Flow**: Modify all `signIn()` function calls (e.g., in the login form) to specify the new handler page as the destination, for example: `signIn('credentials', { ...data, callbackUrl: '/auth/post-login' })`.",
+        "testStrategy": "1. **Admin Login Test**: Log out completely. Navigate to the login page and sign in using an account with the 'ADMIN' role. Verify that you are automatically and correctly redirected to the admin dashboard (`/admin`). 2. **Regular User Login Test**: Log out completely. Navigate to the login page and sign in using a standard user account. Verify that you are automatically redirected to the main user dashboard (`/dashboard`). 3. **Manual Navigation Check**: After being logged in as a regular user, attempt to manually navigate to `/admin`. Verify that access is denied (as per existing middleware rules). 4. **Callback URL Check**: Inspect the network request during login to ensure the `callbackUrl` is being set to `/auth/post-login` correctly.",
+        "status": "pending",
+        "dependencies": [
+          18,
+          26
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Update NextAuth.js Configuration to Include User Role in Session",
+            "description": "Modify the NextAuth.js configuration to ensure the user's role is available in the client-side session object. This involves updating the `jwt` and `session` callbacks to pass the role from the user database model to the session token and then to the client.",
+            "dependencies": [],
+            "details": "1. Open the NextAuth.js configuration file (e.g., `app/api/auth/[...nextauth]/route.ts`).\n2. In the `callbacks` object, locate the `jwt` callback. Inside, ensure the `user.role` is added to the `token` object when the user first signs in.\n3. Locate the `session` callback. Inside, retrieve the `role` from the `token` object and assign it to `session.user.role`.\n4. Update the TypeScript types in `next-auth.d.ts` to include `role: string;` in the `User` and `Session` interfaces to ensure type safety.",
+            "status": "pending",
+            "testStrategy": "After logging in, use browser developer tools to inspect the session object returned by the `useSession` hook in any client component. Verify that `session.user.role` exists and contains the correct value ('ADMIN' or 'USER')."
+          },
+          {
+            "id": 2,
+            "title": "Create the Post-Login Redirection Handler Page",
+            "description": "Create a new client-side page component that will act as a central router after a user successfully logs in. This page will contain the redirection logic and display a loading state while processing.",
+            "dependencies": [],
+            "details": "1. Create a new file at `app/auth/post-login/page.tsx`.\n2. Define a React component (e.g., `PostLoginPage`) within this file.\n3. Add the `\"use client\";` directive at the top of the file.\n4. The component should render a simple loading indicator, such as a spinner or a 'Redirecting...' message, to provide user feedback.",
+            "status": "pending",
+            "testStrategy": "Manually navigate to `/auth/post-login` in the browser. Verify that the loading state UI is displayed correctly without any errors."
+          },
+          {
+            "id": 3,
+            "title": "Implement Role-Based Redirection Logic in Handler Page",
+            "description": "Add the core logic to the post-login handler page to inspect the user's session and role, then redirect them to the appropriate dashboard or back to the login page if unauthenticated.",
+            "dependencies": [
+              "28.1",
+              "28.2"
+            ],
+            "details": "1. In `app/auth/post-login/page.tsx`, import and use the `useSession` hook from `next-auth/react` and the `useRouter` hook from `next/navigation`.\n2. Implement a `useEffect` hook that triggers when the session `status` changes.\n3. Inside the `useEffect`:\n   - If `status === 'authenticated'`, check `session.user.role`.\n   - If the role is 'ADMIN', call `router.replace('/admin')`.\n   - For any other role (e.g., 'USER'), call `router.replace('/dashboard')`.\n   - If `status === 'unauthenticated'`, call `router.replace('/login')` to handle cases where a user lands here without a session.",
+            "status": "pending",
+            "testStrategy": "After logging in as an admin, manually navigate to `/auth/post-login`. Verify you are redirected to `/admin`. Log out, log in as a regular user, and manually navigate to `/auth/post-login`. Verify you are redirected to `/dashboard`."
+          },
+          {
+            "id": 4,
+            "title": "Update Login Form to Use the Post-Login Handler",
+            "description": "Modify the `signIn` function calls in the application's login form to use the new post-login handler page as the `callbackUrl`, ensuring all successful logins are routed through the new redirection logic.",
+            "dependencies": [
+              "28.3"
+            ],
+            "details": "1. Locate the component containing the login form (e.g., `components/auth/LoginForm.tsx`).\n2. Find the `signIn()` function call that is executed on form submission.\n3. Add the `callbackUrl` option to the second argument of the `signIn` call, setting its value to `'/auth/post-login'`. Example: `signIn('credentials', { ...data, callbackUrl: '/auth/post-login' });`.",
+            "status": "pending",
+            "testStrategy": "1. Log out completely. Navigate to the login page and sign in with an 'ADMIN' account. Verify you are correctly and automatically redirected to the `/admin` dashboard.\n2. Log out again. Sign in with a regular 'USER' account. Verify you are correctly and automatically redirected to the `/dashboard` page."
+          }
+        ]
+      },
+      {
+        "id": 29,
+        "title": "Implement User File Management System (Upload, List, Update, Delete)",
+        "description": "Develop a complete file management system for authenticated users. This includes creating a dedicated UI page and the necessary API endpoints to handle file uploads, display a list of user-owned files, and allow for file renaming and deletion.",
+        "details": "This task involves creating a full CRUD (Create, Read, Update, Delete) functionality for user-specific files. 1. **Database Schema**: Add a new `File` model to `prisma/schema.prisma`. It must include fields like `id`, `filename`, `storagePath`, `mimetype`, `size`, `createdAt`, and a relation to the `User` model (`userId String`, `@relation(...)`). Run `npx prisma migrate dev` to apply changes. 2. **Backend API Endpoints**: Create API routes under `app/api/files/`. All routes must be protected and verify that the user performing the action is the owner of the file. - **POST /api/files/upload**: Handle `multipart/form-data` requests. Save the uploaded file to a secure location on the server (e.g., a non-public `uploads` directory) and create a corresponding record in the `File` table, linking it to the authenticated user's ID. - **GET /api/files**: Fetch and return a list of all file records belonging to the currently authenticated user. - **PUT /api/files/[fileId]**: Handle file metadata updates, primarily renaming. It should receive a new `filename` in the request body, validate ownership, and update the database record. - **DELETE /api/files/[fileId]**: Validate ownership, then delete the physical file from the server's storage and remove its corresponding record from the database. 3. **Frontend UI**: Create a new page at `/dashboard/files`. - **File Upload Form**: Implement a form with an `<input type=\"file\">` that submits to the upload endpoint. Provide user feedback on upload progress, success, or failure. - **File List Display**: Use a data fetching hook (like SWR or React Query) to call the `GET /api/files` endpoint. Display the files in a table or grid, showing the filename, upload date, and action buttons (e.g., Rename, Delete, Download). - **Modals for Actions**: Implement modals for renaming a file (pre-filled with the current name) and for confirming deletion to prevent accidental data loss.",
+        "testStrategy": "1. **Authorization & Security**: Attempt to access the `/dashboard/files` page while logged out and verify redirection to the login page. Log in as User A, upload a file, and note its ID. Log in as User B and attempt to list, update, or delete User A's file via direct API calls; verify all attempts are rejected with a 403 Forbidden or 404 Not Found error. 2. **Upload Functionality**: Upload a file (e.g., PDF, JPG). Verify it appears in the UI list, is physically present in the server's upload directory, and a corresponding record exists in the database linked to the correct user. 3. **List Functionality**: Upload multiple files. Verify all are correctly listed for the logged-in user. Log in as a different user and confirm their file list is empty or shows only their own files. 4. **Update Functionality**: Use the UI to rename a file. Verify the name changes in the list and the database record is updated. 5. **Delete Functionality**: Use the UI to delete a file. Confirm the deletion prompt appears. After confirming, verify the file is removed from the UI list, deleted from the server's file system, and its record is removed from the database.",
+        "status": "pending",
+        "dependencies": [
+          7,
+          8,
+          17
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define and Migrate the `File` Model in Prisma Schema",
+            "description": "Create the database schema for storing file metadata. This involves adding a `File` model to `prisma/schema.prisma` and running a migration to apply the changes to the database.",
+            "dependencies": [],
+            "details": "In `prisma/schema.prisma`, define a new `File` model. It must include fields: `id` (String, @id, @default(cuid())), `filename` (String), `storagePath` (String), `mimetype` (String), `size` (Int), `createdAt` (DateTime, @default(now())), and a relation to the `User` model. Add `userId String` and the relation field `user User @relation(fields: [userId], references: [id], onDelete: Cascade)`. After defining the model, run the command `npx prisma migrate dev --name add_file_model` to generate and apply the migration.",
+            "status": "pending",
+            "testStrategy": "After migration, use a database client (like Prisma Studio) to verify that the `File` table with the correct columns and relations has been created in the database."
+          },
+          {
+            "id": 2,
+            "title": "Create API Endpoint for File Upload (POST /api/files/upload)",
+            "description": "Develop a protected API route to handle multipart/form-data file uploads. The endpoint will save the file to a designated server directory and create a corresponding record in the `File` table.",
+            "dependencies": [
+              "29.1"
+            ],
+            "details": "Create the route handler at `app/api/files/upload/route.ts`. Use a library like `formidable` or handle the stream directly to process the `multipart/form-data` request. First, verify the user is authenticated using `getServerSession` from NextAuth.js. Generate a unique name for the file to avoid collisions and save it to a non-public directory (e.g., `./uploads`). After successfully saving the file, create a new entry in the `File` table using Prisma, linking it to the authenticated user's ID and storing metadata like the original filename, the new storage path, mimetype, and size. Return a 201 Created response with the new file's data.",
+            "status": "pending",
+            "testStrategy": "Use an API client like Postman or Insomnia to send a POST request with a valid session cookie and a file in a `multipart/form-data` body. Verify that the file is saved on the server's filesystem and a corresponding record is created in the database. Test error cases like unauthenticated requests or requests without a file."
+          },
+          {
+            "id": 3,
+            "title": "Create API Endpoint to List User's Files (GET /api/files)",
+            "description": "Develop a protected API route that retrieves and returns a list of all file metadata records associated with the currently authenticated user.",
+            "dependencies": [
+              "29.1"
+            ],
+            "details": "Create the route handler at `app/api/files/route.ts`. In the `GET` handler, retrieve the user's session to get their ID. Use Prisma to query the `File` table, filtering by the `userId`. The query should be `prisma.file.findMany({ where: { userId: session.user.id }, orderBy: { createdAt: 'desc' } })`. Return the resulting array of file objects as a JSON response with a 200 OK status. Ensure the route is protected and returns a 401 Unauthorized error if no session is found.",
+            "status": "pending",
+            "testStrategy": "After uploading a few files using the endpoint from subtask 29.2, make an authenticated GET request to `/api/files`. Verify that the response is a JSON array containing the correct file records for that user. Test that an unauthenticated request receives a 401 error."
+          },
+          {
+            "id": 4,
+            "title": "Build the File Management UI Page and Display the File List",
+            "description": "Create a new page at `/dashboard/files` and implement the UI to fetch and display the user's files in a table or grid format.",
+            "dependencies": [
+              "29.3"
+            ],
+            "details": "Create a new route `app/dashboard/files/page.tsx`. This should be a client component (`'use client'`). Use a data fetching library like SWR or React Query to call the `/api/files` endpoint. While data is loading, show a loading spinner. If there's an error, display an error message. Once the data is fetched, map over the array of files and render them in a table. The table should have columns for `Filename`, `Upload Date`, `Size`, and `Actions` (which will be empty for now). Use a utility function to format the date and file size for display.",
+            "status": "pending",
+            "testStrategy": "Navigate to `/dashboard/files` while logged in. Verify that a loading state is shown initially, followed by a table displaying the files previously uploaded for the current user. Check that the page is protected by middleware and redirects to login if accessed while logged out."
+          },
+          {
+            "id": 5,
+            "title": "Implement the File Upload Form on the Frontend",
+            "description": "Add a file upload form to the `/dashboard/files` page that allows users to select and upload a file. Provide feedback on the upload status.",
+            "dependencies": [
+              "29.2",
+              "29.4"
+            ],
+            "details": "In the `app/dashboard/files/page.tsx` component, add a form with an `<input type=\"file\">` and a submit button. On form submission, prevent the default action and create a `FormData` object. Append the selected file to it. Use the `fetch` API or a library like `axios` to send a POST request to `/api/files/upload` with the `FormData` as the body. Implement state to track the upload progress (e.g., 'idle', 'uploading', 'success', 'error'). Disable the submit button while uploading. Display success or error messages to the user. Upon successful upload, re-fetch the file list to show the newly added file.",
+            "status": "pending",
+            "testStrategy": "On the `/dashboard/files` page, use the new form to select and upload a file. Verify that the UI shows an 'uploading' state. After the upload completes, confirm that a success message is shown and the file list automatically updates to include the new file."
+          },
+          {
+            "id": 6,
+            "title": "Create API Endpoint for File Deletion (DELETE /api/files/[fileId])",
+            "description": "Develop a protected API route that handles file deletion. It must verify that the user owns the file before deleting both the physical file from storage and its record from the database.",
+            "dependencies": [
+              "29.1"
+            ],
+            "details": "Create a dynamic route handler at `app/api/files/[fileId]/route.ts`. In the `DELETE` handler, get the `fileId` from the route parameters and the user's session. First, query the database for the file: `prisma.file.findUnique({ where: { id: fileId } })`. If the file doesn't exist or if `file.userId` does not match the session's `user.id`, return a 404 Not Found or 403 Forbidden error. If ownership is verified, use Node.js's `fs` module (`fs.promises.unlink`) to delete the physical file from the path specified in `file.storagePath`. After successfully deleting the file, delete the record from the database: `prisma.file.delete({ where: { id: fileId } })`. Return a 204 No Content response on success.",
+            "status": "pending",
+            "testStrategy": "Using an API client, send an authenticated DELETE request to `/api/files/[fileId]` for a file owned by the user. Verify a 204 response, and confirm the file is gone from both the filesystem and the database. Attempt to delete a file owned by another user and verify a 403/404 error is returned."
+          },
+          {
+            "id": 7,
+            "title": "Create API Endpoint for File Renaming (PUT /api/files/[fileId])",
+            "description": "Develop a protected API route to update a file's metadata, specifically its name. The endpoint must validate user ownership before updating the database record.",
+            "dependencies": [
+              "29.1"
+            ],
+            "details": "In the `app/api/files/[fileId]/route.ts` file, implement the `PUT` handler. It should expect a JSON body with a `filename` property. Get the `fileId` and user session. Find the file in the database and verify ownership, similar to the DELETE endpoint. If ownership is confirmed, use Prisma to update the record: `prisma.file.update({ where: { id: fileId }, data: { filename: newFilename } })`. Return the updated file object with a 200 OK status. Use Zod to validate the incoming `filename` to ensure it's a non-empty string.",
+            "status": "pending",
+            "testStrategy": "Using an API client, send an authenticated PUT request to `/api/files/[fileId]` with `{\"filename\": \"new-name.txt\"}` in the body. Verify a 200 response containing the updated file data. Check the database to confirm the `filename` field was updated. Test for invalid input and ownership errors."
+          },
+          {
+            "id": 8,
+            "title": "Add Rename and Delete Modals and Functionality to the UI",
+            "description": "Enhance the file list on the `/dashboard/files` page by adding 'Rename' and 'Delete' buttons. Implement modals for these actions to provide a good user experience and prevent accidental deletion.",
+            "dependencies": [
+              "29.4",
+              "29.6",
+              "29.7"
+            ],
+            "details": "In the `Actions` column of the file table in `app/dashboard/files/page.tsx`, add 'Rename' and 'Delete' buttons for each file. For 'Delete', clicking the button should open a confirmation modal asking 'Are you sure you want to delete this file?'. On confirmation, send a `DELETE` request to `/api/files/[fileId]`. For 'Rename', clicking the button should open a modal with a text input pre-filled with the current filename. On submitting the modal form, send a `PUT` request to `/api/files/[fileId]` with the new name. After either action is successful, re-fetch the file list to update the UI.",
+            "status": "pending",
+            "testStrategy": "On the file list page, click the 'Delete' button for a file. Verify the confirmation modal appears. Confirm the deletion and check that the file is removed from the list. Click the 'Rename' button for another file. Verify the modal appears with the current name. Enter a new name, submit, and verify the filename updates in the list."
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "created": "2025-09-17T16:02:51.192Z",
+      "updated": "2025-09-17T16:02:51.192Z",
+      "description": "Copy of \"master\" created on 17/9/2025",
+      "copiedFrom": {
+        "tag": "master",
+        "date": "2025-09-17T16:02:51.192Z"
+      }
+    }
   }
 }
