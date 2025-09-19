@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+documentos/*
 
 # debug
 npm-debug.log*
@@ -69,4 +70,3 @@ node_modules/
 # tasks.json
 # tasks/
 .taskmaster/config.json
-
