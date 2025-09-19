@@ -5,16 +5,16 @@ import { updateUserRoleSchema } from "@/lib/zod";
 import { ZodError } from "zod";
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     userId: string;
-  };
+  }>;
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     // Check authentication and admin role
     const session = await auth();
-    
+
     if (!session?.user || session.user.role !== "admin") {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -22,7 +22,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const { userId } = params;
+    const { userId } = await params;
 
     // Validate userId parameter
     if (!userId || typeof userId !== "string") {

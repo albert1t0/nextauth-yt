@@ -958,7 +958,7 @@
         "description": "Implement a navigation button within the admin dashboard interface that allows administrators to quickly and easily return to the main user dashboard.",
         "details": "This task involves adding a persistent navigation element to the admin panel layout. The button should be placed in a prominent, consistent location, such as the admin header or sidebar, to ensure it's accessible from any page within the `/admin` route group. Use a `<Link>` component from Next.js for client-side navigation, pointing to `/dashboard`. The button should be styled using the project's UI component library (e.g., Shadcn/ui) and include a descriptive label like 'Return to Dashboard' along with a relevant icon (e.g., `ArrowLeft` or `LayoutDashboard`). This modification will likely be made in the admin layout file (e.g., `app/admin/layout.tsx`).",
         "testStrategy": "1. Log in to the application using an account with the 'ADMIN' role. 2. Navigate to the main admin dashboard at `/admin`. 3. Verify that a 'Return to Dashboard' button is clearly visible in the admin layout (e.g., header). 4. Click the button. 5. Confirm that you are successfully redirected to the main user dashboard at `/dashboard`. 6. Navigate to another admin sub-page (if available) and confirm the button is still present and functional.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           26,
           30
@@ -971,7 +971,7 @@
             "description": "Develop a self-contained UI component for the 'Return to Dashboard' button. This component will encapsulate the button's visual elements, including the icon and label, using the project's Shadcn/ui library.",
             "dependencies": [],
             "details": "Create a new component file, for example, at `components/ui/return-to-dashboard-button.tsx`. Inside this file, use the `<Button>` component from Shadcn/ui. Import the `ArrowLeft` icon from the `lucide-react` library and place it alongside the text label 'Return to Dashboard'. The component should accept standard button props. For now, it will not have any navigation logic.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Use a component viewer like Storybook or temporarily render the component on a test page to verify its appearance, responsiveness, and hover/active states."
           },
           {
@@ -982,7 +982,7 @@
               "31.1"
             ],
             "details": "Locate and open the admin panel's root layout file, which is likely `app/admin/layout.tsx`. Import the `ReturnToDashboardButton` component created in subtask 31.1. Position the component within the layout's header or sidebar structure. Use Flexbox or Grid CSS properties to ensure it is properly aligned with other navigation elements.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Log in with an admin account and navigate to several different pages within the `/admin` route group. Confirm that the button is present and correctly positioned on all pages without disrupting the existing layout."
           },
           {
@@ -993,7 +993,7 @@
               "31.2"
             ],
             "details": "In the `app/admin/layout.tsx` file, import the `Link` component from `next/link`. Wrap the `<ReturnToDashboardButton />` instance with this `Link` component, setting the `href` prop to `\"/dashboard\"`. To ensure proper styling and accessibility, pass the `asChild` prop to the Shadcn/ui `<Button>` component so that it renders as the anchor tag from the `Link` component.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "1. Log in as an administrator and go to any admin page. 2. Click the 'Return to Dashboard' button. 3. Verify that the browser navigates to `/dashboard` smoothly and without a full page reload. 4. Check the browser's network tab to confirm client-side navigation occurred."
           }
         ]
@@ -1001,7 +1001,7 @@
     ],
     "metadata": {
       "created": "2025-06-21T22:19:07.747Z",
-      "updated": "2025-09-19T21:14:48.049Z",
+      "updated": "2025-09-19T21:30:48.376Z",
       "description": "Tasks for master context"
     }
   },

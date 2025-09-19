@@ -2,7 +2,7 @@ import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { NextResponse } from "next/server"
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     // Check if user is authenticated
     const session = await auth()

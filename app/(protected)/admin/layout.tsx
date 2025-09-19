@@ -1,9 +1,10 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { 
-  LayoutDashboard, 
-  Users, 
+import { ReturnToDashboardButton } from '@/components/ui/return-to-dashboard-button'
+import {
+  LayoutDashboard,
+  Users,
   Settings
 } from 'lucide-react'
 import { auth } from '@/auth'
@@ -30,6 +31,9 @@ export default async function AdminLayout({
             </div>
             
             <div className="flex items-center space-x-4">
+              <Link href="/dashboard">
+                <ReturnToDashboardButton />
+              </Link>
               <span className="text-sm text-gray-600">
                 {session?.user?.email}
               </span>

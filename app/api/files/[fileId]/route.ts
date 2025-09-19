@@ -10,7 +10,7 @@ const updateFileSchema = z.object({
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { fileId: string } }
+  { params }: { params: Promise<{ fileId: string }> }
 ) {
   try {
     // Check if user is authenticated
@@ -22,7 +22,7 @@ export async function PUT(
       )
     }
 
-    const { fileId } = params
+    const { fileId } = await params
 
     // Parse and validate request body
     const body = await request.json()
@@ -96,7 +96,7 @@ export async function DELETE(
     // Delete the physical file
     try {
       await unlink(file.storagePath)
-    } catch (error) {
+    } catch {
       // If file doesn't exist, continue with database deletion
       console.warn("File not found on disk:", file.storagePath)
     }
