@@ -2,13 +2,10 @@ import NextAuth from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { db } from "@/lib/db"
 
-//import { PrismaAdapter } from "@auth/prisma-adapter"
-
 import authConfig from "@/auth.config"
-//import { prisma } from "@/lib/prisma"
 
 // Exportamos las funciones y handlers necesarios de NextAuth
-export const { 
+export const {
   handlers,  // Manejadores de rutas para la API de autenticación
   signIn,    // Función para iniciar sesión
   signOut,   // Función para cerrar sesión
@@ -19,7 +16,7 @@ export const {
 
   // Configuramos la estrategia de sesión como JWT (JSON Web Token)
   // Esto significa que los datos de la sesión se almacenarán en un token en lugar de la base de datos
-  session: { 
+  session: {
     strategy: "jwt",
   },
 
@@ -53,8 +50,10 @@ export const {
     session({ session, token }) {
       // Transferimos el ID y rol del token a la sesión
       // Esto hace que estos datos estén disponibles en el cliente
-      session.user.id = token.id as string;
-      session.user.role = token.role as string;
+      if (token && session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+      }
       return session;
     },
   },

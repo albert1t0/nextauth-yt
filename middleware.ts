@@ -1,27 +1,27 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 
-const middleware = auth
-
-const publicRoutes = [ 
-  "/",
-  "/login",
-  "/register",
-  "/terms",
-  "/privacy",
-  "/about",
-  "/contact",
-  "/forgot-password",
-  "/api/auth/verify-email",
-  "/api/auth/request-password-reset",
-  "/reset-password",
-  "/api/auth/reset-password"
-]
-
-export default middleware((req) => {
+// Crear un middleware que no se aplique a las rutas de autenticación
+export default auth((req) => {
   const { nextUrl, auth } = req;
   const isLoggedIn = !!auth?.user;
   const userRole = auth?.user?.role;
+
+  // Rutas públicas que no requieren autenticación
+  const publicRoutes = [
+    "/",
+    "/login",
+    "/register",
+    "/terms",
+    "/privacy",
+    "/about",
+    "/contact",
+    "/forgot-password",
+    "/api/auth/verify-email",
+    "/api/auth/request-password-reset",
+    "/reset-password",
+    "/api/auth/reset-password"
+  ];
 
   // Permitir cualquier subruta de /reset-password y rutas públicas
   const isPublic = publicRoutes.some(route =>
@@ -47,9 +47,8 @@ export default middleware((req) => {
 export const config = {
   matcher: [
     // Skip Next.js internals and all static files, unless found in search params
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
-    '/(api|trpc)(.*)',
+    // Exclude auth routes from middleware
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)|api/auth).*)',
   ],
 };
 
