@@ -772,7 +772,7 @@
         "description": "Develop a complete file management system for authenticated users. This includes creating a dedicated UI page and the necessary API endpoints to handle file uploads, display a list of user-owned files, and allow for file renaming and deletion.",
         "details": "This task involves creating a full CRUD (Create, Read, Update, Delete) functionality for user-specific files. 1. **Database Schema**: Add a new `File` model to `prisma/schema.prisma`. It must include fields like `id`, `filename`, `storagePath`, `mimetype`, `size`, `createdAt`, and a relation to the `User` model (`userId String`, `@relation(...)`). Run `npx prisma migrate dev` to apply changes. 2. **Backend API Endpoints**: Create API routes under `app/api/files/`. All routes must be protected and verify that the user performing the action is the owner of the file. - **POST /api/files/upload**: Handle `multipart/form-data` requests. Save the uploaded file to a secure location on the server (e.g., a non-public `uploads` directory) and create a corresponding record in the `File` table, linking it to the authenticated user's ID. - **GET /api/files**: Fetch and return a list of all file records belonging to the currently authenticated user. - **PUT /api/files/[fileId]**: Handle file metadata updates, primarily renaming. It should receive a new `filename` in the request body, validate ownership, and update the database record. - **DELETE /api/files/[fileId]**: Validate ownership, then delete the physical file from the server's storage and remove its corresponding record from the database. 3. **Frontend UI**: Create a new page at `/dashboard/files`. - **File Upload Form**: Implement a form with an `<input type=\"file\">` that submits to the upload endpoint. Provide user feedback on upload progress, success, or failure. - **File List Display**: Use a data fetching hook (like SWR or React Query) to call the `GET /api/files` endpoint. Display the files in a table or grid, showing the filename, upload date, and action buttons (e.g., Rename, Delete, Download). - **Modals for Actions**: Implement modals for renaming a file (pre-filled with the current name) and for confirming deletion to prevent accidental data loss.",
         "testStrategy": "1. **Authorization & Security**: Attempt to access the `/dashboard/files` page while logged out and verify redirection to the login page. Log in as User A, upload a file, and note its ID. Log in as User B and attempt to list, update, or delete User A's file via direct API calls; verify all attempts are rejected with a 403 Forbidden or 404 Not Found error. 2. **Upload Functionality**: Upload a file (e.g., PDF, JPG). Verify it appears in the UI list, is physically present in the server's upload directory, and a corresponding record exists in the database linked to the correct user. 3. **List Functionality**: Upload multiple files. Verify all are correctly listed for the logged-in user. Log in as a different user and confirm their file list is empty or shows only their own files. 4. **Update Functionality**: Use the UI to rename a file. Verify the name changes in the list and the database record is updated. 5. **Delete Functionality**: Use the UI to delete a file. Confirm the deletion prompt appears. After confirming, verify the file is removed from the UI list, deleted from the server's file system, and its record is removed from the database.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           7,
           8,
@@ -786,7 +786,7 @@
             "description": "Create the database schema for storing file metadata. This involves adding a `File` model to `prisma/schema.prisma` and running a migration to apply the changes to the database.",
             "dependencies": [],
             "details": "In `prisma/schema.prisma`, define a new `File` model. It must include fields: `id` (String, @id, @default(cuid())), `filename` (String), `storagePath` (String), `mimetype` (String), `size` (Int), `createdAt` (DateTime, @default(now())), and a relation to the `User` model. Add `userId String` and the relation field `user User @relation(fields: [userId], references: [id], onDelete: Cascade)`. After defining the model, run the command `npx prisma migrate dev --name add_file_model` to generate and apply the migration.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "After migration, use a database client (like Prisma Studio) to verify that the `File` table with the correct columns and relations has been created in the database."
           },
           {
@@ -797,7 +797,7 @@
               "29.1"
             ],
             "details": "Create the route handler at `app/api/files/upload/route.ts`. Use a library like `formidable` or handle the stream directly to process the `multipart/form-data` request. First, verify the user is authenticated using `getServerSession` from NextAuth.js. Generate a unique name for the file to avoid collisions and save it to a non-public directory (e.g., `./uploads`). After successfully saving the file, create a new entry in the `File` table using Prisma, linking it to the authenticated user's ID and storing metadata like the original filename, the new storage path, mimetype, and size. Return a 201 Created response with the new file's data.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Use an API client like Postman or Insomnia to send a POST request with a valid session cookie and a file in a `multipart/form-data` body. Verify that the file is saved on the server's filesystem and a corresponding record is created in the database. Test error cases like unauthenticated requests or requests without a file."
           },
           {
@@ -808,7 +808,7 @@
               "29.1"
             ],
             "details": "Create the route handler at `app/api/files/route.ts`. In the `GET` handler, retrieve the user's session to get their ID. Use Prisma to query the `File` table, filtering by the `userId`. The query should be `prisma.file.findMany({ where: { userId: session.user.id }, orderBy: { createdAt: 'desc' } })`. Return the resulting array of file objects as a JSON response with a 200 OK status. Ensure the route is protected and returns a 401 Unauthorized error if no session is found.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "After uploading a few files using the endpoint from subtask 29.2, make an authenticated GET request to `/api/files`. Verify that the response is a JSON array containing the correct file records for that user. Test that an unauthenticated request receives a 401 error."
           },
           {
@@ -819,7 +819,7 @@
               "29.3"
             ],
             "details": "Create a new route `app/dashboard/files/page.tsx`. This should be a client component (`'use client'`). Use a data fetching library like SWR or React Query to call the `/api/files` endpoint. While data is loading, show a loading spinner. If there's an error, display an error message. Once the data is fetched, map over the array of files and render them in a table. The table should have columns for `Filename`, `Upload Date`, `Size`, and `Actions` (which will be empty for now). Use a utility function to format the date and file size for display.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Navigate to `/dashboard/files` while logged in. Verify that a loading state is shown initially, followed by a table displaying the files previously uploaded for the current user. Check that the page is protected by middleware and redirects to login if accessed while logged out."
           },
           {
@@ -831,7 +831,7 @@
               "29.4"
             ],
             "details": "In the `app/dashboard/files/page.tsx` component, add a form with an `<input type=\"file\">` and a submit button. On form submission, prevent the default action and create a `FormData` object. Append the selected file to it. Use the `fetch` API or a library like `axios` to send a POST request to `/api/files/upload` with the `FormData` as the body. Implement state to track the upload progress (e.g., 'idle', 'uploading', 'success', 'error'). Disable the submit button while uploading. Display success or error messages to the user. Upon successful upload, re-fetch the file list to show the newly added file.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "On the `/dashboard/files` page, use the new form to select and upload a file. Verify that the UI shows an 'uploading' state. After the upload completes, confirm that a success message is shown and the file list automatically updates to include the new file."
           },
           {
@@ -842,7 +842,7 @@
               "29.1"
             ],
             "details": "Create a dynamic route handler at `app/api/files/[fileId]/route.ts`. In the `DELETE` handler, get the `fileId` from the route parameters and the user's session. First, query the database for the file: `prisma.file.findUnique({ where: { id: fileId } })`. If the file doesn't exist or if `file.userId` does not match the session's `user.id`, return a 404 Not Found or 403 Forbidden error. If ownership is verified, use Node.js's `fs` module (`fs.promises.unlink`) to delete the physical file from the path specified in `file.storagePath`. After successfully deleting the file, delete the record from the database: `prisma.file.delete({ where: { id: fileId } })`. Return a 204 No Content response on success.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Using an API client, send an authenticated DELETE request to `/api/files/[fileId]` for a file owned by the user. Verify a 204 response, and confirm the file is gone from both the filesystem and the database. Attempt to delete a file owned by another user and verify a 403/404 error is returned."
           },
           {
@@ -853,7 +853,7 @@
               "29.1"
             ],
             "details": "In the `app/api/files/[fileId]/route.ts` file, implement the `PUT` handler. It should expect a JSON body with a `filename` property. Get the `fileId` and user session. Find the file in the database and verify ownership, similar to the DELETE endpoint. If ownership is confirmed, use Prisma to update the record: `prisma.file.update({ where: { id: fileId }, data: { filename: newFilename } })`. Return the updated file object with a 200 OK status. Use Zod to validate the incoming `filename` to ensure it's a non-empty string.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Using an API client, send an authenticated PUT request to `/api/files/[fileId]` with `{\"filename\": \"new-name.txt\"}` in the body. Verify a 200 response containing the updated file data. Check the database to confirm the `filename` field was updated. Test for invalid input and ownership errors."
           },
           {
@@ -866,15 +866,142 @@
               "29.7"
             ],
             "details": "In the `Actions` column of the file table in `app/dashboard/files/page.tsx`, add 'Rename' and 'Delete' buttons for each file. For 'Delete', clicking the button should open a confirmation modal asking 'Are you sure you want to delete this file?'. On confirmation, send a `DELETE` request to `/api/files/[fileId]`. For 'Rename', clicking the button should open a modal with a text input pre-filled with the current filename. On submitting the modal form, send a `PUT` request to `/api/files/[fileId]` with the new name. After either action is successful, re-fetch the file list to update the UI.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "On the file list page, click the 'Delete' button for a file. Verify the confirmation modal appears. Confirm the deletion and check that the file is removed from the list. Click the 'Rename' button for another file. Verify the modal appears with the current name. Enter a new name, submit, and verify the filename updates in the list."
+          }
+        ]
+      },
+      {
+        "id": 30,
+        "title": "Create New Main Dashboard with Visual Navigation Cards",
+        "description": "Develop a new main user dashboard to serve as a central navigation hub. The dashboard will feature a personalized welcome message and visual cards for key application sections, with a conditional card for administrator access.",
+        "details": "This task involves replacing the simple dashboard from Task #18 with a more functional and visually appealing hub. The implementation will be in `app/dashboard/page.tsx`. Use a component library (e.g., Shadcn/ui) to create a responsive grid of `Card` components. 1. **Personalization**: Fetch the authenticated user's session data to display a welcome message, such as 'Welcome, [User Name]!'. 2. **Navigation Cards**: Create distinct cards for 'File Management', 'Profile Management', 'Settings', and 'Reports'. The 'File Management' card must link to the page created in Task #29 (`/dashboard/files`). The 'Reports' card should be styled as disabled or marked 'Coming Soon' as the functionality is not yet built. 3. **Conditional Admin Card**: Check the user's role from the session data. If the role is 'ADMIN', render an additional card titled 'Admin Panel' that links to the `/admin` dashboard created in Task #26. This card should be visually distinct to highlight its administrative nature.",
+        "testStrategy": "1. **Regular User Login**: Log in as a standard user. Verify you land on the new dashboard. Confirm the personalized welcome message is correct. Check that cards for File Management, Profile Management, Settings, and Reports are visible. Crucially, verify the 'Admin Panel' card is NOT visible. Click the 'File Management' card to ensure it navigates to the correct page. 2. **Admin User Login**: Log in as an administrator. Navigate to the `/dashboard` page. Verify all standard cards are present, AND the 'Admin Panel' card is also visible. Click the 'Admin Panel' card and confirm it correctly navigates to the `/admin` dashboard. 3. **Logged-Out Access**: Attempt to access `/dashboard` directly while not authenticated and verify you are redirected to the login page. 4. **Responsiveness**: Check the dashboard layout on various screen sizes to ensure the card grid adapts properly.",
+        "status": "pending",
+        "dependencies": [
+          18,
+          26,
+          28,
+          29
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Refactor Dashboard Page and Fetch User Session Data",
+            "description": "Clear the existing content in `app/dashboard/page.tsx` from Task #18 and set up the new page structure. Implement server-side logic to fetch the authenticated user's session data, which is required for the personalized welcome message and conditional card rendering.",
+            "dependencies": [],
+            "details": "Convert `app/dashboard/page.tsx` to a server component. Use a server-side session utility from your authentication provider (e.g., `auth()` from NextAuth.js) to retrieve the current user's session, including their name and role. If no session exists, the middleware should handle redirection. The fetched user object will be used in subsequent subtasks.",
+            "status": "pending",
+            "testStrategy": "Log in and navigate to `/dashboard`. Verify the page loads without errors. Add a `console.log` on the server to confirm that the user's session data (name, email, role) is being fetched correctly."
+          },
+          {
+            "id": 2,
+            "title": "Implement Personalized Welcome Message",
+            "description": "Create and style a header section on the dashboard that displays a personalized welcome message using the user's name fetched from the session data.",
+            "dependencies": [
+              "30.1"
+            ],
+            "details": "In the `app/dashboard/page.tsx` component, add an `<h1>` or `<h2>` tag at the top of the page. Use the user's name from the session data obtained in subtask 30.1 to render a message like 'Welcome, [User Name]!'. Apply appropriate typography and spacing using Tailwind CSS classes.",
+            "status": "pending",
+            "testStrategy": "Log in with a user that has a name defined in their profile. Verify the welcome message displays their correct name. Test with a user whose name is null or undefined to ensure the component handles it gracefully (e.g., displays 'Welcome!')."
+          },
+          {
+            "id": 3,
+            "title": "Create Reusable `NavigationCard` Component",
+            "description": "Develop a reusable React component, `NavigationCard.tsx`, using Shadcn/ui's `Card` component. This component will accept props like `title`, `description`, `href`, `icon`, and `disabled` to standardize the appearance and behavior of all dashboard navigation cards.",
+            "dependencies": [],
+            "details": "Create a new component file, e.g., `components/dashboard/NavigationCard.tsx`. Use Shadcn/ui components (`Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardContent`). The component should be wrapped in a Next.js `<Link>` component if an `href` is provided and it's not disabled. Implement logic to apply disabled styles (e.g., `opacity-50 cursor-not-allowed`) when the `disabled` prop is true.",
+            "status": "pending",
+            "testStrategy": "Use a tool like Storybook or a temporary test page to render the `NavigationCard` with different props. Verify its appearance and behavior for enabled, disabled, and linked states."
+          },
+          {
+            "id": 4,
+            "title": "Add Standard Navigation Cards to Dashboard Grid",
+            "description": "Integrate the `NavigationCard` component into the dashboard page to display the standard set of navigation options for all users. Arrange the cards in a responsive grid layout.",
+            "dependencies": [
+              "30.2",
+              "30.3"
+            ],
+            "details": "In `app/dashboard/page.tsx`, create a container element with Tailwind CSS grid classes (e.g., `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`). Render four instances of the `NavigationCard` component for 'File Management' (`href='/dashboard/files'`), 'Profile Management', and 'Settings'. For the 'Reports' card, pass the `disabled={true}` prop and include 'Coming Soon' in its description.",
+            "status": "pending",
+            "testStrategy": "Log in as a standard user. Verify that the four standard cards are displayed correctly in a grid. Check that the 'File Management' link navigates to the correct page. Confirm the 'Reports' card is visually disabled and not clickable. Resize the browser window to test the grid's responsiveness."
+          },
+          {
+            "id": 5,
+            "title": "Implement Conditional Rendering for Admin Panel Card",
+            "description": "Add logic to the dashboard page to conditionally render the 'Admin Panel' navigation card. This card should only be visible to users with the 'ADMIN' role and should be visually distinct.",
+            "dependencies": [
+              "30.1",
+              "30.4"
+            ],
+            "details": "In `app/dashboard/page.tsx`, use the user's role from the session data. Add a conditional rendering block: `{session.user.role === 'ADMIN' && <NavigationCard ... />}`. Configure this card with `title='Admin Panel'` and `href='/admin'`. To make it visually distinct, pass a custom `className` prop to the `NavigationCard` to apply a different border color or background highlight (e.g., `border-yellow-500`).",
+            "status": "pending",
+            "testStrategy": "1. Log in as a user with the 'ADMIN' role. Verify the 'Admin Panel' card is visible, visually distinct, and links correctly to `/admin`. 2. Log in as a standard, non-admin user. Verify the 'Admin Panel' card is NOT rendered."
+          },
+          {
+            "id": 6,
+            "title": "Finalize Dashboard Layout and Responsiveness",
+            "description": "Review and refine the overall layout, spacing, and styling of the dashboard page. Ensure the grid of cards is fully responsive and provides an optimal user experience on various screen sizes, from mobile to desktop.",
+            "dependencies": [
+              "30.5"
+            ],
+            "details": "Review `app/dashboard/page.tsx` and adjust Tailwind CSS classes as needed. Check for consistent padding and margins for the page container, header, and card grid. Add subtle hover effects to the `NavigationCard` component for better interactivity (e.g., `hover:border-primary`). Ensure the layout adapts gracefully to smaller viewports by adjusting the number of grid columns.",
+            "status": "pending",
+            "testStrategy": "Use browser developer tools to test the dashboard on different device presets (e.g., iPhone, iPad, large desktop). Verify that the layout adjusts correctly, elements do not overlap, and all text remains readable and accessible across all tested screen sizes."
+          }
+        ]
+      },
+      {
+        "id": 31,
+        "title": "Add 'Back to Main Dashboard' Button to Admin Panel",
+        "description": "Implement a navigation button within the admin dashboard interface that allows administrators to quickly and easily return to the main user dashboard.",
+        "details": "This task involves adding a persistent navigation element to the admin panel layout. The button should be placed in a prominent, consistent location, such as the admin header or sidebar, to ensure it's accessible from any page within the `/admin` route group. Use a `<Link>` component from Next.js for client-side navigation, pointing to `/dashboard`. The button should be styled using the project's UI component library (e.g., Shadcn/ui) and include a descriptive label like 'Return to Dashboard' along with a relevant icon (e.g., `ArrowLeft` or `LayoutDashboard`). This modification will likely be made in the admin layout file (e.g., `app/admin/layout.tsx`).",
+        "testStrategy": "1. Log in to the application using an account with the 'ADMIN' role. 2. Navigate to the main admin dashboard at `/admin`. 3. Verify that a 'Return to Dashboard' button is clearly visible in the admin layout (e.g., header). 4. Click the button. 5. Confirm that you are successfully redirected to the main user dashboard at `/dashboard`. 6. Navigate to another admin sub-page (if available) and confirm the button is still present and functional.",
+        "status": "pending",
+        "dependencies": [
+          26,
+          30
+        ],
+        "priority": "medium",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create the 'ReturnToDashboardButton' UI Component",
+            "description": "Develop a self-contained UI component for the 'Return to Dashboard' button. This component will encapsulate the button's visual elements, including the icon and label, using the project's Shadcn/ui library.",
+            "dependencies": [],
+            "details": "Create a new component file, for example, at `components/ui/return-to-dashboard-button.tsx`. Inside this file, use the `<Button>` component from Shadcn/ui. Import the `ArrowLeft` icon from the `lucide-react` library and place it alongside the text label 'Return to Dashboard'. The component should accept standard button props. For now, it will not have any navigation logic.",
+            "status": "pending",
+            "testStrategy": "Use a component viewer like Storybook or temporarily render the component on a test page to verify its appearance, responsiveness, and hover/active states."
+          },
+          {
+            "id": 2,
+            "title": "Integrate the Button into the Admin Layout",
+            "description": "Modify the primary admin layout file to incorporate the `ReturnToDashboardButton` component. The button should be placed in a consistent, high-visibility area like the header or main navigation sidebar.",
+            "dependencies": [
+              "31.1"
+            ],
+            "details": "Locate and open the admin panel's root layout file, which is likely `app/admin/layout.tsx`. Import the `ReturnToDashboardButton` component created in subtask 31.1. Position the component within the layout's header or sidebar structure. Use Flexbox or Grid CSS properties to ensure it is properly aligned with other navigation elements.",
+            "status": "pending",
+            "testStrategy": "Log in with an admin account and navigate to several different pages within the `/admin` route group. Confirm that the button is present and correctly positioned on all pages without disrupting the existing layout."
+          },
+          {
+            "id": 3,
+            "title": "Implement Client-Side Navigation Logic",
+            "description": "Add the navigation functionality to the button, making it a functional link that directs the user from the admin panel back to the main user dashboard at `/dashboard` using Next.js client-side routing.",
+            "dependencies": [
+              "31.2"
+            ],
+            "details": "In the `app/admin/layout.tsx` file, import the `Link` component from `next/link`. Wrap the `<ReturnToDashboardButton />` instance with this `Link` component, setting the `href` prop to `\"/dashboard\"`. To ensure proper styling and accessibility, pass the `asChild` prop to the Shadcn/ui `<Button>` component so that it renders as the anchor tag from the `Link` component.",
+            "status": "pending",
+            "testStrategy": "1. Log in as an administrator and go to any admin page. 2. Click the 'Return to Dashboard' button. 3. Verify that the browser navigates to `/dashboard` smoothly and without a full page reload. 4. Check the browser's network tab to confirm client-side navigation occurred."
           }
         ]
       }
     ],
     "metadata": {
       "created": "2025-06-21T22:19:07.747Z",
-      "updated": "2025-09-17T16:35:45.716Z",
+      "updated": "2025-09-19T21:14:48.049Z",
       "description": "Tasks for master context"
     }
   },
