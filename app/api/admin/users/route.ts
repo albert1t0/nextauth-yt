@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { Prisma } from "@prisma/client";
+import { Prisma, Role } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
 
     // Add role filter
     if (role && role.trim()) {
-      whereClause.role = role.toLowerCase();
+      whereClause.role = role.toLowerCase() as Role;
     }
 
     // Get users and total count with filters

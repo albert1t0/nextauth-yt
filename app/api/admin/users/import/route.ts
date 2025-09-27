@@ -3,8 +3,8 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { csvUserImportSchema } from "@/lib/zod";
 import Papa from "papaparse";
-import bcryptjs from "bcryptjs";
 import { ZodError } from "zod";
+import { Role } from "@prisma/client";
 
 export async function POST(request: NextRequest) {
   try {
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate and process each row
-    const validUsers: { name: string; email: string; role: string }[] = [];
+    const validUsers: { name: string; email: string; role: Role }[] = [];
     const errors: { row: number; errors: string[] }[] = [];
     let skipped = 0;
 
@@ -98,15 +98,10 @@ export async function POST(request: NextRequest) {
           continue;
         }
         
-        // Hash default password
-        const hashedPassword = await bcryptjs.hash("defaultpassword123", 12);
-        
         validUsers.push({
           name: validatedData.name,
           email: validatedData.email,
-          role: validatedData.role,
-          password: hashedPassword,
-          emailVerified: new Date(), // Auto-verify imported users
+          role: validatedData.role === "admin" ? Role.admin : Role.user,
         });
         
       } catch (error) {

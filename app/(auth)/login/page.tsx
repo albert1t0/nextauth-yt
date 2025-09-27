@@ -1,10 +1,12 @@
 import FormLogin from '@/components/ui/form-login'
-import React from 'react'
+import React, { Suspense } from 'react'
 
 const LoginPage
  = () => {
   return (
-          < FormLogin />
+    <Suspense fallback={<div>Loading...</div>}>
+      <FormLogin />
+    </Suspense>
    );
 };
 

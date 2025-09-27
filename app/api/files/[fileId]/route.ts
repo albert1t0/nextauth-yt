@@ -67,7 +67,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { fileId: string } }
+  { params }: { params: Promise<{ fileId: string }> }
 ) {
   try {
     // Check if user is authenticated
@@ -79,7 +79,7 @@ export async function DELETE(
       )
     }
 
-    const { fileId } = params
+    const { fileId } = await params
 
     // Find the file and verify ownership
     const file = await db.file.findUnique({

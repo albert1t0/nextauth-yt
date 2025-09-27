@@ -87,4 +87,47 @@ export default {
       },
     }),
   ],
+
+  // Configuración de páginas para personalizar las rutas de autenticación
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
+
+  // Configuración de sesión
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 días
+    updateAge: 24 * 60 * 60, // 24 horas
+  },
+
+  // Configuración de callbacks
+  callbacks: {
+    async jwt({ token, user, session, trigger }) {
+      // Actualizar el token cuando el usuario inicia sesión
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+      }
+
+      // Actualizar el token cuando la sesión se actualiza
+      if (trigger === "update" && session) {
+        token.name = session.user.name;
+        token.email = session.user.email;
+      }
+
+      return token;
+    },
+
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+      }
+      return session;
+    },
+  },
+
+  // Configuración adicional para evitar problemas de sesión
+  trustHost: true,
 } satisfies NextAuthConfig;

@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { loginAction } from "@/action/auth-action";
 import { useState, useTransition, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 
@@ -26,7 +26,6 @@ const FormLogin = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   // Verificar si el usuario viene de una verificación exitosa
@@ -50,9 +49,13 @@ async function onSubmit(values: z.infer<typeof loginSchema>) {
     setSuccessMessage(null);
     startTransition(async() => {
       try {
-        await loginAction(values, "/auth/post-login");
-        // La redirección ahora será manejada por NextAuth con el callbackUrl
-        router.push("/auth/post-login");
+        const result = await loginAction(values, "/auth/post-login");
+
+        if (result.success) {
+          // Dejar que NextAuth maneje la redirección automáticamente
+          // Forzar una recarga para limpiar cualquier estado de sesión anterior
+          window.location.href = "/auth/post-login";
+        }
       } catch (error) {
         setError(error instanceof Error ? error.message : "Error de autenticación");
       }

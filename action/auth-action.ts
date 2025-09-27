@@ -12,16 +12,21 @@ export const loginAction = async (
     callbackUrl?: string
 ) => {
     try {
-        await signIn("credentials", {
+        const result = await signIn("credentials", {
             email: values.email,
             password: values.password,
             redirect: false,
             callbackUrl: callbackUrl || "/auth/post-login",
         });
+
+        if (result?.error) {
+            throw new Error(result.error);
+        }
+
         return { success: true };
     } catch (error) {
         console.error("Login failed:", error);
-        throw new Error("Error de autenticación");
+        throw new Error(error instanceof Error ? error.message : "Error de autenticación");
     }
 };
 
