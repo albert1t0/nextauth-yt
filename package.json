@@ -31,6 +31,7 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.57.0",
     "recharts": "^3.2.1",
+    "sonner": "^2.0.7",
     "swr": "^2.3.6",
     "tailwind-merge": "^3.3.0",
     "zod": "^3.25.55"

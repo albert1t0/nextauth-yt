@@ -997,11 +997,145 @@
             "testStrategy": "1. Log in as an administrator and go to any admin page. 2. Click the 'Return to Dashboard' button. 3. Verify that the browser navigates to `/dashboard` smoothly and without a full page reload. 4. Check the browser's network tab to confirm client-side navigation occurred."
           }
         ]
+      },
+      {
+        "id": 32,
+        "title": "Implement 'My Profile' Page for User Account Management",
+        "description": "Create a 'My Profile' page at /dashboard/profile where authenticated users can view their account details, update their name, and securely change their password.",
+        "details": "This task involves creating a new page and two API endpoints. The page should be located at `app/dashboard/profile/page.tsx` and must be a protected route. The UI will be built using shadcn/ui components and should feature two separate forms within Cards: one for updating the user's name and another for changing the password. It should also display non-editable account information like email, role, and creation date. The forms will use `react-hook-form` with the Zod resolver for client-side validation. Two new API endpoints are required: 1. `PATCH /api/profile`: This endpoint will handle name updates. It must be secured, validate the incoming data with Zod, and use Prisma to update the user's record, ensuring a user can only modify their own data. 2. `PATCH /api/profile/change-password`: This endpoint will handle password changes. It must verify the user's current password using `bcrypt.compare` against the stored hash before hashing and saving the new password.",
+        "testStrategy": "1. **Route Protection**: Attempt to access `/dashboard/profile` while logged out and verify redirection to the login page. Log in and confirm access is granted. 2. **UI Verification**: Confirm the page correctly displays the logged-in user's name, email, and role. 3. **Profile Update**: Test the name change form's client-side validation (e.g., submitting an empty name). Successfully submit a new name and verify a success notification appears, the UI updates, and the change is reflected in the database. 4. **Password Change**: Test the password form's validation (e.g., mismatched new passwords, weak password). Submit with an incorrect current password and verify a specific error message is shown. Submit with the correct current password and a new valid password. Verify the success message, then log out. Confirm login is successful with the new password and fails with the old password. 5. **API Security**: Use an API client to send unauthenticated requests to both PATCH endpoints and verify a 401 Unauthorized response is returned.",
+        "status": "done",
+        "dependencies": [
+          5,
+          7,
+          8,
+          14,
+          17,
+          22
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define Zod Schemas for Profile and Password Validation",
+            "description": "Create two Zod schemas to validate the data for the profile update and password change forms. The profile schema will validate the 'name' field, and the password schema will validate 'currentPassword', 'newPassword', and 'confirmPassword', ensuring the new passwords match.",
+            "dependencies": [],
+            "details": "Create a new file at `lib/validations/profile.ts`. Export two schemas: `updateProfileSchema` with a `name` field (e.g., `z.string().min(2, 'Name must be at least 2 characters')`) and `changePasswordSchema` with `currentPassword`, `newPassword` (e.g., `z.string().min(8, 'Password must be at least 8 characters')`), and `confirmPassword`. Use Zod's `.refine()` method on the `changePasswordSchema` to validate that `newPassword` and `confirmPassword` are identical.",
+            "status": "done",
+            "testStrategy": "Write unit tests for the schemas to ensure they correctly validate both valid and invalid data structures, including edge cases like empty strings, short passwords, and mismatched confirmation passwords."
+          },
+          {
+            "id": 2,
+            "title": "Set Up Profile Page File Structure and Protected Route",
+            "description": "Create the necessary directory and file for the new profile page at `/dashboard/profile`. Ensure this route is protected and only accessible to authenticated users by updating the middleware configuration.",
+            "dependencies": [],
+            "details": "Create the folder `app/dashboard/profile/`. Inside, create a `page.tsx` file with a basic placeholder React component (e.g., `<div>My Profile Page</div>`). Verify that the `middleware.ts` file (as per Task 17) includes `/dashboard/:path*` or specifically `/dashboard/profile` in its `matcher` config array to enforce authentication for this route.",
+            "status": "done",
+            "testStrategy": "Attempt to navigate to `/dashboard/profile` while logged out and verify redirection to the login page. Log in as a user and navigate to the page again to confirm the placeholder content is rendered successfully."
+          },
+          {
+            "id": 3,
+            "title": "Implement `PATCH /api/profile` Endpoint for Name Update",
+            "description": "Create the API route handler to update the authenticated user's name. This endpoint will receive the new name, validate it using the Zod schema, and update the user record in the database.",
+            "dependencies": [
+              "32.1"
+            ],
+            "details": "Create the file `app/api/profile/route.ts`. Implement the `PATCH` handler. Use a helper function or `getServerSession` from `next-auth` to get the current user's session. If no session exists, return a 401 Unauthorized error. Parse the request body and validate it against the `updateProfileSchema`. If valid, use Prisma to update the `name` for the user identified by `session.user.id`. Return a 200 OK response with the updated user data. Handle potential database errors.",
+            "status": "done",
+            "testStrategy": "Use an API client like Postman to send PATCH requests to `/api/profile`. Test with a valid authentication token and a valid name. Verify the database is updated. Test without a token (expect 401), and with invalid data (e.g., empty name, expect 400)."
+          },
+          {
+            "id": 4,
+            "title": "Implement `PATCH /api/profile/change-password` Endpoint",
+            "description": "Create the API route handler to securely change the authenticated user's password. It must verify the user's current password before hashing and saving the new password.",
+            "dependencies": [
+              "32.1"
+            ],
+            "details": "Create the file `app/api/profile/change-password/route.ts`. Implement the `PATCH` handler. Secure the route by checking for a valid session. Validate the request body using `changePasswordSchema`. Fetch the full user record from the database. Use `bcrypt.compare` to check if the provided `currentPassword` matches the stored hash. If it does not match, return a 400 Bad Request error. If it matches, hash the `newPassword` with `bcrypt.hash` and update the user's password field in the database. Return a 200 OK success message.",
+            "status": "done",
+            "testStrategy": "Using an API client, test the success case with a valid token and correct current password. Test failure cases: incorrect current password (expect 400), new passwords not matching in the request body (expect 400), and unauthenticated request (expect 401)."
+          },
+          {
+            "id": 5,
+            "title": "Create `AccountInfo` Component to Display User Details",
+            "description": "Develop a React component to display non-editable user account information, such as email, role, and account creation date, within a `shadcn/ui` Card.",
+            "dependencies": [
+              "32.2"
+            ],
+            "details": "Create a new component file at `components/dashboard/profile/account-info.tsx`. This component will accept a user object as a prop. Use `shadcn/ui` components like `Card`, `CardHeader`, `CardTitle`, `CardContent`, and `Label` to create a read-only view of the user's `email`, `role`, and `createdAt` properties. Format the date for better readability.",
+            "status": "done",
+            "testStrategy": "Use Storybook or render the component on the profile page with mock user data to verify that it displays all information correctly and matches the intended design."
+          },
+          {
+            "id": 6,
+            "title": "Create `UpdateProfileForm` Component",
+            "description": "Build the client-side form for updating the user's name. This component will use `react-hook-form`, the Zod resolver, and `shadcn/ui` components, and will submit data to the `PATCH /api/profile` endpoint.",
+            "dependencies": [
+              "32.1",
+              "32.3"
+            ],
+            "details": "Create `components/dashboard/profile/update-profile-form.tsx`. Mark it as a client component (`'use client'`). Use the `useForm` hook from `react-hook-form` with the `zodResolver` and `updateProfileSchema`. The form should be pre-populated with the user's current name passed via props. Build the UI with `shadcn/ui` `Form`, `FormField`, `Input`, and `Button` components inside a `Card`. The `onSubmit` handler will make a `fetch` call to `PATCH /api/profile`.",
+            "status": "done",
+            "testStrategy": "Render the component and test client-side validation by entering an invalid name. Mock the API call to verify that a valid submission sends the correct payload. Check that the form is pre-filled correctly."
+          },
+          {
+            "id": 7,
+            "title": "Create `ChangePasswordForm` Component",
+            "description": "Build the client-side form for changing the user's password. This component will use `react-hook-form`, the Zod resolver, and `shadcn/ui` components, and will submit data to the `PATCH /api/profile/change-password` endpoint.",
+            "dependencies": [
+              "32.1",
+              "32.4"
+            ],
+            "details": "Create `components/dashboard/profile/change-password-form.tsx` as a client component. Use `react-hook-form` with the `zodResolver` and `changePasswordSchema`. The form will contain three `Input` fields of `type='password'` for current password, new password, and confirmation. The `onSubmit` handler will call the `PATCH /api/profile/change-password` endpoint. For security, ensure the form fields are cleared after a successful submission.",
+            "status": "done",
+            "testStrategy": "Render the component and test client-side validation (e.g., new passwords don't match, new password is too short). Mock the API call on submit to verify the correct payload is sent. Ensure password fields do not autocomplete."
+          },
+          {
+            "id": 8,
+            "title": "Assemble the Main `/dashboard/profile` Page",
+            "description": "Integrate the `AccountInfo`, `UpdateProfileForm`, and `ChangePasswordForm` components into the main profile page. Fetch the current user's data on the server to pass down as props.",
+            "dependencies": [
+              "32.2",
+              "32.5",
+              "32.6",
+              "32.7"
+            ],
+            "details": "In `app/dashboard/profile/page.tsx`, convert the component to an `async` server component. Use `getServerSession` to get the session and fetch the complete user object from the database using Prisma. Pass the user data as props to the `AccountInfo` and `UpdateProfileForm` components. Arrange the three components on the page using a layout (e.g., a CSS grid or flexbox) and add appropriate headings like 'Account Information', 'Update Profile', and 'Change Password'.",
+            "status": "done",
+            "testStrategy": "Load the `/dashboard/profile` page as an authenticated user. Verify that all three components render correctly and that the user's name and other details are displayed and pre-filled in the appropriate places."
+          },
+          {
+            "id": 9,
+            "title": "Implement Client-Side Loading and Feedback States",
+            "description": "Enhance the `UpdateProfileForm` and `ChangePasswordForm` components with loading indicators and user feedback (e.g., toast notifications) for success and error states.",
+            "dependencies": [
+              "32.6",
+              "32.7"
+            ],
+            "details": "In both form components, use a state variable (e.g., `isSubmitting`) to disable the submit button and show a loading spinner during the API call. In the `onSubmit` function, wrap the `fetch` call in a `try...catch` block. On a successful response, show a success toast (e.g., 'Profile updated!'). On a failed response, parse the error message from the JSON body and display an error toast (e.g., 'Incorrect current password').",
+            "status": "done",
+            "testStrategy": "Manually test both forms. Verify the submit button is disabled and a spinner appears on submission. Trigger a successful update and confirm a success toast appears. Trigger a failed update (e.g., wrong password) and confirm a specific error toast is shown."
+          },
+          {
+            "id": 10,
+            "title": "Perform End-to-End Integration and Security Review",
+            "description": "Conduct a full review and testing of the entire 'My Profile' feature, ensuring all components and APIs work together correctly and security measures are effective.",
+            "dependencies": [
+              "32.3",
+              "32.4",
+              "32.8",
+              "32.9"
+            ],
+            "details": "Execute a full test plan: 1. Log in and navigate to `/dashboard/profile`. 2. Verify all data is displayed correctly. 3. Successfully update the name and refresh the page to confirm persistence. 4. Successfully change the password. 5. Log out and log back in with the new password. 6. Attempt to change the password with an incorrect current password and verify the error feedback. 7. Review browser network tab to ensure no sensitive data (like password hashes) is returned in API responses.",
+            "status": "done",
+            "testStrategy": "This is a comprehensive manual test of the entire feature flow, simulating real user actions from login to profile modification to logout and re-login."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-06-21T22:19:07.747Z",
-      "updated": "2025-09-27T02:53:46.108Z",
+      "updated": "2025-09-29T19:31:13.805Z",
       "description": "Tasks for master context"
     }
   },

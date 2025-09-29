@@ -45,3 +45,27 @@ export const csvUserImportSchema = object({
   }),
 });
 
+// Profile management schemas
+export const updateProfileSchema = object({
+  name: string({ required_error: "El nombre es requerido" })
+    .min(2, "El nombre debe tener al menos 2 caracteres")
+    .max(50, "El nombre no puede exceder los 50 caracteres")
+    .trim(),
+});
+
+export const changePasswordSchema = object({
+  currentPassword: string({ required_error: "La contraseña actual es requerida" })
+    .min(1, "La contraseña actual es requerida"),
+  newPassword: string({ required_error: "La nueva contraseña es requerida" })
+    .min(8, "La nueva contraseña debe tener al menos 8 caracteres")
+    .max(32, "La nueva contraseña no puede exceder los 32 caracteres"),
+  confirmPassword: string({ required_error: "La confirmación de contraseña es requerida" })
+    .min(1, "La confirmación de contraseña es requerida"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Las contraseñas no coinciden",
+  path: ["confirmPassword"],
+}).refine((data) => data.currentPassword !== data.newPassword, {
+  message: "La nueva contraseña debe ser diferente a la actual",
+  path: ["newPassword"],
+});
+
