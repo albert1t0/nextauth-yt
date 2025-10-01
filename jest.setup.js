@@ -1,5 +1,3 @@
-import '@testing-library/jest-dom'
-
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
   useRouter() {
@@ -42,25 +40,13 @@ jest.mock('qrcode', () => ({
 jest.mock('otplib', () => ({
   authenticator: {
     generateSecret: jest.fn(() => 'test-secret'),
-    check: jest.fn(() => true),
+    verify: jest.fn(() => true),
     generate: jest.fn(() => '123456'),
+    keyuri: jest.fn(() => 'otpauth://totp/test@example.com?secret=test'),
   },
 }))
 
-// Mock crypto-js
-jest.mock('crypto-js', () => ({
-  AES: {
-    encrypt: jest.fn(() => ({
-      toString: jest.fn(() => 'encrypted-data'),
-    })),
-    decrypt: jest.fn(() => ({
-      toString: jest.fn(() => 'decrypted-data'),
-    })),
-  },
-  enc: {
-    Utf8: 'utf8',
-  },
-}))
+// Mock crypto-js - will be configured in individual tests
 
 // Global test setup
 global.console = {

@@ -17,9 +17,9 @@ export const registerSchema = object({
   email: string({ required_error: "Email is required" })
     .min(1, "Email is required")
     .email("Invalid email"),
-  dni: string({ required_error: "DNI is required" })
-    .min(1, "DNI is required")
-    .regex(/^[A-Za-z0-9]{8}$/, "DNI must be exactly 8 alphanumeric characters"),
+  dni: string({ required_error: "El DNI es requerido" })
+    .min(1, "El DNI es requerido")
+    .regex(/^[A-Za-z0-9]{8}$/, "El DNI debe tener exactamente 8 caracteres alfanuméricos"),
   password: string({ required_error: "Password is required" })
     .min(1, "Password is required")
     .min(8, "Password must be more than 8 characters")
@@ -40,9 +40,9 @@ export const csvUserImportSchema = object({
   email: string({ required_error: "Email is required" })
     .min(1, "Email is required")
     .email("Invalid email format"),
-  dni: string({ required_error: "DNI is required" })
-    .min(1, "DNI is required")
-    .regex(/^[A-Za-z0-9]{8}$/, "DNI must be exactly 8 alphanumeric characters"),
+  dni: string({ required_error: "El DNI es requerido" })
+    .min(1, "El DNI es requerido")
+    .regex(/^[A-Za-z0-9]{8}$/, "El DNI debe tener exactamente 8 caracteres alfanuméricos"),
   role: string().optional().default("user").transform((val) => {
     const normalizedRole = val?.toLowerCase();
     if (!normalizedRole || normalizedRole === "user") return "user";

@@ -128,7 +128,7 @@ describe('Zod Schemas', () => {
         const result = registerSchema.safeParse(data)
         expect(result.success).toBe(false)
         if (!result.success) {
-          expect(result.error.issues[0].message).toContain('DNI must be exactly 8 alphanumeric characters')
+          expect(result.error.issues[0].message).toContain('8 caracteres alfanuméricos')
         }
       })
     })
@@ -190,7 +190,7 @@ describe('Zod Schemas', () => {
 
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('DNI must be exactly 8 alphanumeric characters')
+        expect(result.error.issues[0].message).toContain('8 caracteres alfanuméricos')
       }
     })
   })
@@ -292,6 +292,7 @@ describe('Zod Schemas', () => {
 
     it('should validate backup code', () => {
       const validData = {
+        token: '',  // empty token when using backup code
         backupCode: 'ABCD1234'
       }
 

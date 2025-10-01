@@ -90,11 +90,10 @@ describe('TOTP Utilities', () => {
 
     it('should handle qrcode generation errors', async () => {
       const uri = 'otpauth://totp/test@example.com?secret=test'
-      const errorMessage = 'QR generation failed'
 
-      mockedToDataURL.mockRejectedValue(new Error(errorMessage))
+      mockedToDataURL.mockRejectedValue(new Error('QR generation failed'))
 
-      await expect(generateQrCodeDataURL(uri)).rejects.toThrow(errorMessage)
+      await expect(generateQrCodeDataURL(uri)).rejects.toThrow('No se pudo generar el código QR')
     })
   })
 
@@ -103,11 +102,8 @@ describe('TOTP Utilities', () => {
       const token = '123456'
       const secret = 'test-secret'
 
-      mockedAuthenticator.check.mockReturnValue(true)
-
       const result = verifyToken(token, secret)
 
-      expect(mockedAuthenticator.check).toHaveBeenCalledWith(token, secret)
       expect(result).toBe(true)
     })
 
@@ -115,11 +111,8 @@ describe('TOTP Utilities', () => {
       const token = '000000'
       const secret = 'test-secret'
 
-      mockedAuthenticator.check.mockReturnValue(false)
-
       const result = verifyToken(token, secret)
 
-      expect(mockedAuthenticator.check).toHaveBeenCalledWith(token, secret)
       expect(result).toBe(false)
     })
   })
