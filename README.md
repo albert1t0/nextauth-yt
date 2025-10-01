@@ -22,12 +22,16 @@ Este proyecto demuestra una implementación completa de un sistema de autenticac
 - 🔑 Sistema de recuperación de contraseña con tokens seguros
 - 🛡️ Role-based access control (USER/ADMIN)
 - 🔒 Contraseñas hasheadas con bcrypt
+- 🔐 Autenticación de Dos Factores (TOTP) con códigos de respaldo
+- ⚙️ Configuración global de parámetros TOTP para administradores
 
 ### Base de Datos
 - 🗄️ PostgreSQL con Docker
 - 📊 Prisma ORM con migraciones automáticas
 - 🔄 Sistema de tokens con expiración (1 hora)
 - 📝 Modelos de datos optimizados para autenticación
+- ⚙️ Configuración global de sistema con patrón singleton
+- 🔐 Almacenamiento seguro de secretos TOTP encriptados
 
 ### Arquitectura
 - 🏗️ Next.js 15 con App Router
@@ -35,6 +39,8 @@ Este proyecto demuestra una implementación completa de un sistema de autenticac
 - 🎨 Componentes UI reutilizables con validación
 - 📋 Middleware de protección de rutas
 - 📦 Gestión de dependencias optimizada
+- 🔧 Sistema de configuración dinámica para TOTP
+- 🧪 Suite completa de pruebas unitarias e integración
 
 ## 🛠️ Tecnologías Utilizadas
 
@@ -42,8 +48,10 @@ Este proyecto demuestra una implementación completa de un sistema de autenticac
 - **Backend**: NextAuth.js v5, Server Actions
 - **Base de Datos**: PostgreSQL, Prisma ORM
 - **Validación**: Zod schemas, React Hook Form
-- **Autenticación**: JWT, bcrypt
-- **Desarrollo**: Docker, TypeScript
+- **Autenticación**: JWT, bcrypt, otplib (TOTP)
+- **Desarrollo**: Docker, TypeScript, Jest
+- **UI Components**: shadcn/ui, Lucide React
+- **Testing**: Jest, node-mocks-http
 
 ## 📦 Instalación y Configuración
 
@@ -96,11 +104,20 @@ Acceder a [http://localhost:3000](http://localhost:3000) para ver la aplicación
 ├── app/                    # Rutas de Next.js App Router
 │   ├── (auth)/            # Páginas públicas (login, registro)
 │   ├── (protected)/       # Rutas protegidas (requieren autenticación)
-│   └── api/auth/          # Endpoints de autenticación
+│   │   ├── admin/         # Panel de administración
+│   │   │   ├── settings/  # Configuración del sistema
+│   │   │   └── users/     # Gestión de usuarios
+│   │   └── 2fa/           # Autenticación de dos factores
+│   └── api/               # Endpoints API
+│       ├── auth/          # API de autenticación
+│       └── admin/         # API de administración
 ├── action/                # Server actions para formularios
 ├── components/ui/         # Componentes UI reutilizables
-├── lib/                   # Utilidades (DB, email, validación)
+├── lib/                   # Utilidades (DB, email, validación, TOTP)
 ├── prisma/                # Schema y migraciones de base de datos
+├── __tests__/             # Suite de pruebas
+│   ├── unit/              # Pruebas unitarias
+│   └── integration/       # Pruebas de integración
 └── public/               # Archivos estáticos
 ```
 
@@ -118,6 +135,11 @@ npx prisma generate           # Generar cliente Prisma
 npx prisma db push           # Aplicar cambios al schema
 npx prisma studio            # Abrir Prisma Studio
 npx prisma migrate dev       # Crear migraciones
+
+# Pruebas
+npm test                     # Ejecutar suite de pruebas
+npm run test:watch          # Modo watch para desarrollo
+npm run test:coverage       # Generar reporte de cobertura
 
 # Docker
 docker-compose up -d         # Iniciar PostgreSQL
@@ -144,11 +166,67 @@ docker-compose down          # Detener contenedores
 - Rutas de admin requieren rol ADMIN
 - Redirección automática para usuarios no autorizados
 
+### Autenticación de Dos Factores (TOTP)
+
+- Configuración TOTP con códigos QR
+- Generación de códigos de respaldo
+- Verificación de tokens con ventana de tiempo configurable
+- Panel de administración para configuración global de parámetros TOTP:
+  - Nombre del issuer (ej: "Mi App")
+  - Número de dígitos (6 u 8)
+  - Período de validez (30-1800 segundos)
+- Almacenamiento seguro de secretos con encriptación
+
 ## 📝 Documentación Adicional
 
 - [CLAUDE.md](./CLAUDE.md) - Guía completa de desarrollo
 - [Prisma Schema](./prisma/schema.prisma) - Modelo de base de datos
 - [Auth Config](./auth.config.ts) - Configuración de NextAuth
+- [TOTP Library](./lib/totp.ts) - Implementación de TOTP
+- [Zod Schemas](./lib/zod.ts) - Esquemas de validación
+
+## 🧪 Testing
+
+El proyecto incluye una suite completa de pruebas que cubren todos los aspectos del sistema:
+
+### Pruebas Unitarias
+
+- Validación de esquemas Zod
+- Utilidades de TOTP (generación de secretos, verificación de tokens)
+- Funciones de encriptación y manejo de datos
+
+### Pruebas de Integración
+
+- Endpoints API de autenticación
+- Endpoints de administración
+- Funcionalidad TOTP completa
+- Manejo de errores y casos límite
+
+### Ejecutar Pruebas
+
+```bash
+# Todas las pruebas
+npm test
+
+# Modo watch para desarrollo
+npm run test:watch
+
+# Cobertura de pruebas
+npm run test:coverage
+```
+
+## 🔒 Características de Seguridad
+
+- JWT sessions con expiración configurable
+- Contraseñas hasheadas con bcrypt
+- Tokens seguros con expiración (1 hora)
+- Verificación de email obligatoria
+- Role-based access control
+- Autenticación de dos factores con TOTP
+- Encriptación de secretos TOTP
+- Validación completa de formularios
+- Protección contra ataques comunes (CSRF, XSS)
+- Middleware de protección de rutas
 
 ## 🚀 Despliegue
 
