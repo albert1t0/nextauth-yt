@@ -1,11 +1,67 @@
 import { authenticator } from 'otplib';
 import QRCode from 'qrcode';
+import { db } from './db';
 
-// Configuración de TOTP
+// Configuración de TOTP inicial por defecto
 authenticator.options = {
   step: 30, // 30 segundos por defecto
   window: 1, // ventana de verificación (token actual y anterior)
+  digits: 6, // 6 dígitos por defecto
 };
+
+interface TOTPSystemSettings {
+  totpIssuer: string;
+  totpDigits: number;
+  totpPeriod: number;
+}
+
+/**
+ * Obtiene las configuraciones TOTP del sistema desde la base de datos
+ */
+export async function getSystemSettings(): Promise<TOTPSystemSettings> {
+  try {
+    let settings = await db.systemSettings.findFirst({
+      orderBy: { createdAt: 'asc' }
+    });
+
+    if (!settings) {
+      settings = await db.systemSettings.create({
+        data: {
+          totpIssuer: 'MyApp',
+          totpDigits: 6,
+          totpPeriod: 30,
+        }
+      });
+    }
+
+    return {
+      totpIssuer: settings.totpIssuer,
+      totpDigits: settings.totpDigits,
+      totpPeriod: settings.totpPeriod,
+    };
+  } catch (error) {
+    console.error('Error fetching TOTP system settings:', error);
+    // Retornar valores por defecto si hay error
+    return {
+      totpIssuer: process.env.NEXT_PUBLIC_APP_NAME || 'MyApp',
+      totpDigits: 6,
+      totpPeriod: 30,
+    };
+  }
+}
+
+/**
+ * Configura las opciones TOTP basadas en los settings del sistema
+ */
+export async function configureTOTPFromSystemSettings() {
+  const settings = await getSystemSettings();
+
+  authenticator.options = {
+    step: settings.totpPeriod,
+    window: 2, // Permitir tokens de las ventanas anterior y siguiente
+    digits: settings.totpDigits,
+  } as any; // Usamos any para evitar problemas de tipos con la librería otplib
+}
 
 export interface TOTPSetupData {
   secret: string;
@@ -23,12 +79,13 @@ export function generateSecret(): string {
 /**
  * Genera un URI otpauth:// para apps de autenticación
  */
-export function generateOtpAuthUri(
+export async function generateOtpAuthUri(
   accountName: string,
   secret: string,
   issuer?: string
-): string {
-  const appIssuer = issuer || process.env.NEXT_PUBLIC_APP_NAME || 'NextAuth App';
+): Promise<string> {
+  const settings = await getSystemSettings();
+  const appIssuer = issuer || settings.totpIssuer;
   return authenticator.keyuri(accountName, appIssuer, secret);
 }
 
@@ -54,8 +111,11 @@ export async function generateQrCodeDataURL(uri: string): Promise<string> {
 /**
  * Verifica un token TOTP
  */
-export function verifyToken(token: string, secret: string): boolean {
+export async function verifyToken(token: string, secret: string): Promise<boolean> {
   try {
+    // Asegurarse de que la configuración esté actualizada
+    await configureTOTPFromSystemSettings();
+
     return authenticator.verify({
       token,
       secret,
@@ -95,8 +155,11 @@ export async function generateTOTPSetup(
   userEmail: string,
   issuer?: string
 ): Promise<TOTPSetupData> {
+  // Asegurarse de que la configuración esté actualizada
+  await configureTOTPFromSystemSettings();
+
   const secret = generateSecret();
-  const otpauthUri = generateOtpAuthUri(userEmail, secret, issuer);
+  const otpauthUri = await generateOtpAuthUri(userEmail, secret, issuer);
   const qrCodeDataURL = await generateQrCodeDataURL(otpauthUri);
   const backupCodes = generateBackupCodes();
 

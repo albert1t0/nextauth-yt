@@ -1497,7 +1497,7 @@
         "description": "Create a `SystemSettings` model to store global TOTP configuration, develop a secure API endpoint for administrators to manage these settings, and build a corresponding user interface within the admin panel.",
         "details": "This task involves creating the infrastructure for centrally managing TOTP parameters. 1. **Database Schema:** Define a new singleton model in `schema.prisma` called `SystemSettings`. It should include fields like `id`, `totpIssuer` (String, the name displayed in authenticator apps), `totpDigits` (Int, e.g., 6 or 8), and `totpPeriod` (Int, e.g., 30 or 60 seconds). Apply the migration. 2. **API Endpoint:** Create a new API route at `/api/admin/settings/totp`. Implement a `GET` handler to fetch the current settings (creating default values if none exist) and a `PUT` handler to update them. Both handlers must be protected, ensuring only users with an 'ADMIN' role can access them. Use Zod for validating the input on the `PUT` request. 3. **Admin UI Page:** Develop a new page at `/admin/settings/totp`. This page will contain a form built with `react-hook-form` and `shadcn/ui` components. The form will fetch and display the current settings on load and submit updated values to the API endpoint, providing user feedback via toast notifications.",
         "testStrategy": "1. **API Security:** Using an API client, attempt to access the `GET` and `PUT` endpoints at `/api/admin/settings/totp` as a non-authenticated user and as an authenticated non-admin user. Verify all requests are rejected with appropriate 401/403 status codes. 2. **API Functionality:** As an admin, send a `PUT` request with valid data to update the settings and verify a 200 OK response. Follow up with a `GET` request to confirm the changes were persisted. Test the `PUT` endpoint with invalid data (e.g., non-integer for digits) to ensure a 400 Bad Request response is returned. 3. **UI Verification:** Log in as an admin and navigate to the new settings page. Confirm the form is populated with the correct data. Update the settings, save, and verify a success message is shown. Refresh the page to ensure the new values persist. Attempt to access the page as a non-admin user and confirm access is denied.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           38
         ],
@@ -1539,7 +1539,7 @@
     ],
     "metadata": {
       "created": "2025-06-21T22:19:07.747Z",
-      "updated": "2025-10-01T17:54:14.298Z",
+      "updated": "2025-10-01T21:45:54.385Z",
       "description": "Tasks for master context"
     }
   },

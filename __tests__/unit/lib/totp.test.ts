@@ -11,9 +11,16 @@ import { toDataURL } from 'qrcode'
 // Mock dependencies
 jest.mock('otplib')
 jest.mock('qrcode')
+jest.mock('@/lib/db', () => ({
+  systemSettings: {
+    findFirst: jest.fn(),
+    create: jest.fn()
+  }
+}))
 
 const mockedAuthenticator = authenticator as jest.Mocked<typeof authenticator>
 const mockedToDataURL = toDataURL as jest.MockedFunction<typeof toDataURL>
+const mockDb = require('@/lib/db')
 
 describe('TOTP Utilities', () => {
   beforeEach(() => {
@@ -51,20 +58,32 @@ describe('TOTP Utilities', () => {
   })
 
   describe('generateOtpAuthUri', () => {
-    it('should generate correct otpauth URI with default issuer', () => {
+    beforeEach(() => {
+      // Mock db response for all tests in this describe block
+      mockDb.systemSettings.findFirst.mockResolvedValue({
+        id: 'settings-1',
+        totpIssuer: 'NextAuth App',
+        totpDigits: 6,
+        totpPeriod: 30,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+    })
+
+    it('should generate correct otpauth URI with default issuer', async () => {
       const accountName = 'test@example.com'
       const secret = 'test-secret'
       const expectedUri = 'otpauth://totp/test@example.com?secret=test-secret&issuer=NextAuth%20App'
 
       mockedAuthenticator.keyuri.mockReturnValue(expectedUri)
 
-      const result = generateOtpAuthUri(accountName, secret)
+      const result = await generateOtpAuthUri(accountName, secret)
 
       expect(mockedAuthenticator.keyuri).toHaveBeenCalledWith(accountName, 'NextAuth App', secret)
       expect(result).toBe(expectedUri)
     })
 
-    it('should generate correct otpauth URI with custom issuer', () => {
+    it('should generate correct otpauth URI with custom issuer', async () => {
       const accountName = 'test@example.com'
       const secret = 'test-secret'
       const issuer = 'Custom App'
@@ -72,20 +91,20 @@ describe('TOTP Utilities', () => {
 
       mockedAuthenticator.keyuri.mockReturnValue(expectedUri)
 
-      const result = generateOtpAuthUri(accountName, secret, issuer)
+      const result = await generateOtpAuthUri(accountName, secret, issuer)
 
       expect(mockedAuthenticator.keyuri).toHaveBeenCalledWith(accountName, issuer, secret)
       expect(result).toBe(expectedUri)
     })
 
-    it('should handle special characters in account name', () => {
+    it('should handle special characters in account name', async () => {
       const accountName = 'test user@example.com'
       const secret = 'test-secret'
       const expectedUri = 'otpauth://totp/test%20user@example.com?secret=test-secret&issuer=NextAuth%20App'
 
       mockedAuthenticator.keyuri.mockReturnValue(expectedUri)
 
-      const result = generateOtpAuthUri(accountName, secret)
+      const result = await generateOtpAuthUri(accountName, secret)
 
       expect(mockedAuthenticator.keyuri).toHaveBeenCalledWith(accountName, 'NextAuth App', secret)
       expect(result).toContain('otpauth://totp/test%20user@example.com')
@@ -123,13 +142,25 @@ describe('TOTP Utilities', () => {
   })
 
   describe('verifyToken', () => {
-    it('should verify valid token', () => {
+    beforeEach(() => {
+      // Mock db response for all tests in this describe block
+      mockDb.systemSettings.findFirst.mockResolvedValue({
+        id: 'settings-1',
+        totpIssuer: 'NextAuth App',
+        totpDigits: 6,
+        totpPeriod: 30,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+    })
+
+    it('should verify valid token', async () => {
       const token = '123456'
       const secret = 'test-secret'
 
       mockedAuthenticator.verify.mockReturnValue(true)
 
-      const result = verifyToken(token, secret)
+      const result = await verifyToken(token, secret)
 
       expect(mockedAuthenticator.verify).toHaveBeenCalledWith({
         token,
@@ -139,13 +170,13 @@ describe('TOTP Utilities', () => {
       expect(result).toBe(true)
     })
 
-    it('should reject invalid token', () => {
+    it('should reject invalid token', async () => {
       const token = '000000'
       const secret = 'test-secret'
 
       mockedAuthenticator.verify.mockReturnValue(false)
 
-      const result = verifyToken(token, secret)
+      const result = await verifyToken(token, secret)
 
       expect(mockedAuthenticator.verify).toHaveBeenCalledWith({
         token,
@@ -194,6 +225,18 @@ describe('TOTP Utilities', () => {
   })
 
   describe('generateTOTPSetup', () => {
+    beforeEach(() => {
+      // Mock db response for all tests in this describe block
+      mockDb.systemSettings.findFirst.mockResolvedValue({
+        id: 'settings-1',
+        totpIssuer: 'NextAuth App',
+        totpDigits: 6,
+        totpPeriod: 30,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+    })
+
     // This function is not exported, so we test its components through other functions
     it('should work together with other functions', async () => {
       const mockSecret = 'test-secret-123'
@@ -205,7 +248,7 @@ describe('TOTP Utilities', () => {
       mockedToDataURL.mockResolvedValue(mockQrData)
 
       const secret = generateSecret()
-      const uri = generateOtpAuthUri('test@example.com', secret)
+      const uri = await generateOtpAuthUri('test@example.com', secret)
       const qrCode = await generateQrCodeDataURL(uri)
       const backupCodes = generateBackupCodes(10)
 

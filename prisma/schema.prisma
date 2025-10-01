@@ -94,6 +94,18 @@ model BackupCode {
   @@unique([userId, codeHash])
 }
 
+model SystemSettings {
+  id          String @id @default(cuid())
+  totpIssuer  String @default("MyApp")
+  totpDigits  Int    @default(6)
+  totpPeriod  Int    @default(30)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([id])
+}
+
 model File {
   id          String   @id @default(cuid())
   filename    String

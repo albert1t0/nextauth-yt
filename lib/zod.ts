@@ -1,4 +1,4 @@
-import { object, string, enum as zodEnum } from "zod"
+import { object, string, enum as zodEnum, coerce, number } from "zod"
  
 export const loginSchema = object({
   email: string({ required_error: "Email is required" })
@@ -87,5 +87,19 @@ export const totpVerificationSchema = object({
 }).refine((data) => data.token || data.backupCode, {
   message: "Se requiere un código TOTP o un código de respaldo",
   path: ["token"],
+});
+
+export const totpSettingsSchema = object({
+  totpIssuer: string({ required_error: "El issuer es requerido" })
+    .min(1, "El issuer es requerido")
+    .max(50, "El issuer no puede exceder los 50 caracteres"),
+  totpDigits: coerce.number()
+    .refine((val) => val === 6 || val === 8, {
+      message: "Los dígitos deben ser 6 u 8",
+    }),
+  totpPeriod: coerce.number()
+    .refine((val) => val >= 30 && val <= 1800, {
+      message: "El período debe estar entre 30 y 1800 segundos",
+    }),
 });
 

@@ -6,7 +6,8 @@ import {
   updateProfileSchema,
   csvUserImportSchema,
   changePasswordSchema,
-  totpVerificationSchema
+  totpVerificationSchema,
+  totpSettingsSchema
 } from '@/lib/zod'
 
 describe('Zod Schemas', () => {
@@ -350,6 +351,165 @@ describe('Zod Schemas', () => {
         expect(result.data.token).toBe('123456')
         expect(result.data.backupCode).toBe('ABCD1234')
       }
+    })
+  })
+
+  describe('totpSettingsSchema', () => {
+    it('should validate correct TOTP settings', () => {
+      const validData = {
+        totpIssuer: 'MyApp',
+        totpDigits: 6,
+        totpPeriod: 30
+      }
+
+      const result = totpSettingsSchema.safeParse(validData)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual(validData)
+      }
+    })
+
+    it('should validate TOTP settings with 8 digits', () => {
+      const validData = {
+        totpIssuer: 'SecureApp',
+        totpDigits: 8,
+        totpPeriod: 60
+      }
+
+      const result = totpSettingsSchema.safeParse(validData)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual(validData)
+      }
+    })
+
+    it('should validate TOTP settings with maximum period', () => {
+      const validData = {
+        totpIssuer: 'TestApp',
+        totpDigits: 6,
+        totpPeriod: 1800
+      }
+
+      const result = totpSettingsSchema.safeParse(validData)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual(validData)
+      }
+    })
+
+    it('should reject invalid totpDigits values', () => {
+      const invalidDigits = [5, 7, 9, 10, 0, -1]
+
+      invalidDigits.forEach(digits => {
+        const data = {
+          totpIssuer: 'TestApp',
+          totpDigits: digits,
+          totpPeriod: 30
+        }
+
+        const result = totpSettingsSchema.safeParse(data)
+        expect(result.success).toBe(false)
+        if (!result.success) {
+          expect(result.error.issues[0].message).toContain('Los dígitos deben ser 6 u 8')
+        }
+      })
+    })
+
+    it('should reject invalid totpPeriod values', () => {
+      const invalidPeriods = [29, 1801, 0, -1, 3600]
+
+      invalidPeriods.forEach(period => {
+        const data = {
+          totpIssuer: 'TestApp',
+          totpDigits: 6,
+          totpPeriod: period
+        }
+
+        const result = totpSettingsSchema.safeParse(data)
+        expect(result.success).toBe(false)
+        if (!result.success) {
+          expect(result.error.issues[0].message).toContain('El período debe estar entre 30 y 1800 segundos')
+        }
+      })
+    })
+
+    it('should reject empty totpIssuer', () => {
+      const invalidData = {
+        totpIssuer: '',
+        totpDigits: 6,
+        totpPeriod: 30
+      }
+
+      const result = totpSettingsSchema.safeParse(invalidData)
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe('El issuer es requerido')
+      }
+    })
+
+    it('should reject totpIssuer that is too long', () => {
+      const invalidData = {
+        totpIssuer: 'A'.repeat(51), // 51 characters, max is 50
+        totpDigits: 6,
+        totpPeriod: 30
+      }
+
+      const result = totpSettingsSchema.safeParse(invalidData)
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain('El issuer no puede exceder los 50 caracteres')
+      }
+    })
+
+    it('should transform string numbers to actual numbers', () => {
+      const stringData = {
+        totpIssuer: 'TestApp',
+        totpDigits: '6', // string that should be transformed to number
+        totpPeriod: '30' // string that should be transformed to number
+      }
+
+      const result = totpSettingsSchema.safeParse(stringData)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(typeof result.data.totpDigits).toBe('number')
+        expect(typeof result.data.totpPeriod).toBe('number')
+        expect(result.data.totpDigits).toBe(6)
+        expect(result.data.totpPeriod).toBe(30)
+      }
+    })
+
+    it('should reject non-numeric strings for digits and period', () => {
+      const invalidData = {
+        totpIssuer: 'TestApp',
+        totpDigits: 'invalid',
+        totpPeriod: 'not-a-number'
+      }
+
+      const result = totpSettingsSchema.safeParse(invalidData)
+
+      expect(result.success).toBe(false)
+    })
+
+    it('should require all fields', () => {
+      const missingFields = [
+        { totpIssuer: 'TestApp', totpDigits: 6 }, // missing totpPeriod
+        { totpIssuer: 'TestApp', totpPeriod: 30 }, // missing totpDigits
+        { totpDigits: 6, totpPeriod: 30 } // missing totpIssuer
+      ]
+
+      missingFields.forEach(data => {
+        const result = totpSettingsSchema.safeParse(data)
+        expect(result.success).toBe(false)
+        if (!result.success) {
+          expect(result.error.issues.length).toBeGreaterThan(0)
+        }
+      })
     })
   })
 })
