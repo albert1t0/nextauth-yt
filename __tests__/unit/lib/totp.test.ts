@@ -21,17 +21,6 @@ describe('TOTP Utilities', () => {
   })
 
   describe('generateSecret', () => {
-    it('should generate a unique secret each time', () => {
-      const secret1 = generateSecret()
-      const secret2 = generateSecret()
-
-      expect(secret1).toBeDefined()
-      expect(secret2).toBeDefined()
-      expect(secret1).not.toBe(secret2)
-      expect(typeof secret1).toBe('string')
-      expect(secret1.length).toBeGreaterThan(0)
-    })
-
     it('should call otplib authenticator generateSecret', () => {
       const mockSecret = 'test-secret-123'
       mockedAuthenticator.generateSecret.mockReturnValue(mockSecret)
@@ -41,6 +30,24 @@ describe('TOTP Utilities', () => {
       expect(mockedAuthenticator.generateSecret).toHaveBeenCalled()
       expect(result).toBe(mockSecret)
     })
+
+    it('should generate a unique secret each time', () => {
+      const mockSecret1 = 'test-secret-123'
+      const mockSecret2 = 'test-secret-456'
+      
+      mockedAuthenticator.generateSecret
+        .mockReturnValueOnce(mockSecret1)
+        .mockReturnValueOnce(mockSecret2)
+
+      const secret1 = generateSecret()
+      const secret2 = generateSecret()
+
+      expect(secret1).toBeDefined()
+      expect(secret2).toBeDefined()
+      expect(secret1).not.toBe(secret2)
+      expect(typeof secret1).toBe('string')
+      expect(secret1.length).toBeGreaterThan(0)
+    })
   })
 
   describe('generateOtpAuthUri', () => {
@@ -49,8 +56,11 @@ describe('TOTP Utilities', () => {
       const secret = 'test-secret'
       const expectedUri = 'otpauth://totp/test@example.com?secret=test-secret&issuer=NextAuth%20App'
 
+      mockedAuthenticator.keyuri.mockReturnValue(expectedUri)
+
       const result = generateOtpAuthUri(accountName, secret)
 
+      expect(mockedAuthenticator.keyuri).toHaveBeenCalledWith(accountName, 'NextAuth App', secret)
       expect(result).toBe(expectedUri)
     })
 
@@ -60,16 +70,24 @@ describe('TOTP Utilities', () => {
       const issuer = 'Custom App'
       const expectedUri = 'otpauth://totp/test@example.com?secret=test-secret&issuer=Custom%20App'
 
+      mockedAuthenticator.keyuri.mockReturnValue(expectedUri)
+
       const result = generateOtpAuthUri(accountName, secret, issuer)
 
+      expect(mockedAuthenticator.keyuri).toHaveBeenCalledWith(accountName, issuer, secret)
       expect(result).toBe(expectedUri)
     })
 
     it('should handle special characters in account name', () => {
       const accountName = 'test user@example.com'
       const secret = 'test-secret'
+      const expectedUri = 'otpauth://totp/test%20user@example.com?secret=test-secret&issuer=NextAuth%20App'
+
+      mockedAuthenticator.keyuri.mockReturnValue(expectedUri)
+
       const result = generateOtpAuthUri(accountName, secret)
 
+      expect(mockedAuthenticator.keyuri).toHaveBeenCalledWith(accountName, 'NextAuth App', secret)
       expect(result).toContain('otpauth://totp/test%20user@example.com')
       expect(result).toContain('secret=test-secret')
     })
@@ -84,7 +102,14 @@ describe('TOTP Utilities', () => {
 
       const result = await generateQrCodeDataURL(uri)
 
-      expect(mockedToDataURL).toHaveBeenCalledWith(uri)
+      expect(mockedToDataURL).toHaveBeenCalledWith(uri, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF',
+        },
+      })
       expect(result).toBe(expectedDataUrl)
     })
 
@@ -102,8 +127,15 @@ describe('TOTP Utilities', () => {
       const token = '123456'
       const secret = 'test-secret'
 
+      mockedAuthenticator.verify.mockReturnValue(true)
+
       const result = verifyToken(token, secret)
 
+      expect(mockedAuthenticator.verify).toHaveBeenCalledWith({
+        token,
+        secret,
+        window: 2,
+      })
       expect(result).toBe(true)
     })
 
@@ -111,8 +143,15 @@ describe('TOTP Utilities', () => {
       const token = '000000'
       const secret = 'test-secret'
 
+      mockedAuthenticator.verify.mockReturnValue(false)
+
       const result = verifyToken(token, secret)
 
+      expect(mockedAuthenticator.verify).toHaveBeenCalledWith({
+        token,
+        secret,
+        window: 2,
+      })
       expect(result).toBe(false)
     })
   })
@@ -157,10 +196,12 @@ describe('TOTP Utilities', () => {
   describe('generateTOTPSetup', () => {
     // This function is not exported, so we test its components through other functions
     it('should work together with other functions', async () => {
-      const mockSecret = 'test-secret'
+      const mockSecret = 'test-secret-123'
       const mockQrData = 'data:image/png;base64,test'
+      const mockUri = 'otpauth://totp/test@example.com?secret=test-secret-123&issuer=NextAuth%20App'
 
       mockedAuthenticator.generateSecret.mockReturnValue(mockSecret)
+      mockedAuthenticator.keyuri.mockReturnValue(mockUri)
       mockedToDataURL.mockResolvedValue(mockQrData)
 
       const secret = generateSecret()

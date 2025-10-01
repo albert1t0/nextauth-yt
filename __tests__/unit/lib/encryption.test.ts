@@ -15,7 +15,7 @@ const mockedCrypto = crypto as jest.Mocked<typeof crypto>
 const mockedBcrypt = bcrypt as jest.Mocked<typeof bcrypt>
 
 describe('Encryption Utilities', () => {
-  const TEST_ENCRYPTION_KEY = 'test-encryption-key-123'
+  const TEST_ENCRYPTION_KEY = 'your-secret-encryption-key-here'
 
   beforeEach(() => {
     jest.clearAllMocks()

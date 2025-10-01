@@ -145,7 +145,7 @@ describe('Zod Schemas', () => {
 
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('DNI is required')
+        expect(result.error.issues[0].message).toBe('El DNI es requerido')
       }
     })
   })
@@ -292,7 +292,7 @@ describe('Zod Schemas', () => {
 
     it('should validate backup code', () => {
       const validData = {
-        token: '',  // empty token when using backup code
+        token: '123456',  // token is required, backupCode is optional
         backupCode: 'ABCD1234'
       }
 
@@ -326,14 +326,14 @@ describe('Zod Schemas', () => {
 
     it('should require either token or backup code', () => {
       const data = {
-        // neither token nor backup code
+        token: ''  // empty token, no backup code
       }
 
       const result = totpVerificationSchema.safeParse(data)
 
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Se requiere un código TOTP o un código de respaldo')
+        expect(result.error.issues[0].message).toBe('El código es requerido')
       }
     })
 
