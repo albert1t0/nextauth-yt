@@ -23,10 +23,11 @@ import { User } from "lucide-react";
 
 interface FormProfileProps {
   initialName: string;
+  initialDni?: string;
   onProfileUpdate?: (updatedName: string) => void;
 }
 
-export function FormProfile({ initialName, onProfileUpdate }: FormProfileProps) {
+export function FormProfile({ initialName, initialDni, onProfileUpdate }: FormProfileProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -34,6 +35,7 @@ export function FormProfile({ initialName, onProfileUpdate }: FormProfileProps) 
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
       name: initialName || "",
+      dni: initialDni || "",
     },
   });
 
@@ -88,6 +90,26 @@ export function FormProfile({ initialName, onProfileUpdate }: FormProfileProps) 
                       disabled={isPending}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="dni"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>DNI</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="00000000"
+                      {...field}
+                      disabled={isPending}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    8 caracteres alfanuméricos (opcional)
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

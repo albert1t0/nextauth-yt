@@ -20,9 +20,12 @@ model User {
   emailVerified DateTime?
   image         String?
   role          Role          @default(user) // 'user' or 'admin'
+  dni           String?          @unique
 
   accounts      Account[]
   files         File[]
+  twoFactorAuth TwoFactorAuth?
+  backupCodes   BackupCode[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -63,6 +66,32 @@ model PasswordResetToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model TwoFactorAuth {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  secret          String?   // Encrypted TOTP secret
+  enabled         Boolean   @default(false)
+  digits          Int       @default(6) // 6-8 digits, configurable
+  period          Int       @default(30) // 30 seconds, configurable 30-1800 seconds
+  lastUsedAt      DateTime?
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model BackupCode {
+  id        String   @id @default(cuid())
+  codeHash  String   @unique // Hashed backup code
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, codeHash])
 }
 
 model File {

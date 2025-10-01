@@ -17,6 +17,9 @@ export const registerSchema = object({
   email: string({ required_error: "Email is required" })
     .min(1, "Email is required")
     .email("Invalid email"),
+  dni: string({ required_error: "DNI is required" })
+    .min(1, "DNI is required")
+    .regex(/^[A-Za-z0-9]{8}$/, "DNI must be exactly 8 alphanumeric characters"),
   password: string({ required_error: "Password is required" })
     .min(1, "Password is required")
     .min(8, "Password must be more than 8 characters")
@@ -37,6 +40,9 @@ export const csvUserImportSchema = object({
   email: string({ required_error: "Email is required" })
     .min(1, "Email is required")
     .email("Invalid email format"),
+  dni: string({ required_error: "DNI is required" })
+    .min(1, "DNI is required")
+    .regex(/^[A-Za-z0-9]{8}$/, "DNI must be exactly 8 alphanumeric characters"),
   role: string().optional().default("user").transform((val) => {
     const normalizedRole = val?.toLowerCase();
     if (!normalizedRole || normalizedRole === "user") return "user";
@@ -51,6 +57,10 @@ export const updateProfileSchema = object({
     .min(2, "El nombre debe tener al menos 2 caracteres")
     .max(50, "El nombre no puede exceder los 50 caracteres")
     .trim(),
+  dni: string({ required_error: "El DNI es requerido" })
+    .min(1, "El DNI es requerido")
+    .regex(/^[A-Za-z0-9]{8}$/, "El DNI debe tener exactamente 8 caracteres alfanuméricos")
+    .optional(),
 });
 
 export const changePasswordSchema = object({
@@ -67,5 +77,15 @@ export const changePasswordSchema = object({
 }).refine((data) => data.currentPassword !== data.newPassword, {
   message: "La nueva contraseña debe ser diferente a la actual",
   path: ["newPassword"],
+});
+
+export const totpVerificationSchema = object({
+  token: string({ required_error: "El código es requerido" })
+    .min(1, "El código es requerido")
+    .regex(/^[0-9]{6}$/, "El código debe tener exactamente 6 dígitos"),
+  backupCode: string().optional(),
+}).refine((data) => data.token || data.backupCode, {
+  message: "Se requiere un código TOTP o un código de respaldo",
+  path: ["token"],
 });
 

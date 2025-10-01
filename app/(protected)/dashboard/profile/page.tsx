@@ -17,6 +17,7 @@ async function getProfileData(userId: string) {
     select: {
       id: true,
       name: true,
+      dni: true,
       email: true,
       role: true,
       emailVerified: true,
@@ -58,6 +59,7 @@ export default async function ProfilePage() {
           <AccountInfo
             email={userData.email}
             name={userData.name || "Usuario"}
+            dni={userData.dni}
             role={userData.role}
             emailVerified={userData.emailVerified}
             createdAt={userData.createdAt}
@@ -65,6 +67,7 @@ export default async function ProfilePage() {
 
           <FormProfile
             initialName={userData.name || ""}
+            initialDni={userData.dni || ""}
           />
         </div>
 

@@ -41,15 +41,25 @@ export const registerAction = async (
             return { error: "Datos inválidos" };
         }
 
-        // verificar si usuario existe
-        const user = await db.user.findUnique({
+        // verificar si usuario existe por email o DNI
+        const existingUserByEmail = await db.user.findUnique({
             where: {
                 email: data.email,
             },
         });
 
-        if (user) {
-            return { error: "El usuario ya existe" };
+        if (existingUserByEmail) {
+            return { error: "El email ya está registrado" };
+        }
+
+        const existingUserByDni = await db.user.findUnique({
+            where: {
+                dni: data.dni,
+            },
+        });
+
+        if (existingUserByDni) {
+            return { error: "El DNI ya está registrado" };
         }
 
         // crear usuario
@@ -59,6 +69,7 @@ export const registerAction = async (
             data: {
                 email: data.email,
                 name: data.name,
+                dni: data.dni,
                 password: hashedPassword,
             },
         });

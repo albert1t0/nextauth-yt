@@ -1131,11 +1131,415 @@
             "testStrategy": "This is a comprehensive manual test of the entire feature flow, simulating real user actions from login to profile modification to logout and re-login."
           }
         ]
+      },
+      {
+        "id": 33,
+        "title": "Add DNI Field to User Model and Validations",
+        "description": "Modify the Prisma schema to add a mandatory and unique DNI field to the User model. This task includes creating the corresponding database migration and updating Zod validation schemas for the user registration and profile management pages.",
+        "details": "1. **Update Prisma Schema**: Modify the `User` model in `prisma/schema.prisma` to include the new `dni` field. It must be a non-nullable, unique string.\n```prisma\nmodel User {\n  id        String   @id @default(cuid())\n  email     String   @unique\n  name      String?\n  dni       String   @unique\n  password  String\n  // ... other fields\n}\n```\n2. **Database Migration**: Create and apply a new database migration to add the `dni` column to the existing `User` table. Run the command: `npx prisma migrate dev --name add_dni_to_user`. Follow the CLI prompts to handle existing records if necessary. After the migration, regenerate the Prisma Client with `npx prisma generate`.\n3. **Update Zod Schemas**: Modify the Zod validation schemas used for user registration and profile updates to include the `dni` field. Implement appropriate validation rules, such as a regex for format validation.\n```typescript\n// Example for a registration schema\nexport const RegisterSchema = z.object({\n  // ... other fields\n  dni: z.string().regex(/^[0-9]{8}[TRWAGMYFPDXBNJZSQVHLCKE]$/i, {\n    message: \"Invalid DNI format. It should be 8 numbers followed by a letter.\"\n  }),\n});\n```\n4. **Backend API Integration**: Update the registration API endpoint (`/api/auth/register`) and the profile update endpoint (from Task #32) to handle receiving, validating, and saving the `dni` field in the database. Ensure uniqueness constraints are handled gracefully, returning a user-friendly error message (e.g., 'DNI already in use').\n5. **Frontend UI Integration**: Add a new `Input` field for the DNI to the registration form component (from Task #15) and the profile management form on the `/dashboard/profile` page (from Task #32). Connect this field to the form state and validation logic.",
+        "testStrategy": "1. **Migration Verification**: After running `npx prisma migrate dev`, connect to the PostgreSQL database and inspect the `User` table. Confirm that a `dni` column exists with `TEXT` type and has `NOT NULL` and `UNIQUE` constraints.\n2. **Registration Flow**: Navigate to the `/register` page. Verify the DNI input field is present and marked as required. Test client-side validation by entering an incorrectly formatted DNI and confirm the specific error message appears. Successfully register a new user with a valid DNI and verify the value is correctly stored in the database. Attempt to register another user with the same DNI and verify that the API returns a conflict error which is displayed to the user.\n3. **Profile Management Flow**: Log in and navigate to the `/dashboard/profile` page. Verify the DNI field is present. Test updating the DNI with a valid value and confirm it's saved. Test updating with an invalid format and confirm validation prevents submission. Attempt to update the DNI to one that is already in use by another user and verify the backend error is handled and displayed correctly.",
+        "status": "done",
+        "dependencies": [
+          2,
+          5,
+          15,
+          32
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Update Prisma Schema with DNI Field",
+            "description": "Modify the `User` model in the `prisma/schema.prisma` file to include a new `dni` field. This field must be a non-nullable, unique string to ensure data integrity.",
+            "dependencies": [],
+            "details": "In `prisma/schema.prisma`, add the line `dni String @unique` to the `User` model. This defines the new field as a required, unique string in the database schema.",
+            "status": "done",
+            "testStrategy": "Review the `prisma/schema.prisma` file to confirm the `dni` field has been correctly added to the `User` model with the `@unique` attribute."
+          },
+          {
+            "id": 2,
+            "title": "Create and Apply Database Migration for DNI Field",
+            "description": "Generate and apply a new database migration to add the `dni` column to the `User` table in the PostgreSQL database, reflecting the schema changes.",
+            "dependencies": [
+              "33.1"
+            ],
+            "details": "Execute the command `npx prisma migrate dev --name add_dni_to_user` in the terminal. If prompted, provide a default value for existing user records (e.g., a placeholder string) to handle the non-nullable constraint. Afterwards, run `npx prisma generate` to update the Prisma Client with the new schema.",
+            "status": "done",
+            "testStrategy": "Connect to the PostgreSQL database using a client like psql or a GUI tool. Inspect the `User` table schema and verify that the `dni` column has been added with the correct type (`TEXT` or `VARCHAR`) and has both `NOT NULL` and `UNIQUE` constraints applied."
+          },
+          {
+            "id": 3,
+            "title": "Update Zod Schemas for DNI Validation",
+            "description": "Modify the Zod validation schemas used for user registration and profile updates to include validation rules for the new `dni` field.",
+            "dependencies": [],
+            "details": "In the relevant Zod schema files (e.g., for registration and profile updates), add the `dni` field. Implement a regex to validate the Spanish DNI format. Example: `dni: z.string().regex(/^[0-9]{8}[TRWAGMYFPDXBNJZSQVHLCKE]$/i, { message: \"Invalid DNI format. It should be 8 numbers followed by a letter.\" })`.",
+            "status": "done",
+            "testStrategy": "Create unit tests for the updated Zod schemas. Pass valid and invalid DNI strings to the schema's `safeParse` method and assert that it validates or rejects them correctly, returning the appropriate error messages for invalid inputs."
+          },
+          {
+            "id": 4,
+            "title": "Integrate DNI Field into Backend API Endpoints",
+            "description": "Update the backend logic for user registration and profile management to handle receiving, validating, and saving the new `dni` field.",
+            "dependencies": [
+              "33.2",
+              "33.3"
+            ],
+            "details": "Modify the API route handlers for registration (`/api/auth/register`) and profile updates. Ensure the incoming `dni` is validated using the updated Zod schema. Update the Prisma `create` and `update` calls to include the `dni` field. Implement try-catch blocks to handle potential unique constraint violations from Prisma and return a user-friendly error message like 'DNI already in use.'",
+            "status": "done",
+            "testStrategy": "Use an API client like Postman or write integration tests to send requests to the registration and profile update endpoints with: 1) a valid DNI, 2) an invalid DNI format, and 3) a DNI that already exists. Verify that the API responds with the correct status codes and JSON error messages for each case."
+          },
+          {
+            "id": 5,
+            "title": "Add DNI Input Field to Frontend Forms",
+            "description": "Modify the user registration and profile management forms in the frontend application to include a new input field for the DNI, connecting it to the form state and validation.",
+            "dependencies": [
+              "33.4"
+            ],
+            "details": "In the registration form component (from Task #15) and the profile page form (`/dashboard/profile`, from Task #32), add a new `FormField` for the DNI using a shadcn/ui `Input` component. Connect this input to the form's state management (e.g., React Hook Form) and link it to the updated Zod schema for client-side validation.",
+            "status": "done",
+            "testStrategy": "Navigate to the registration and profile pages. Verify the DNI input field is rendered. Test client-side validation by entering invalid formats and confirming error messages appear. Perform an end-to-end test by registering a new user with a valid DNI and verifying it's saved correctly in the database."
+          }
+        ]
+      },
+      {
+        "id": 34,
+        "title": "Create Two-Factor Authentication (TOTP) Prisma Model",
+        "description": "Define a new `TwoFactorAuth` model in the Prisma schema to support Time-based One-Time Password (TOTP) functionality. This includes fields for the secret, backup codes, and a one-to-one relationship with the User model.",
+        "details": "This task involves modifying the `prisma/schema.prisma` file to introduce the necessary database structure for 2FA. \n1. **Define the `TwoFactorAuth` Model**: Create a new model with fields to store the TOTP secret, configuration, and status. The secret should be unique. Backup codes will be stored as an array of strings.\n2. **Establish One-to-One Relationship**: Add a relation field to the `User` model and use a unique foreign key (`userId`) in the `TwoFactorAuth` model to enforce a one-to-one relationship. Add `onDelete: Cascade` to ensure data integrity when a user is deleted.\n3. **Set Defaults**: Configure default values for `digits` (6) and `period` (30 seconds), which are standard for TOTP implementations.\n4. **Create Database Migration**: After updating the schema, generate and apply a new database migration.\n\n**Prisma Schema Changes (`prisma/schema.prisma`):**\n```prisma\nmodel User {\n  // ... existing fields: id, email, name, password, etc.\n  twoFactorAuth TwoFactorAuth?\n}\n\nmodel TwoFactorAuth {\n  id           String   @id @default(cuid())\n  secret       String   @unique\n  digits       Int      @default(6)\n  period       Int      @default(30)\n  backupCodes  String[]\n  enabledAt    DateTime?\n\n  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)\n  userId String @unique\n}\n```\n\n**Migration Command:**\n```bash\nnpx prisma migrate dev --name add_two_factor_auth_model\n```",
+        "testStrategy": "1. **Migration Execution**: Run the `npx prisma migrate dev` command and ensure it completes without errors. \n2. **Database Schema Verification**: Connect to the PostgreSQL database using a tool like Prisma Studio (`npx prisma studio`) or a standard SQL client. Confirm that a new table named `TwoFactorAuth` has been created. \n3. **Table Structure Validation**: Inspect the `TwoFactorAuth` table and verify that all specified columns (`id`, `secret`, `digits`, `period`, `backupCodes`, `enabledAt`, `userId`) exist with the correct data types (e.g., `digits` and `period` as integers, `backupCodes` as a text array). \n4. **Constraint Verification**: Confirm that the `userId` column has a `UNIQUE` constraint and a foreign key relationship to the `id` column of the `User` table with a cascade delete rule. \n5. **Prisma Client Generation**: Run `npx prisma generate` and inspect the generated types in `node_modules/.prisma/client` to ensure the `TwoFactorAuth` model and its relations are correctly typed and available for use in the application code.",
+        "status": "done",
+        "dependencies": [
+          3,
+          32
+        ],
+        "priority": "high",
+        "subtasks": []
+      },
+      {
+        "id": 35,
+        "title": "Add DNI Field to User Registration",
+        "description": "Modify the user registration form and backend API to include a DNI field. This involves updating the UI, implementing validation for an 8-character alphanumeric format, and adjusting the database schema.",
+        "details": "1. **Database Schema Update**: Modify the `User` model in `prisma/schema.prisma` to add a new optional and unique `dni` field. `dni String? @unique`. After updating, run `npx prisma migrate dev --name add_dni_to_user` to apply the migration.\n2. **Zod Schema Update**: In `lib/zod.ts`, update the `registerSchema` to include the `dni` field. Add validation to ensure it is a string that matches an 8-character alphanumeric format. Example: `dni: z.string().regex(/^[a-zA-Z0-9]{8}$/, { message: \"DNI must be 8 alphanumeric characters.\" })`.\n3. **Frontend Form Modification**: Update the `RegistrationForm` component (from Task 15) to include a new text input for the DNI. Connect this input to the form's state management and ensure it displays validation errors derived from the updated Zod schema.\n4. **Backend API Update**: In the registration API endpoint (`app/api/auth/register/route.ts`), modify the handler to parse and validate the new `dni` field from the request body. Ensure the validated DNI is included in the data object when creating the new user with `prisma.user.create()`.",
+        "testStrategy": "1. **UI Verification**: Navigate to the `/register` page and confirm that the new 'DNI' input field is present in the form.\n2. **Client-Side Validation**: Attempt to submit the registration form with invalid DNI values (e.g., less than 8 characters, more than 8 characters, contains symbols). Verify that a client-side validation error message is displayed and the form submission is blocked.\n3. **Successful Registration**: Complete and submit the registration form with valid data, including a correctly formatted 8-character alphanumeric DNI.\n4. **Database Verification**: After a successful registration, query the database to confirm that the new user record has been created and that the `dni` column is correctly populated with the value provided during registration.",
+        "status": "done",
+        "dependencies": [
+          15,
+          7
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 36,
+        "title": "Actualizar Registro y Sesión para Incluir DNI",
+        "description": "Modificar el proceso de registro de usuarios para incluir un campo DNI, asegurando su unicidad en la base de datos, y actualizar la configuración de NextAuth para que el DNI esté disponible en la sesión del usuario.",
+        "details": "Esta tarea requiere la modificación de tres áreas principales: el esquema de la base de datos, la lógica de la API de registro y la configuración de la sesión de NextAuth. 1. **Actualizar Esquema de Prisma**: Añadir un campo `dni` al modelo `User` en `prisma/schema.prisma`. Este campo debe ser de tipo String y único para evitar duplicados. ```prisma\nmodel User {\n  // ... otros campos\n  dni      String?   @unique\n}\n``` Después de modificar el esquema, ejecuta la migración: `npx prisma migrate dev --name add_dni_to_user`. 2. **Modificar API de Registro**: En el endpoint `app/api/auth/register/route.ts`, actualiza el esquema de validación de Zod para incluir el campo `dni`. Antes de crear el usuario con `prisma.user.create`, realiza una consulta para verificar si ya existe un usuario con el DNI proporcionado. Si existe, devuelve un error 409 (Conflict). Asegúrate de pasar el `dni` en los datos al crear el nuevo usuario. 3. **Actualizar Configuración de NextAuth**: En el archivo de configuración de NextAuth (p. ej., `auth.config.ts` o `app/api/auth/[...nextauth]/route.ts`), modifica los callbacks `jwt` y `session`. En el callback `jwt`, añade el DNI del objeto de usuario al token. En el callback `session`, extrae el DNI del token y añádelo al objeto de sesión para que esté disponible en el cliente.",
+        "testStrategy": "1. **Prueba de Registro Exitoso**: Intenta registrar un nuevo usuario con un DNI válido y único. Verifica que el usuario se crea correctamente en la base de datos con el DNI almacenado. 2. **Prueba de DNI Duplicado**: Intenta registrar un segundo usuario utilizando el mismo DNI que en la prueba anterior. Verifica que la API devuelve un error específico indicando que el DNI ya está en uso y que no se crea un nuevo usuario. 3. **Prueba de Validación**: Intenta registrar un usuario sin proporcionar el campo DNI (si es obligatorio) y verifica que la validación de Zod devuelve el error correspondiente. 4. **Verificación de Sesión**: Después de registrar e iniciar sesión con el nuevo usuario, inspecciona el objeto de sesión en el cliente (usando las herramientas de desarrollo del navegador o una página de depuración). Confirma que el objeto `session.user` contiene el campo `dni` con el valor correcto.",
+        "status": "done",
+        "dependencies": [
+          7,
+          8,
+          11
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 37,
+        "title": "Install and Configure TOTP Libraries (otplib, qrcode)",
+        "description": "Install and configure the `otplib` and `qrcode` libraries to support the generation and verification of TOTP secrets and QR codes for the two-factor authentication feature.",
+        "details": "This task involves setting up the core backend dependencies for implementing TOTP-based 2FA. First, install the necessary packages: `npm install otplib qrcode`. Also, install the TypeScript types for qrcode: `npm install @types/qrcode --save-dev`. After installation, create a new utility file, for example, `lib/totp.ts`, to encapsulate all TOTP-related logic. This service will expose functions for generating a new secret, creating an `otpauth://` URI for authenticator apps, generating a QR code data URL from that URI, and verifying a user-provided token against the stored secret. The service name used in the `otpauth://` URI should be configurable, ideally sourced from an environment variable.",
+        "testStrategy": "1. **Unit Testing**: Create unit tests for the new TOTP utility module (`lib/totp.ts`). Verify that `generateSecret()` returns a non-empty string. Confirm that `generateOtpAuthUri()` produces a correctly formatted URI string starting with `otpauth://totp/`. Test the `verifyToken()` function by generating a token for a known secret and ensuring the function returns `true`, then test with an incorrect token to ensure it returns `false`. 2. **Manual Verification**: Create a temporary API route that generates a secret and a corresponding QR code data URL. Log this data URL to the console. Copy the data URL into a browser to render the QR code. Scan the QR code with an authenticator app (e.g., Google Authenticator, Authy). Verify that the app successfully adds the account. Finally, use a token from the app to call the `verifyToken` function within the test route and confirm it returns `true`.",
+        "status": "done",
+        "dependencies": [
+          3,
+          34
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Install TOTP and QR Code Dependencies",
+            "description": "Install the necessary npm packages `otplib` and `qrcode`, along with the TypeScript type definitions for `qrcode`, to provide the foundational libraries for TOTP generation and QR code creation.",
+            "dependencies": [],
+            "details": "Execute the following commands in the terminal to add the required dependencies to the project: `npm install otplib qrcode` and `npm install @types/qrcode --save-dev`.",
+            "status": "done",
+            "testStrategy": "After installation, verify that `otplib` and `qrcode` are listed in the `dependencies` section and `@types/qrcode` is in the `devDependencies` section of the `package.json` file. Ensure the project compiles without type errors when importing these packages."
+          },
+          {
+            "id": 2,
+            "title": "Create TOTP Utility and Secret Generation Function",
+            "description": "Create a dedicated utility file for all TOTP-related logic and implement the core function for generating a new, unique secret for users enabling two-factor authentication.",
+            "dependencies": [
+              "37.1"
+            ],
+            "details": "Create a new file at `lib/totp.ts`. Within this file, import the `authenticator` from `otplib` and implement an exported function `generateSecret()` that calls `authenticator.generateSecret()` to produce and return a new base32 encoded secret string.",
+            "status": "done",
+            "testStrategy": "Write a unit test for the `generateSecret()` function. Assert that the function returns a non-empty string and that subsequent calls produce different secrets."
+          },
+          {
+            "id": 3,
+            "title": "Implement otpauth URI and QR Code Generation",
+            "description": "Develop functions to generate the standard `otpauth://` URI for authenticator app compatibility and to convert this URI into a QR code image data URL for frontend display.",
+            "dependencies": [
+              "37.2"
+            ],
+            "details": "In `lib/totp.ts`, create a function `generateOtpAuthUri(accountName, secret)` that constructs the URI string. The issuer name within the URI should be sourced from an environment variable (e.g., `process.env.NEXT_PUBLIC_APP_NAME`). Then, create a function `generateQrCodeDataURL(uri)` that uses `qrcode.toDataURL()` to convert the URI into a data URL.",
+            "status": "done",
+            "testStrategy": "Unit test the `generateOtpAuthUri` function to ensure it produces a correctly formatted URI string. For `generateQrCodeDataURL`, verify that the output is a string that starts with `data:image/png;base64,`."
+          },
+          {
+            "id": 4,
+            "title": "Implement TOTP Token Verification Logic",
+            "description": "Implement the server-side function to validate a user-provided TOTP token against their stored secret, which is the final step in authenticating a user via 2FA.",
+            "dependencies": [
+              "37.2"
+            ],
+            "details": "In `lib/totp.ts`, add an exported function `verifyToken({ token, secret })`. This function will use `authenticator.verify({ token, secret })` from the `otplib` library to check the validity of the token. The function should return a boolean result.",
+            "status": "done",
+            "testStrategy": "Write unit tests for the `verifyToken` function. Use `otplib` to generate a valid token for a known secret and assert that verification returns `true`. Test with an incorrect token to ensure verification returns `false`."
+          }
+        ]
+      },
+      {
+        "id": 38,
+        "title": "Implement API Endpoints for TOTP Two-Factor Authentication",
+        "description": "Create the necessary backend API routes to enable, verify, disable, and manage TOTP-based 2FA, including generating backup codes for account recovery.",
+        "details": "This task involves setting up the complete backend infrastructure for Time-based One-Time Password (TOTP) functionality. First, update the Prisma schema to include 2FA details on the `User` model and create a new model for single-use backup codes. Then, implement four protected API endpoints. Libraries such as `otplib` for TOTP logic and `qrcode` for QR code generation are recommended. All secrets and backup codes must be stored securely (encrypted or hashed) in the database.\n\n**1. Prisma Schema Updates:**\nModify `prisma/schema.prisma`:\n```prisma\nmodel User {\n  // ... existing fields\n  isTwoFactorEnabled  Boolean  @default(false)\n  twoFactorSecret     String?  // Will be stored encrypted\n  backupCodes         BackupCode[]\n}\n\nmodel BackupCode {\n  id        String   @id @default(cuid())\n  codeHash  String   @unique\n  isUsed    Boolean  @default(false)\n  createdAt DateTime @default(now())\n  userId    String\n  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n}\n```\nRun `npx prisma migrate dev` after updating the schema.\n\n**2. Endpoint Implementation:**\n- **`POST /api/auth/2fa/setup`**: For an authenticated user, generate a new TOTP secret using `otplib`. Generate an `otpauth://` URI and convert it to a QR code data URL using `qrcode`. Return the data URL to the client. The secret should be temporarily stored (e.g., encrypted on the user record) pending verification.\n- **`POST /api/auth/2fa/verify`**: For an authenticated user, validate the TOTP code sent from the client against the stored secret using `otplib.check()`. On first successful verification during setup, this endpoint should finalize the process by setting `isTwoFactorEnabled = true` on the User model.\n- **`POST /api/auth/2fa/disable`**: For an authenticated user, this endpoint should require password re-verification for security. Upon success, it will set `isTwoFactorEnabled = false`, clear the `twoFactorSecret`, and delete all associated backup codes.\n- **`GET /api/auth/2fa/backup-codes`**: For an authenticated user with 2FA enabled, this endpoint should also require password re-verification. It will generate a new set of single-use backup codes (e.g., 10), hash them, and store them in the `BackupCode` table, deleting any old ones. It must return the plaintext codes to the user for this one and only time.",
+        "testStrategy": "Testing will be performed using an API client like Postman or Insomnia against a local development server.\n\n1.  **Security Checks**: Attempt to access each of the four endpoints (`/setup`, `/verify`, `/disable`, `/backup-codes`) without an active session. Verify that each request is rejected with a 401 Unauthorized or 403 Forbidden status.\n2.  **Setup and Verification Flow**: \n    - As a logged-in user, send a POST request to `/api/auth/2fa/setup`. Verify a 200 OK response containing a valid QR code data URL.\n    - Scan the QR code with an authenticator app (e.g., Google Authenticator).\n    - Send a POST request to `/api/auth/2fa/verify` with an invalid code. Verify a failure response (e.g., 400 Bad Request).\n    - Send a POST request to `/api/auth/2fa/verify` with the correct code from the app. Verify a 200 OK response and check the database to confirm `isTwoFactorEnabled` is set to `true` for the user.\n3.  **Backup Code Generation**: \n    - With 2FA enabled, send a GET request to `/api/auth/2fa/backup-codes` (including password for re-authentication). Verify a 200 OK response containing an array of plaintext backup codes.\n    - Inspect the `BackupCode` table in the database to confirm the new codes are stored and are hashed (`codeHash`).\n4.  **Disable Flow**: \n    - With 2FA enabled, send a POST request to `/api/auth/2fa/disable` (including password for re-authentication). Verify a 200 OK response.\n    - Check the database to confirm `isTwoFactorEnabled` is `false`, `twoFactorSecret` is null, and all associated backup codes have been deleted.",
+        "status": "done",
+        "dependencies": [
+          8,
+          17
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Update Prisma Schema for 2FA and Backup Codes",
+            "description": "Modify the `schema.prisma` file to support TOTP 2FA. This involves adding `isTwoFactorEnabled` and `twoFactorSecret` fields to the `User` model and creating a new `BackupCode` model for recovery purposes.",
+            "dependencies": [],
+            "details": "Apply the provided schema changes to `prisma/schema.prisma`. Add `isTwoFactorEnabled Boolean @default(false)` and `twoFactorSecret String?` to the `User` model. Create the `BackupCode` model as specified in the task description. After saving the file, run `npx prisma migrate dev --name add_2fa_support` to apply the changes to the database. Ensure you have utility functions for encrypting and decrypting secrets, as the `twoFactorSecret` must not be stored in plaintext.",
+            "status": "done",
+            "testStrategy": "After running the migration, inspect the database schema using a tool like Prisma Studio (`npx prisma studio`) to confirm that the `User` table has the new columns and the `BackupCode` table exists with the correct structure and relations."
+          },
+          {
+            "id": 2,
+            "title": "Create API Endpoint for 2FA Setup (`/api/auth/2fa/setup`)",
+            "description": "Implement a protected API route that generates a new TOTP secret and a corresponding QR code for the authenticated user to scan with their authenticator app.",
+            "dependencies": [
+              "38.1"
+            ],
+            "details": "Create a `POST` endpoint at `/api/auth/2fa/setup`. This route must be protected and accessible only by authenticated users (relying on middleware from Task 17). Use the `otplib` library to generate a secret (`authenticator.generateSecret()`). Construct an `otpauth://` URI. Use the `qrcode` library to convert this URI into a data URL. Encrypt the generated secret and store it in the `twoFactorSecret` field for the current user, but leave `isTwoFactorEnabled` as `false` until verification. Return the QR code data URL to the client.",
+            "status": "done",
+            "testStrategy": "As an authenticated user, send a POST request to the endpoint. Verify the response is a 200 OK and contains a valid QR code data URL. Decode the QR code to ensure it contains the correct `otpauth://` URI. Check the database to confirm the user's `twoFactorSecret` field is populated with an encrypted string and `isTwoFactorEnabled` remains `false`."
+          },
+          {
+            "id": 3,
+            "title": "Create API Endpoint for 2FA Verification and Enablement (`/api/auth/2fa/verify`)",
+            "description": "Implement the endpoint that verifies the user's TOTP code. Upon successful verification during initial setup, it permanently enables 2FA for the user's account.",
+            "dependencies": [
+              "38.2"
+            ],
+            "details": "Create a `POST` endpoint at `/api/auth/2fa/verify`. This route must be protected. It should accept a `token` (the 6-digit code) in the request body. Retrieve the authenticated user's record, decrypt their `twoFactorSecret`, and use `otplib.check(token, decryptedSecret)` to validate the code. If the code is valid and `isTwoFactorEnabled` is currently `false`, update the user's record to set `isTwoFactorEnabled = true`. Return a success response. If the code is invalid, return a 400 error.",
+            "status": "done",
+            "testStrategy": "After using the setup endpoint, scan the QR code with an authenticator app. Send a POST request to `/verify` with the generated 6-digit code. Verify the response is successful and the user's `isTwoFactorEnabled` flag in the database is now `true`. Test again with an incorrect or expired code and verify a 400-level error is returned."
+          },
+          {
+            "id": 4,
+            "title": "Create API Endpoint for Disabling 2FA (`/api/auth/2fa/disable`)",
+            "description": "Implement a secure endpoint for an authenticated user to disable 2FA on their account. This action requires password re-verification for security.",
+            "dependencies": [
+              "38.3"
+            ],
+            "details": "Create a `POST` endpoint at `/api/auth/2fa/disable`. This route must be protected. The request body must include the user's current `password`. Fetch the user from the database and use `bcrypt.compare` to verify the provided password against their stored hash. If the password is correct, update the user record: set `isTwoFactorEnabled = false` and `twoFactorSecret = null`. Additionally, execute a `prisma.backupCode.deleteMany({ where: { userId: user.id } })` to remove all associated backup codes. If the password is incorrect, return a 401 Unauthorized error.",
+            "status": "done",
+            "testStrategy": "For a user with 2FA enabled, send a POST request to `/disable` with an incorrect password and verify it fails. Send another request with the correct password. Verify the response is successful and the database reflects the changes: `isTwoFactorEnabled` is `false`, `twoFactorSecret` is `null`, and all related entries in the `BackupCode` table have been deleted."
+          },
+          {
+            "id": 5,
+            "title": "Create API Endpoint for Generating Backup Codes (`/api/auth/2fa/backup-codes`)",
+            "description": "Implement an endpoint for users with 2FA enabled to generate a new set of single-use backup codes. This also requires password re-verification.",
+            "dependencies": [
+              "38.3"
+            ],
+            "details": "Create a `POST` endpoint at `/api/auth/2fa/backup-codes`. This route must be protected and check if `isTwoFactorEnabled` is `true`. The request body must include the user's current `password`. After verifying the password, first delete any existing backup codes for the user. Then, generate a new set of 10 unique, random codes (e.g., 8-10 alphanumeric characters). For each code, hash it using `bcrypt` and create a new record in the `BackupCode` table. Finally, return the array of *plaintext* codes to the user. This is the only time the user will see them.",
+            "status": "done",
+            "testStrategy": "For a user with 2FA enabled, send a POST request to `/backup-codes` with the correct password. Verify the response is a 200 OK and contains an array of plaintext codes. Check the `BackupCode` table to ensure 10 new, hashed codes associated with the user have been created. Call the endpoint again to verify the old codes are replaced with new ones."
+          }
+        ]
+      },
+      {
+        "id": 39,
+        "title": "Create UI Components for TOTP Two-Factor Authentication",
+        "description": "Develop the necessary frontend components for managing TOTP-based 2FA. This includes a setup modal with a QR code, a verification form, a component to display backup codes, and a button to disable the feature.",
+        "details": "This task involves creating the complete user interface for the TOTP two-factor authentication feature. All components should be built using React and shadcn/ui for a consistent look and feel.\n1. **2FA Status Component**: On the user's account settings page, create a section that displays the current 2FA status (Enabled/Disabled) and provides a button to either 'Enable 2FA' or 'Disable 2FA'.\n2. **Setup Modal**: When the 'Enable 2FA' button is clicked, a modal (`Dialog` from shadcn/ui) should appear. This modal will make a GET request to the `/api/auth/2fa/setup` endpoint (from Task 38) to fetch the QR code data URI and the secret key.\n   - Display the QR code as an image.\n   - Display the secret key as plain text for manual entry into an authenticator app.\n   - Include a form with a single input field for the 6-digit verification code.\n3. **Verification Form**: Use `react-hook-form` and `zod` (as established in Task 14) to validate the 6-digit code. On submission, this form will POST the code to the `/api/auth/2fa/verify` endpoint. Handle success and error responses from the API, showing appropriate feedback to the user.\n4. **Backup Codes Display**: Upon successful verification and enablement, the setup modal should be replaced with a view displaying the backup codes fetched from the `/api/auth/2fa/backup-codes` endpoint. This component must include a prominent warning to the user to store these codes securely. Implement 'Copy to Clipboard' and 'Download as .txt' functionality for the codes.\n5. **Disable 2FA Logic**: The 'Disable 2FA' button should trigger a confirmation modal. Upon confirmation, it will make a POST request to the `/api/auth/2fa/disable` endpoint to turn off 2FA for the user's account. The UI should update accordingly upon a successful response.",
+        "testStrategy": "1. **Enablement Flow**: Navigate to the account settings page and click 'Enable 2FA'. Verify the setup modal appears and displays both a QR code and a secret key. Scan the QR code with an authenticator app. First, enter an incorrect 6-digit code and verify that an error message is displayed. Then, enter the correct code and verify that 2FA is enabled and the backup codes are shown.\n2. **Backup Codes Verification**: Confirm that the backup codes are displayed correctly. Test the 'Copy to Clipboard' button and the 'Download' button to ensure they function as expected.\n3. **Disablement Flow**: With 2FA enabled, click the 'Disable 2FA' button. Verify a confirmation prompt appears. After confirming, check that the UI updates to show 2FA as 'Disabled'.\n4. **API Interaction**: Use browser developer tools to monitor network requests. Ensure that the correct API endpoints (`/setup`, `/verify`, `/backup-codes`, `/disable`) are being called with the correct HTTP methods and that the frontend correctly handles both success (2xx) and error (4xx) responses.",
+        "status": "pending",
+        "dependencies": [
+          38,
+          14
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 40,
+        "title": "Integrate TOTP Management into User Profile Page",
+        "description": "Modify the existing user profile page to include a security section for managing two-factor authentication (2FA). This section will display the current TOTP status and provide options to enable or disable it.",
+        "details": "Locate and update the main user profile or account settings page component. Add a new 'Security' section that fetches and displays the user's current 2FA status. Conditionally render an 'Enable 2FA' button or a 'Disable 2FA' button based on this status. Integrate the UI components from Task #39: the 'Enable' button should launch the setup modal (with QR code and verification form), and the 'Disable' button should trigger a confirmation dialog before calling the disable API endpoint from Task #38. Ensure the UI state updates correctly upon successful completion of these actions without a page refresh.",
+        "testStrategy": "1. Log in as a user with 2FA disabled and navigate to the profile page. Verify the security section shows 'Disabled' status and an 'Enable' button. 2. Click 'Enable', complete the setup flow using the modal, and verify the page updates to show 'Enabled' status. 3. Refresh the page to ensure the new status persists. 4. Click the 'Disable' button, confirm the action, and verify the page updates back to 'Disabled' status. 5. Log out and log back in to confirm the TOTP code is no longer required.",
+        "status": "pending",
+        "dependencies": [
+          38,
+          39
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 41,
+        "title": "Implement TOTP Verification in Login Flow",
+        "description": "Modify the NextAuth.js login process to require a TOTP code for users with two-factor authentication enabled. This includes creating a verification page and updating the session state management.",
+        "details": "This task integrates the second factor of authentication into the user login journey. 1. **Update Authentication Logic**: Modify the `authorize` callback in the NextAuth.js configuration. After successfully validating the user's password (Task 8), check if the user has 2FA enabled. If so, do not return the full user object immediately. Instead, return a partial object indicating that 2FA is required, for example: `{ id: user.id, isTwoFactorEnabled: true }`. 2. **Manage Intermediate Session State**: Adjust the `jwt` callback to handle this intermediate state. When the `authorize` callback returns the partial object, set a flag in the JWT, such as `isTwoFactorAuthenticated: false`. This token will grant access only to the TOTP verification page. 3. **Create TOTP Verification Page**: Develop a new route and page at `/auth/verify-totp`. This page will feature a form for users to input the 6-digit code from their authenticator app. Use a server action to handle the form submission securely. 4. **Implement Verification Action**: The server action will receive the TOTP code. It will retrieve the current user's session, fetch their 2FA secret from the database, and use the `otplib.verify()` function (from Task 37) to validate the code. 5. **Finalize Authentication**: If the code is valid, the server action must trigger a session update to finalize the login. This involves re-signing the JWT with `isTwoFactorAuthenticated: true` and then redirecting the user to their appropriate dashboard, respecting the role-based redirection logic from Task 28. If the code is invalid, the action should return an error message to the form. 6. **Update Middleware**: Enhance the `middleware.ts` (from Task 17) to protect routes from users in the intermediate 2FA state. The middleware should inspect the JWT; if a user is authenticated but `isTwoFactorAuthenticated` is false, it must redirect any requests for protected pages to `/auth/verify-totp`.",
+        "testStrategy": "1. **Login without 2FA**: Log in as a user who does not have 2FA enabled. Verify that the login process is successful and proceeds directly to the dashboard without any intermediate steps. 2. **Login with 2FA (Success)**: Log in as a user with 2FA enabled. After submitting the correct password, verify that you are redirected to the `/auth/verify-totp` page. Enter the correct 6-digit code from an authenticator app and verify that you are successfully logged in and redirected to the appropriate dashboard. 3. **Login with 2FA (Failure)**: On the `/auth/verify-totp` page, submit an incorrect or expired TOTP code. Verify that an appropriate error message is displayed on the form and you are not logged in. 4. **Middleware Route Protection**: After entering the correct password but before entering the TOTP code, attempt to manually navigate to a protected URL (e.g., `/dashboard`). Verify that the middleware correctly intercepts the request and redirects you back to `/auth/verify-totp`. 5. **Session Integrity**: After a successful 2FA login, use browser developer tools to inspect the session object and confirm that it reflects a fully authenticated state.",
+        "status": "done",
+        "dependencies": [
+          8,
+          17,
+          37
+        ],
+        "priority": "high",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Update NextAuth.js Callbacks for 2FA Pre-verification State",
+            "description": "Modify the `authorize` and `jwt` callbacks in the NextAuth.js configuration. The `authorize` callback will check if a user has 2FA enabled after password validation. If so, it will signal the need for a second factor, and the `jwt` callback will create a token with an intermediate authentication state.",
+            "dependencies": [],
+            "details": "In `app/api/auth/[...nextauth]/route.ts`:\n1. In the `authorize` callback, after successfully validating the user's password, fetch the user's record including their 2FA status.\n2. If `user.isTwoFactorEnabled` is true, return a partial object like `{ id: user.id, isTwoFactorEnabled: true }` instead of the full user object.\n3. In the `jwt` callback, check if the `user` object from `authorize` contains `isTwoFactorEnabled`. \n4. If it does, set a flag in the JWT: `token.isTwoFactorAuthenticated = false`. Also, ensure `token.sub` is set to `user.id`.\n5. If it's a normal login (full user object), the token should reflect a fully authenticated state.",
+            "status": "done",
+            "testStrategy": "Log in as a user with 2FA enabled. After submitting the correct password, use browser developer tools to inspect the session token. Verify that the decoded JWT payload contains a property like `isTwoFactorAuthenticated: false`. Log in as a user without 2FA and verify this property is not present or is true."
+          },
+          {
+            "id": 2,
+            "title": "Create the TOTP Verification Page UI",
+            "description": "Develop the user interface for the TOTP verification step. This will be a new page at `/auth/verify-totp` containing a form for the user to enter their 6-digit code from their authenticator app and an option to use a backup code.",
+            "dependencies": [],
+            "details": "1. Create a new route at `app/auth/verify-totp/page.tsx`.\n2. Implement a form using React Hook Form and a Zod schema for validation. The schema should accept a 6-digit numeric string.\n3. The form should include a single input field for the code, a 'Verify' submit button, and a link/button for users who need to use a backup code.\n4. The component should be a client component that calls a server action on form submission.\n5. Implement UI feedback for loading states and display error messages returned from the server action.",
+            "status": "done",
+            "testStrategy": "Navigate to `/auth/verify-totp`. Verify the form renders correctly. Test client-side validation by entering non-numeric characters or an incorrect number of digits. Ensure the form can be submitted."
+          },
+          {
+            "id": 3,
+            "title": "Implement Server Action for TOTP Code Verification",
+            "description": "Create a server action to handle the submission from the TOTP verification page. This action will validate the provided code against the user's stored 2FA secret and update the session upon success.",
+            "dependencies": [
+              "41.1",
+              "41.2"
+            ],
+            "details": "1. Create a new server action in a file like `actions/verify-totp.ts`.\n2. The action will receive the 6-digit code from the form.\n3. Use `auth()` from NextAuth.js to retrieve the current session token and confirm the user is in the intermediate state (`isTwoFactorAuthenticated === false`).\n4. Fetch the user's `twoFactorSecret` from the database using the user ID from the token.\n5. Use the `otplib.verify()` function (from Task 37) to validate the submitted code against the secret.\n6. If the code is valid, proceed to the session finalization step (covered in 41.5). If invalid, return an error object like `{ error: 'Invalid code' }`.",
+            "status": "done",
+            "testStrategy": "With a user in the intermediate 2FA state, call the server action with a valid TOTP code and verify it returns a success response. Call it with an invalid code and verify it returns the expected error message."
+          },
+          {
+            "id": 4,
+            "title": "Enhance Middleware to Enforce 2FA Verification Step",
+            "description": "Modify the existing `middleware.ts` to protect application routes from users who have authenticated with their password but have not yet completed the TOTP verification step. It should redirect them to the verification page.",
+            "dependencies": [
+              "41.1"
+            ],
+            "details": "1. Open `middleware.ts`.\n2. In the middleware logic (e.g., within the `withAuth` callbacks), inspect the decoded JWT token.\n3. Add a new condition: if `token` exists but `token.isTwoFactorAuthenticated === false`:\n   a. Check if the current request path is `/auth/verify-totp`. If not, redirect the user to `/auth/verify-totp`.\n   b. Allow the request to proceed if the path is `/auth/verify-totp`.\n4. Ensure this logic does not interfere with the existing rule that redirects unauthenticated users to the login page.",
+            "status": "done",
+            "testStrategy": "Log in as a 2FA-enabled user. After password submission, attempt to navigate directly to a protected route like `/dashboard`. Verify you are redirected to `/auth/verify-totp`. Verify that you can access `/auth/verify-totp` without being redirected."
+          },
+          {
+            "id": 5,
+            "title": "Finalize Session and Implement Post-Verification Redirection",
+            "description": "Upon successful TOTP verification, update the user's session to a fully authenticated state and redirect them to the appropriate dashboard page, respecting any role-based logic.",
+            "dependencies": [
+              "41.3"
+            ],
+            "details": "1. In the `actions/verify-totp.ts` server action, after a successful code validation:\n2. Call the `update` function from `next-auth/react` (or a similar server-side mechanism if available) to update the session token, setting `isTwoFactorAuthenticated: true`.\n3. After updating the session, determine the correct redirect URL (e.g., `/dashboard`). This may involve fetching the user's role to apply logic from Task 28.\n4. The server action should return a success object containing the redirect URL, e.g., `{ success: true, redirectUrl: '/dashboard' }`.\n5. The client-side form handler on the `/auth/verify-totp` page will use this URL to perform the redirection via `router.push()`.",
+            "status": "done",
+            "testStrategy": "Complete the entire login flow as a 2FA-enabled user (password then valid TOTP). Verify the session token is updated to a fully authenticated state and that you are redirected to the correct dashboard page."
+          },
+          {
+            "id": 6,
+            "title": "Implement Backup Code Verification in Login Flow",
+            "description": "Extend the verification server action to accept one-time backup codes as an alternative to TOTP. A used backup code must be invalidated to prevent reuse.",
+            "dependencies": [
+              "41.3"
+            ],
+            "details": "1. In the `actions/verify-totp.ts` server action, if the `otplib.verify()` check fails, initiate a backup code check.\n2. Assume a `TwoFactorBackupCode` model exists, linked to the user, with a hashed `code` and a `usedAt` timestamp.\n3. Fetch all unused backup codes for the user from the database.\n4. Iterate through the fetched codes, using `bcrypt.compare()` to check the submitted code against each hashed code.\n5. If a match is found, update that backup code record in the database by setting the `usedAt` timestamp to the current time.\n6. Proceed with the session update and redirection logic from subtask 41.5 as if it were a successful TOTP verification.\n7. If both TOTP and backup code checks fail, return the 'Invalid code' error.",
+            "status": "done",
+            "testStrategy": "1. On the TOTP verification page, enter a valid, unused backup code. Verify login succeeds and the code is marked as used in the database. 2. Attempt to log in again using the same backup code and verify that it fails."
+          }
+        ]
+      },
+      {
+        "id": 42,
+        "title": "Implement Admin Panel for TOTP Configuration",
+        "description": "Create an admin-level interface to manage global TOTP settings, such as code length and expiration time, and to enforce two-factor authentication for specific users.",
+        "details": "This task involves creating a new section in the admin panel for managing the application's TOTP two-factor authentication settings. \n\n**Backend:**\n1. **Database Schema:** Create a new model, `TotpSettings`, to store global configuration. It should include fields like `codeLength` (INTEGER, default 6) and `expirationTime` (INTEGER, default 30 minutes in seconds). Also, add a boolean field `isTwoFactorForced` to the `User` model.\n2. **API Endpoints:** Create new API routes protected for admin users only. \n   - `GET /api/admin/totp-settings`: Fetches the current global TOTP settings.\n   - `PUT /api/admin/totp-settings`: Updates the global settings. It should validate inputs (e.g., length between 6-8, expiration time from a predefined list).\n   - `POST /api/admin/users/:userId/force-2fa`: Sets the `isTwoFactorForced` flag for a specific user.\n3. **Service Layer:** Modify the TOTP utility service created in Task #37 to read from the new `TotpSettings` model. The functions for generating and verifying tokens must use the configured code length and expiration time instead of hardcoded values.\n4. **Login Flow:** Update the authentication logic from Task #41. If a user has `isTwoFactorForced` set to true but has not yet enabled 2FA, they must be redirected to the 2FA setup page after logging in with their password, and they should not be able to access any other part of the application until setup is complete.\n\n**Frontend:**\n1. **Admin UI:** Create a new page or section in the admin dashboard titled 'Two-Factor Authentication Settings'.\n2. **Global Settings Form:** This form should display the current settings and allow an admin to select a code length (dropdown: 6, 7, 8) and an expiration time (dropdown: 5, 10, 15, 30 minutes). A 'Save' button will submit the changes to the PUT endpoint.\n3. **User Management Integration:** In the existing user management table within the admin panel, add a new column or control (e.g., a toggle switch) to show and change the 'Force 2FA' status for each user.",
+        "testStrategy": "1. **Admin Access Control:** Log in as a non-admin user and attempt to access the new admin API endpoints directly (e.g., using Postman or browser console). Verify that all requests are rejected with a 403 Forbidden status.\n2. **Global Settings UI:** Log in as an admin. Navigate to the TOTP settings page. Change the code length to 8 and the expiration to 10 minutes. Save the changes. Refresh the page and verify the form retains the new values. Check the database to confirm the `TotpSettings` table is updated.\n3. **Force 2FA Functionality:** As an admin, find a user who has not enabled 2FA and toggle the 'Force 2FA' switch for them. Log out and log in as that user. Verify that after entering their password, they are immediately redirected to the 2FA setup page and cannot proceed further until it is completed.\n4. **End-to-End Verification:** After setting the code length to 8 via the admin panel, have a new user (or the 'forced' user) complete the 2FA setup. Verify their authenticator app generates an 8-digit code. Test the login flow to ensure the 8-digit code is accepted.",
+        "status": "pending",
+        "dependencies": [
+          37,
+          38,
+          41
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 43,
+        "title": "Implement Global System Settings for TOTP",
+        "description": "Create a `SystemSettings` model to store global TOTP configuration, develop a secure API endpoint for administrators to manage these settings, and build a corresponding user interface within the admin panel.",
+        "details": "This task involves creating the infrastructure for centrally managing TOTP parameters. 1. **Database Schema:** Define a new singleton model in `schema.prisma` called `SystemSettings`. It should include fields like `id`, `totpIssuer` (String, the name displayed in authenticator apps), `totpDigits` (Int, e.g., 6 or 8), and `totpPeriod` (Int, e.g., 30 or 60 seconds). Apply the migration. 2. **API Endpoint:** Create a new API route at `/api/admin/settings/totp`. Implement a `GET` handler to fetch the current settings (creating default values if none exist) and a `PUT` handler to update them. Both handlers must be protected, ensuring only users with an 'ADMIN' role can access them. Use Zod for validating the input on the `PUT` request. 3. **Admin UI Page:** Develop a new page at `/admin/settings/totp`. This page will contain a form built with `react-hook-form` and `shadcn/ui` components. The form will fetch and display the current settings on load and submit updated values to the API endpoint, providing user feedback via toast notifications.",
+        "testStrategy": "1. **API Security:** Using an API client, attempt to access the `GET` and `PUT` endpoints at `/api/admin/settings/totp` as a non-authenticated user and as an authenticated non-admin user. Verify all requests are rejected with appropriate 401/403 status codes. 2. **API Functionality:** As an admin, send a `PUT` request with valid data to update the settings and verify a 200 OK response. Follow up with a `GET` request to confirm the changes were persisted. Test the `PUT` endpoint with invalid data (e.g., non-integer for digits) to ensure a 400 Bad Request response is returned. 3. **UI Verification:** Log in as an admin and navigate to the new settings page. Confirm the form is populated with the correct data. Update the settings, save, and verify a success message is shown. Refresh the page to ensure the new values persist. Attempt to access the page as a non-admin user and confirm access is denied.",
+        "status": "pending",
+        "dependencies": [
+          38
+        ],
+        "priority": "medium",
+        "subtasks": []
+      },
+      {
+        "id": 44,
+        "title": "Implementar Migración y Recopilación de DNI para Usuarios",
+        "description": "Añadir un campo DNI al modelo de usuario, implementar un flujo para que los usuarios existentes lo proporcionen, y actualizar los formularios de registro y administración para incluir este nuevo dato.",
+        "details": "Esta tarea se divide en varias partes clave para asegurar una transición completa. 1. **Actualización del Esquema de Base de Datos**: Modificar el archivo `schema.prisma` para añadir un campo opcional y único para el DNI en el modelo `User`. Ejemplo: `dni String? @unique`. Ejecutar la migración con `npx prisma migrate dev --name add_dni_to_user`. 2. **Actualización del Perfil de Usuario**: En la página de perfil del usuario, añadir una sección o formulario visible solo si el DNI del usuario no está definido. Este formulario debe enviar los datos a un endpoint de API seguro (ej. `PUT /api/user/profile`) que valide el formato del DNI usando Zod antes de guardarlo. 3. **Flujo de Migración Forzada**: Modificar el middleware de rutas protegidas (`middleware.ts`). El middleware deberá verificar si el usuario autenticado tiene un DNI registrado. Si no lo tiene, se le redirigirá forzosamente a la página de perfil para que lo complete, bloqueando el acceso a otras áreas de la aplicación hasta que se cumpla el requisito. 4. **Integración en Registro y Administración**: Actualizar el formulario de registro de nuevos usuarios para que el campo DNI sea obligatorio. Modificar el panel de administración de usuarios para mostrar el DNI en el listado y permitir a los administradores ver y editar este campo para cualquier usuario.",
+        "testStrategy": "1. **Verificación de Migración**: Tras ejecutar la migración, inspeccionar la base de datos para confirmar que la columna `dni` existe en la tabla `User` y permite valores nulos. 2. **Pruebas de Perfil de Usuario**: Iniciar sesión como un usuario existente sin DNI. Verificar que se muestra el formulario para añadirlo. Introducir un DNI válido y confirmar que se guarda correctamente y el formulario desaparece. Intentar con un formato inválido y verificar que se muestra un mensaje de error. 3. **Pruebas del Middleware de Redirección**: Iniciar sesión como un usuario sin DNI y verificar la redirección forzada a la página de perfil. Intentar acceder a otras rutas protegidas (ej. `/dashboard`) y confirmar que la redirección persiste. Tras añadir el DNI, verificar que se recupera el acceso normal a la aplicación. 4. **Pruebas de Registro**: Intentar registrar un nuevo usuario sin DNI y verificar que el proceso falla con un error de validación. Completar un registro con un DNI válido y confirmar que el usuario se crea correctamente con el DNI asignado. 5. **Pruebas del Panel de Administración**: Como administrador, navegar a la gestión de usuarios. Verificar que la columna DNI es visible. Editar un usuario para añadir/modificar su DNI y confirmar que los cambios se guardan.",
+        "status": "pending",
+        "dependencies": [
+          7,
+          8,
+          17,
+          25
+        ],
+        "priority": "low",
+        "subtasks": []
+      },
+      {
+        "id": 45,
+        "title": "Comprehensive Testing and Documentation for TOTP Feature",
+        "description": "Conduct exhaustive end-to-end testing of all TOTP user and admin flows, create comprehensive technical and user-facing documentation, and develop automated test scripts for various TOTP configurations.",
+        "details": "This task serves as the final quality assurance and documentation step for the entire TOTP feature. It is divided into three main areas: testing, documentation, and automation. 1. **Exhaustive End-to-End Testing**: Manually test all user stories related to TOTP. This includes: the user flow for enabling 2FA via their profile (QR code generation, verification), the login process for a 2FA-enabled user (prompt for code, validation), the user flow for disabling 2FA, and the login process for non-2FA users (no change). Also, test all admin functionalities, including modifying global TOTP settings (issuer, digits, period) and verifying that these changes are reflected in the user experience. 2. **Documentation Creation**: Produce two sets of documentation. First, a user-facing guide explaining what TOTP is, how to set it up with common authenticator apps, and how to use it. This should be non-technical and include screenshots. Second, create detailed technical documentation for developers, including API specifications for all new TOTP-related endpoints, sequence diagrams for the login and setup flows, and notes on the database schema changes. 3. **Automated Test Scripts**: Using a framework like Cypress or Playwright, develop a suite of automated tests covering the critical paths. This should include scripts for a user enabling 2FA, logging out, logging back in successfully, and disabling 2FA. Another script should cover an admin changing global settings and a user then attempting to set up 2FA to confirm the new settings are applied.",
+        "testStrategy": "1. **Test Case Execution**: All manual test cases derived from the details section must be executed against a staging environment. A test report must be generated and show a 100% pass rate for all critical flows. 2. **Documentation Review**: The user documentation must be reviewed and approved by a non-technical stakeholder for clarity. The technical documentation must be peer-reviewed by another developer for accuracy and completeness. 3. **Automation Suite**: The automated test scripts must be run successfully in a CI/CD pipeline. The pull request containing the test scripts must be reviewed and merged. 4. **Cross-Configuration Verification**: Manually verify that the login and setup flows work correctly with different admin-defined configurations (e.g., 8-digit codes, 60-second periods).",
+        "status": "pending",
+        "dependencies": [
+          40,
+          41,
+          42,
+          43
+        ],
+        "priority": "low",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-06-21T22:19:07.747Z",
-      "updated": "2025-09-29T19:31:13.805Z",
+      "updated": "2025-10-01T17:54:14.298Z",
       "description": "Tasks for master context"
     }
   },

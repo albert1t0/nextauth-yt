@@ -1,11 +1,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Mail, Calendar, Shield, CheckCircle, XCircle } from "lucide-react";
+import { Mail, Calendar, Shield, CheckCircle, XCircle, User } from "lucide-react";
 
 interface AccountInfoProps {
   email: string;
   name: string;
+  dni?: string;
   role: "user" | "admin";
   emailVerified: Date | null;
   createdAt: Date;
@@ -14,6 +15,7 @@ interface AccountInfoProps {
 export function AccountInfo({
   email,
   name,
+  dni,
   role,
   emailVerified,
   createdAt
@@ -46,6 +48,16 @@ export function AccountInfo({
           <Label className="text-sm font-medium text-gray-600">Nombre</Label>
           <p className="text-base font-semibold">{name}</p>
         </div>
+
+        {dni && (
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-gray-600">DNI</Label>
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              <p className="text-base font-semibold">{dni}</p>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-2">
           <Label className="text-sm font-medium text-gray-600">Correo Electrónico</Label>

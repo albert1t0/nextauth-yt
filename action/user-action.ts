@@ -20,12 +20,33 @@ export const updateProfileAction = async (values: z.infer<typeof updateProfileSc
       return { error: "Datos inválidos" };
     }
 
-    const { name } = validatedFields.data;
+    const { name, dni } = validatedFields.data;
 
-    // Actualizar el nombre del usuario
+    // Verificar si el DNI ya está en uso por otro usuario
+    if (dni) {
+      const existingUserByDni = await db.user.findUnique({
+        where: {
+          dni: dni,
+          NOT: {
+            id: session.user.id // Excluir al usuario actual
+          }
+        },
+      });
+
+      if (existingUserByDni) {
+        return { error: "El DNI ya está registrado por otro usuario" };
+      }
+    }
+
+    // Actualizar el nombre y DNI del usuario
+    const updateData: { name: string; dni?: string } = { name };
+    if (dni !== undefined) {
+      updateData.dni = dni;
+    }
+
     await db.user.update({
       where: { id: session.user.id },
-      data: { name },
+      data: updateData,
     });
 
     return { success: "Perfil actualizado correctamente" };

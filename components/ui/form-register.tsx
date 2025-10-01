@@ -32,6 +32,7 @@ const FormRegister = () => {
       email: "",
       password: "",
       name: "",
+      dni: "",
     },
   })
 
@@ -60,14 +61,34 @@ return ( <div className="max-w-80">
             <FormItem>
               <FormLabel>Nombre</FormLabel>
               <FormControl>
-                <Input 
+                <Input
                   placeholder="name"
                   type="text"
                   {...field}
                 />
               </FormControl>
               <FormDescription>
-              
+
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="dni"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>DNI</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="00000000"
+                  type="text"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                8 caracteres alfanuméricos
               </FormDescription>
               <FormMessage />
             </FormItem>
