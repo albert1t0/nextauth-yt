@@ -13,6 +13,8 @@ Este proyecto demuestra una implementación completa de un sistema de autenticac
 - **Base de Datos Robusta**: Esquema de PostgreSQL con Prisma ORM
 - **Validación Completa**: Validación de formularios con Zod y manejo de errores
 - **Interfaz de Usuario Moderna**: Componentes de UI reutilizables con validación en tiempo real
+- **Navegación Intuitiva**: Sistema de navegación consistente con botones de regreso en todas las páginas
+- **Gestión de Configuración**: Panel de configuración de usuario y administrador con funcionalidades completas
 
 ## 🚀 Características Principales
 
@@ -24,6 +26,22 @@ Este proyecto demuestra una implementación completa de un sistema de autenticac
 - 🔒 Contraseñas hasheadas con bcrypt
 - 🔐 Autenticación de Dos Factores (TOTP) con códigos de respaldo
 - ⚙️ Configuración global de parámetros TOTP para administradores
+
+### Dashboard de Usuario
+- 📊 Panel principal con tarjetas de navegación intuitivas
+- 👤 Gestión de perfil con información personal y seguridad
+- 📁 Sistema de gestión de archivos con upload, rename y delete
+- ⚙️ Configuración de cuenta con control de 2FA
+- 🔄 Navegación consistente con botones de regreso en todas las páginas
+- 📱 Diseño responsivo y accesible
+
+### Panel de Administración
+- 📈 Dashboard con estadísticas de usuarios y actividad
+- 👥 Gestión completa de usuarios (listado, export CSV)
+- 📤 Importación masiva de usuarios desde CSV
+- ⚙️ Configuración global del sistema TOTP
+- 🔒 Control de acceso basado en roles
+- 📊 Visualización de datos con gráficos de actividad
 
 ### Base de Datos
 - 🗄️ PostgreSQL con Docker
@@ -103,21 +121,39 @@ Acceder a [http://localhost:3000](http://localhost:3000) para ver la aplicación
 ```
 ├── app/                    # Rutas de Next.js App Router
 │   ├── (auth)/            # Páginas públicas (login, registro)
+│   │   ├── setup-2fa/     # Configuración de 2FA
+│   │   └── verify-totp/   # Verificación de 2FA
 │   ├── (protected)/       # Rutas protegidas (requieren autenticación)
-│   │   ├── admin/         # Panel de administración
-│   │   │   ├── settings/  # Configuración del sistema
-│   │   │   └── users/     # Gestión de usuarios
-│   │   └── 2fa/           # Autenticación de dos factores
+│   │   ├── dashboard/     # Dashboard principal de usuario
+│   │   │   ├── files/     # Gestión de archivos
+│   │   │   ├── profile/   # Perfil de usuario
+│   │   │   └── settings/  # Configuración de cuenta
+│   │   └── admin/         # Panel de administración
+│   │       ├── settings/  # Configuración del sistema
+│   │       │   └── totp/   # Configuración TOTP global
+│   │       └── users/     # Gestión de usuarios
 │   └── api/               # Endpoints API
 │       ├── auth/          # API de autenticación
+│       │   ├── 2fa/       # Endpoints de 2FA
+│       │   └── setup-2fa/ # Configuración inicial 2FA
+│       ├── files/         # API de gestión de archivos
 │       └── admin/         # API de administración
+│           ├── settings/  # API de configuración
+│           └── users/     # API de gestión de usuarios
 ├── action/                # Server actions para formularios
+│   ├── auth-action.ts     # Acciones de autenticación
+│   ├── totp-action.ts     # Acciones de TOTP
+│   └── user-action.ts     # Acciones de usuario
 ├── components/ui/         # Componentes UI reutilizables
+│   └── dashboard/         # Componentes específicos del dashboard
 ├── lib/                   # Utilidades (DB, email, validación, TOTP)
 ├── prisma/                # Schema y migraciones de base de datos
 ├── __tests__/             # Suite de pruebas
 │   ├── unit/              # Pruebas unitarias
-│   └── integration/       # Pruebas de integración
+│   ├── integration/       # Pruebas de integración
+│   ├── e2e/               # Pruebas end-to-end
+│   ├── security/          # Pruebas de seguridad
+│   └── performance/       # Pruebas de rendimiento
 └── public/               # Archivos estáticos
 ```
 
@@ -166,16 +202,47 @@ docker-compose down          # Detener contenedores
 - Rutas de admin requieren rol ADMIN
 - Redirección automática para usuarios no autorizados
 
+## 🎨 Experiencia de Usuario y Navegación
+
+### Dashboard de Usuario
+- **Navegación Intuitiva**: Tarjetas de navegación con iconos y descripciones claras
+- **Flujo Consistente**: Botones de regreso al dashboard en todas las páginas secundarias
+- **Diseño Responsivo**: Adaptación perfecta a dispositivos móviles y desktop
+- **Feedback Visual**: Estados de carga, animaciones y transiciones suaves
+
+### Sistema de Navegación
+- **Botones de Regreso**: Botones "Volver al Dashboard" y "Inicio" en páginas secundarias
+- **Iconos Temáticos**: Cada sección utiliza iconos relevantes (User, FolderOpen, Settings)
+- **Posicionamiento Estratégico**: Botones superiores para navegación rápida e inferiores para call-to-action
+- **Experiencia Consistente**: Mismo patrón de navegación en todas las páginas del dashboard
+
+### Panel de Administración
+- **Sidebar de Navegación**: Menú lateral con todas las secciones administrativas
+- **Dashboard Principal**: Estadísticas en tiempo real y métricas importantes
+- **Gestión Visual**: Tablas interactivas, tarjetas de información y acciones rápidas
+- **Control de Acceso**: Restricción basada en roles con redirección automática
+
 ### Autenticación de Dos Factores (TOTP)
 
-- Configuración TOTP con códigos QR
-- Generación de códigos de respaldo
-- Verificación de tokens con ventana de tiempo configurable
-- Panel de administración para configuración global de parámetros TOTP:
-  - Nombre del issuer (ej: "Mi App")
-  - Número de dígitos (6 u 8)
-  - Período de validez (30-1800 segundos)
-- Almacenamiento seguro de secretos con encriptación
+#### Configuración de Usuario
+- **Flujo Guiado**: Proceso paso a paso para configurar 2FA
+- **Código QR**: Generación automática de QR para escaneo con apps de autenticación
+- **Códigos de Respaldo**: Generación automática de 10 códigos de un solo uso
+- **Verificación Inmediata**: Validación de configuración antes de activar
+- **Recuperación Segura**: Uso de códigos de respaldo cuando no se tiene acceso a la app
+
+#### Configuración Global de Administrador
+- **Panel TOTP**: Interfaz dedicada para configuración global del sistema
+- **Issuer Personalizable**: Nombre de la aplicación para apps de autenticación
+- **Dígitos Configurables**: Opción entre 6 u 8 dígitos para códigos TOTP
+- **Período Ajustable**: Tiempo de validez desde 30 segundos hasta 30 minutos
+- **Aplicación Inmediata**: Cambios globales aplicados a todos los usuarios
+
+#### Seguridad de 2FA
+- **Almacenamiento Encriptado**: Secretos TOTP cifrados en base de datos
+- **Verificación por Tiempo**: Validación con ventana de tiempo configurable
+- **Middleware de Protección**: Bloqueo automático cuando se requiere 2FA
+- **Integración con Session**: Estado 2FA mantenido en sesión de usuario
 
 ## 📝 Documentación Adicional
 
@@ -215,18 +282,44 @@ npm run test:watch
 npm run test:coverage
 ```
 
+## ✨ Características Destacadas
+
+### 🎯 Experiencia de Usuario Superior
+- **Navegación Intuitiva**: Sistema de navegación consistente con botones de regreso en todas las páginas
+- **Diseño Responsivo**: Interfaz adaptativa para todos los dispositivos
+- **Feedback Visual**: Estados de carga, animaciones y transiciones suaves
+- **Accesibilidad**: Componentes accesibles con roles ARIA y navegación por teclado
+
+### 🔧 Gestión de Archivos
+- **Upload Seguro**: Subida de archivos con validación de tipos y tamaños
+- **Operaciones CRUD**: Crear, leer, actualizar y eliminar archivos
+- **Renombrado**: Cambio de nombres de archivos con validación
+- **Visualización**: Tabla interactiva con información detallada
+
+### 📊 Panel de Administración
+- **Estadísticas en Tiempo Real**: Métricas de usuarios y actividad
+- **Gestión Masiva**: Importación y exportación de usuarios (CSV)
+- **Configuración Global**: Panel TOTP para configuración del sistema
+- **Control Total**: Gestión completa de usuarios y permisos
+
+### 🔐 Sistema de Autenticación Avanzado
+- **Autenticación Multifactor**: 2FA con TOTP y códigos de respaldo
+- **Configuración Flexible**: Parámetros TOTP configurables por administradores
+- **Flujo Guiado**: Asistente paso a paso para configuración de 2FA
+- **Recuperación Segura**: Sistema de códigos de respaldo de un solo uso
+
 ## 🔒 Características de Seguridad
 
-- JWT sessions con expiración configurable
-- Contraseñas hasheadas con bcrypt
-- Tokens seguros con expiración (1 hora)
-- Verificación de email obligatoria
-- Role-based access control
-- Autenticación de dos factores con TOTP
-- Encriptación de secretos TOTP
-- Validación completa de formularios
-- Protección contra ataques comunes (CSRF, XSS)
-- Middleware de protección de rutas
+- **JWT Sessions**: Tokens seguros con expiración configurable
+- **Contraseñas Seguras**: Hash con bcrypt y validación de fortaleza
+- **Tokens Temporales**: Sistema de tokens con expiración (1 hora)
+- **Verificación Obligatoria**: Email verification requerida para acceso
+- **Control de Acceso**: Role-based access con middleware de protección
+- **Autenticación 2FA**: TOTP con encriptación de secretos
+- **Protección de Rutas**: Middleware inteligente con redirección automática
+- **Validación Integral**: Validación de formularios con Zod
+- **Seguridad en Capas**: Protección contra CSRF, XSS y ataques comunes
+- **Almacenamiento Seguro**: Encriptación de datos sensibles
 
 ## 🚀 Despliegue
 
