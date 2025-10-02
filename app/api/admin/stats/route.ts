@@ -9,7 +9,7 @@ export async function GET() {
     
     if (!session?.user || session.user.role !== "admin") {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "No autorizado" },
         { status: 401 }
       );
     }
@@ -96,7 +96,7 @@ export async function GET() {
   } catch (error) {
     console.error("Error fetching admin statistics:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Error interno del servidor" },
       { status: 500 }
     );
   }

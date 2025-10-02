@@ -50,7 +50,7 @@ async function onSubmit(values: z.infer<typeof registerSchema>) {
   } 
   
 return ( <div className="max-w-80">
-    <h1>Register</h1><br />
+    <h1>Registro</h1><br />
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 

@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     const parsedData = parseResult.data;
 
     // Validate required columns
-    const requiredColumns = ['name', 'email'];
+    const requiredColumns = ['name', 'email', 'dni'];
     const headers = parseResult.meta.fields || [];
     const missingColumns = requiredColumns.filter(col => !headers.includes(col));
 
@@ -77,30 +77,44 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate and process each row
-    const validUsers: { name: string; email: string; role: Role }[] = [];
+    const validUsers: { name: string; email: string; dni: string; password: string; role: Role }[] = [];
     const errors: { row: number; errors: string[] }[] = [];
     let skipped = 0;
 
     for (let i = 0; i < parsedData.length; i++) {
       const row = parsedData[i] as { [key: string]: string };
-      
+
       try {
         // Validate row data with Zod schema
         const validatedData = csvUserImportSchema.parse(row);
-        
-        // Check if user already exists
-        const existingUser = await db.user.findUnique({
-          where: { email: validatedData.email }
+
+        // Check if user already exists by email or DNI
+        const existingUser = await db.user.findFirst({
+          where: {
+            OR: [
+              { email: validatedData.email },
+              { dni: validatedData.dni }
+            ]
+          }
         });
-        
+
         if (existingUser) {
           skipped++;
           continue;
         }
-        
+
+        // Generate password if not provided
+        const password = validatedData.password || validatedData.dni;
+
+        // Hash the password
+        const bcrypt = await import('bcryptjs');
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         validUsers.push({
           name: validatedData.name,
           email: validatedData.email,
+          dni: validatedData.dni,
+          password: hashedPassword,
           role: validatedData.role === "admin" ? Role.admin : Role.user,
         });
         

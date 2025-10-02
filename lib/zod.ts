@@ -1,53 +1,59 @@
 import { object, string, enum as zodEnum, coerce, number } from "zod"
  
 export const loginSchema = object({
-  email: string({ required_error: "Email is required" })
-    .min(1, "Email is required")
-    .email("Invalid email"),
-  password: string({ required_error: "Password is required" })
-    .min(1, "Password is required")
-    .min(8, "Password must be more than 8 characters")
-    .max(32, "Password must be less than 32 characters"),
+  email: string({ required_error: "El email es requerido" })
+    .min(1, "El email es requerido")
+    .email("Email inválido"),
+  password: string({ required_error: "La contraseña es requerida" })
+    .min(1, "La contraseña es requerida")
+    .min(8, "La contraseña debe tener más de 8 caracteres")
+    .max(32, "La contraseña debe tener menos de 32 caracteres"),
 });
 
 export const registerSchema = object({
-  name: string({ required_error: "Name is required" })
-    .min(1, "Name is required")
-    .max(32, "Name must be less than 32 characters"),
-  email: string({ required_error: "Email is required" })
-    .min(1, "Email is required")
-    .email("Invalid email"),
+  name: string({ required_error: "El nombre es requerido" })
+    .min(1, "El nombre es requerido")
+    .max(32, "El nombre debe tener menos de 32 caracteres"),
+  email: string({ required_error: "El email es requerido" })
+    .min(1, "El email es requerido")
+    .email("Email inválido"),
   dni: string({ required_error: "El DNI es requerido" })
     .min(1, "El DNI es requerido")
     .regex(/^[A-Za-z0-9]{8}$/, "El DNI debe tener exactamente 8 caracteres alfanuméricos"),
-  password: string({ required_error: "Password is required" })
-    .min(1, "Password is required")
-    .min(8, "Password must be more than 8 characters")
-    .max(32, "Password must be less than 32 characters"),
+  password: string({ required_error: "La contraseña es requerida" })
+    .min(1, "La contraseña es requerida")
+    .min(8, "La contraseña debe tener más de 8 caracteres")
+    .max(32, "La contraseña debe tener menos de 32 caracteres"),
 });
 
 export const updateUserRoleSchema = object({
   role: zodEnum(["user", "admin"], {
-    required_error: "Role is required",
-    invalid_type_error: "Role must be either 'user' or 'admin'",
+    required_error: "El rol es requerido",
+    invalid_type_error: "El rol debe ser 'user' o 'admin'",
   }),
 });
 
 export const csvUserImportSchema = object({
-  name: string({ required_error: "Name is required" })
-    .min(1, "Name is required")
-    .max(100, "Name must be less than 100 characters"),
-  email: string({ required_error: "Email is required" })
-    .min(1, "Email is required")
-    .email("Invalid email format"),
+  name: string({ required_error: "El nombre es requerido" })
+    .min(1, "El nombre es requerido")
+    .max(100, "El nombre debe tener menos de 100 caracteres"),
+  email: string({ required_error: "El email es requerido" })
+    .min(1, "El email es requerido")
+    .email("Formato de email inválido"),
   dni: string({ required_error: "El DNI es requerido" })
     .min(1, "El DNI es requerido")
     .regex(/^[A-Za-z0-9]{8}$/, "El DNI debe tener exactamente 8 caracteres alfanuméricos"),
+  password: string().optional().transform((val) => {
+    if (!val || val.trim() === '') return null;
+    if (val.length < 8) throw new Error("La contraseña debe tener al menos 8 caracteres");
+    if (val.length > 32) throw new Error("La contraseña no puede exceder 32 caracteres");
+    return val;
+  }),
   role: string().optional().default("user").transform((val) => {
     const normalizedRole = val?.toLowerCase();
     if (!normalizedRole || normalizedRole === "user") return "user";
     if (normalizedRole === "admin") return "admin";
-    throw new Error("Role must be either 'user' or 'admin'");
+    throw new Error("El rol debe ser 'user' o 'admin'");
   }),
 });
 

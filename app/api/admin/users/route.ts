@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     
     if (!session?.user || session.user.role !== "admin") {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "No autorizado" },
         { status: 401 }
       );
     }
@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error fetching users:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Error interno del servidor" },
       { status: 500 }
     );
   }

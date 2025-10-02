@@ -112,7 +112,7 @@ export default function AdminUsersImportPage() {
                 disabled={loading}
               />
               <p className="text-sm text-gray-500">
-                El archivo debe contener columnas: name, email, role (opcional)
+                El archivo debe contener columnas: name, email, dni, role (opcional), password (opcional)
               </p>
             </div>
 
@@ -202,21 +202,31 @@ export default function AdminUsersImportPage() {
           <div className="space-y-3 text-sm">
             <p>El archivo CSV debe tener el siguiente formato:</p>
             <div className="bg-gray-100 p-3 rounded font-mono text-xs">
-              name,email,role<br/>
-              Juan Pérez,juan@example.com,user<br/>
-              María García,maria@example.com,admin<br/>
-              Carlos López,carlos@example.com
+              name,email,dni,role,password<br/>
+              Juan Pérez,juan@example.com,12345678,user,password123<br/>
+              María García,maria@example.com,87654321,admin,admin123<br/>
+              Carlos López,carlos@example.com,11223344,,contraseña456
             </div>
             <div className="space-y-1">
               <p><strong>Columnas requeridas:</strong></p>
               <ul className="list-disc list-inside ml-4">
                 <li><code>name</code> - Nombre completo del usuario</li>
                 <li><code>email</code> - Email válido</li>
+                <li><code>dni</code> - DNI de 8 caracteres alfanuméricos</li>
               </ul>
-              <p><strong>Columna opcional:</strong></p>
+              <p><strong>Columnas opcionales:</strong></p>
               <ul className="list-disc list-inside ml-4">
                 <li><code>role</code> - &quot;user&quot; o &quot;admin&quot; (por defecto: &quot;user&quot;)</li>
+                <li><code>password</code> - Contraseña (8-32 caracteres). Si no se proporciona, se usará el DNI como contraseña</li>
               </ul>
+              <div className="mt-2 p-2 bg-blue-50 rounded text-blue-700">
+                <p><strong>Requisitos de contraseña:</strong></p>
+                <ul className="list-disc list-inside ml-4 text-sm">
+                  <li>Mínimo 8 caracteres</li>
+                  <li>Máximo 32 caracteres</li>
+                  <li>Si se deja vacío, se usará automáticamente el DNI como contraseña</li>
+                </ul>
+              </div>
             </div>
           </div>
         </CardContent>
