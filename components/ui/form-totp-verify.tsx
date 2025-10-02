@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { verifyTotpAction } from "@/action/totp-action";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield, Key, AlertCircle } from "lucide-react";
@@ -28,6 +29,7 @@ const FormTotpVerify = () => {
   const [showBackupCode, setShowBackupCode] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const { update } = useSession();
 
   const form = useForm<z.infer<typeof totpVerificationSchema>>({
     resolver: zodResolver(totpVerificationSchema),
@@ -44,6 +46,14 @@ const FormTotpVerify = () => {
         const result = await verifyTotpAction(values);
 
         if (result.success) {
+          // Actualizar la sesión para marcar 2FA como completado
+          await update({
+            user: {
+              isTwoFactorAuthenticated: true,
+              requiresTwoFactor: false
+            }
+          });
+
           setSuccess(true);
           // Redirigir al dashboard o URL especificada
           setTimeout(() => {

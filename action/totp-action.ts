@@ -153,3 +153,100 @@ export const checkTwoFactorStatus = async () => {
     return { requiresTwoFactor: false };
   }
 };
+
+const totpSetupSchema = z.object({
+  code: z.string().min(6, "El código debe tener 6 dígitos").max(6),
+  secret: z.string().min(1, "La clave secreta es requerida"),
+});
+
+interface VerifyTotpSetupResult {
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Verifica un código TOTP durante la configuración inicial
+ */
+export const verifyTotpSetupAction = async (
+  values: z.infer<typeof totpSetupSchema>
+): Promise<VerifyTotpSetupResult> => {
+  try {
+    // Validar los datos de entrada
+    const validatedFields = totpSetupSchema.safeParse(values);
+
+    if (!validatedFields.success) {
+      return { success: false, error: "Datos inválidos" };
+    }
+
+    const { code, secret } = validatedFields.data;
+
+    // Obtener la sesión actual del usuario
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return { success: false, error: "No autorizado" };
+    }
+
+    // Verificar el código TOTP usando la clave secreta
+    const isValidToken = await verifyToken(code, secret);
+
+    if (!isValidToken) {
+      return { success: false, error: "Código inválido" };
+    }
+
+    // Obtener configuración TOTP del sistema
+    const systemSettings = await db.systemSettings.findFirst({
+      orderBy: { createdAt: "asc" }
+    });
+
+    const totpDigits = systemSettings?.totpDigits || 6;
+    const totpPeriod = systemSettings?.totpPeriod || 30;
+    const totpIssuer = systemSettings?.totpIssuer || "MyApp";
+
+    // Encriptar la clave secreta
+    const { encrypt } = await import("@/lib/encryption");
+    const encryptedSecret = encrypt(secret);
+
+    // Crear o actualizar la configuración 2FA del usuario
+    await db.twoFactorAuth.upsert({
+      where: { userId: session.user.id },
+      update: {
+        secret: encryptedSecret,
+        enabled: true,
+        digits: totpDigits,
+        period: totpPeriod,
+      },
+      create: {
+        userId: session.user.id,
+        secret: encryptedSecret,
+        enabled: true,
+        digits: totpDigits,
+        period: totpPeriod,
+      },
+    });
+
+    // Generar códigos de respaldo
+    const bcrypt = await import("bcryptjs");
+    const backupCodes = [];
+
+    for (let i = 0; i < 10; i++) {
+      const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+      const codeHash = await bcrypt.hash(code, 10);
+
+      await db.backupCode.create({
+        data: {
+          codeHash,
+          userId: session.user.id,
+        },
+      });
+
+      backupCodes.push(code);
+    }
+
+    return { success: true };
+
+  } catch (error) {
+    console.error("[TOTP_SETUP_ERROR]", error);
+    return { success: false, error: "Error al configurar la autenticación de dos factores" };
+  }
+};

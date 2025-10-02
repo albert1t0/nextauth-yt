@@ -17,6 +17,13 @@ export default function PostLoginPage() {
 
     // Handle authenticated users
     if (status === "authenticated" && session?.user?.role) {
+      // Check if user requires TOTP verification
+      if (session.user.requiresTwoFactor && !session.user.isTwoFactorAuthenticated) {
+        console.log("User requires TOTP verification, redirecting to TOTP page");
+        router.replace("/auth/verify-totp");
+        return;
+      }
+
       // Redirect based on user role (roles are: 'admin', 'user')
       const redirectPath = session.user.role === "admin"
         ? "/admin"

@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { formatFileSize, formatDate } from "@/lib/utils"
+import { ArrowLeft, Home, FolderOpen } from "lucide-react"
+import Link from "next/link"
 
 interface FileItem {
   id: string
@@ -144,10 +146,32 @@ export default function FilesPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">File Management</h1>
-        <p className="text-gray-600">Upload and manage your files</p>
+    <div className="container mx-auto py-8 space-y-8">
+      {/* Navigation */}
+      <div className="flex items-center justify-between">
+        <Link href="/dashboard">
+          <Button variant="outline" className="flex items-center space-x-2">
+            <ArrowLeft className="h-4 w-4" />
+            <span>Volver al Dashboard</span>
+          </Button>
+        </Link>
+        <Link href="/dashboard">
+          <Button variant="ghost" size="sm" className="flex items-center space-x-2">
+            <Home className="h-4 w-4" />
+            <span>Inicio</span>
+          </Button>
+        </Link>
+      </div>
+
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <div className="flex items-center justify-center space-x-3">
+          <FolderOpen className="h-8 w-8 text-blue-600" />
+          <h1 className="text-3xl font-bold tracking-tight">Gestión de Archivos</h1>
+        </div>
+        <p className="text-xl text-muted-foreground">
+          Sube, organiza y gestiona tus archivos de manera segura
+        </p>
       </div>
 
       {error && (
@@ -259,6 +283,27 @@ export default function FilesPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Return to Dashboard Section */}
+      <div className="mt-12 text-center border-t pt-8">
+        <div className="space-y-4">
+          <div className="flex items-center justify-center space-x-2">
+            <FolderOpen className="h-5 w-5 text-blue-600" />
+            <h3 className="text-lg font-semibold text-gray-900">
+              ¿Has terminado de gestionar tus archivos?
+            </h3>
+          </div>
+          <p className="text-gray-600">
+            Vuelve al panel principal para acceder a otras funciones
+          </p>
+          <Link href="/dashboard">
+            <Button className="flex items-center space-x-2 mx-auto">
+              <Home className="h-4 w-4" />
+              <span>Volver al Dashboard</span>
+            </Button>
+          </Link>
+        </div>
+      </div>
 
       {/* Rename Modal (inline for simplicity) */}
       {renamingFile && (
