@@ -4,6 +4,9 @@ import { redirect } from "next/navigation";
 import { AccountInfo } from "@/components/dashboard/profile/account-info";
 import { FormProfile } from "@/components/dashboard/profile/form-profile";
 import { FormChangePassword } from "@/components/dashboard/profile/form-change-password";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Home } from "lucide-react";
+import Link from "next/link";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -44,6 +47,22 @@ export default async function ProfilePage() {
 
   return (
     <div className="container mx-auto py-8 space-y-8">
+      {/* Navigation */}
+      <div className="flex items-center justify-between">
+        <Link href="/dashboard">
+          <Button variant="outline" className="flex items-center space-x-2">
+            <ArrowLeft className="h-4 w-4" />
+            <span>Volver al Dashboard</span>
+          </Button>
+        </Link>
+        <Link href="/dashboard">
+          <Button variant="ghost" size="sm" className="flex items-center space-x-2">
+            <Home className="h-4 w-4" />
+            <span>Inicio</span>
+          </Button>
+        </Link>
+      </div>
+
       {/* Header */}
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-bold tracking-tight">Mi Perfil</h1>
@@ -88,6 +107,17 @@ export default async function ProfilePage() {
             y verificando que tu correo electrónico esté confirmado.
           </p>
         </div>
+      </div>
+
+      {/* Return to Dashboard Section */}
+      <div className="mt-8 text-center border-t pt-8">
+        <p className="text-gray-600 mb-4">¿Has terminado de gestionar tu perfil?</p>
+        <Link href="/dashboard">
+          <Button className="flex items-center space-x-2 mx-auto">
+            <Home className="h-4 w-4" />
+            <span>Volver al Dashboard</span>
+          </Button>
+        </Link>
       </div>
     </div>
   );

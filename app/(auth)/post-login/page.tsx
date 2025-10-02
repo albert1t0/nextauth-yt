@@ -17,6 +17,15 @@ export default function PostLoginPage() {
 
     if (session) {
       setRedirectAttempted(true);
+
+      // Check if user requires TOTP verification
+      if (session.user.requiresTwoFactor && !session.user.isTwoFactorAuthenticated) {
+        setTimeout(() => {
+          window.location.href = "/auth/verify-totp";
+        }, 500);
+        return;
+      }
+
       // Limpiar cualquier caché de sesión antes de redirigir
       setTimeout(() => {
         if (session.user?.role === "admin") {
