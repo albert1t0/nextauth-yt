@@ -1,4 +1,4 @@
-# NextAuth Authentication System
+# NextApp FileRepo App
 
 Una aplicación web completa con sistema de autenticación robusto utilizando Next.js, NextAuth.js v5, Prisma ORM y PostgreSQL. Desarrollada utilizando nuevas prácticas apoyado por agentes y modelos de IA, como Claude, GLM, Copilot y GPT.
 
