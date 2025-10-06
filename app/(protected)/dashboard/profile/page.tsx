@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { AccountInfo } from "@/components/dashboard/profile/account-info";
 import { FormProfile } from "@/components/dashboard/profile/form-profile";
 import { FormChangePassword } from "@/components/dashboard/profile/form-change-password";
+import { TwoFactorAuthSection } from "@/components/dashboard/profile/two-factor-auth-section";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Home } from "lucide-react";
 import Link from "next/link";
@@ -33,7 +34,20 @@ async function getProfileData(userId: string) {
     redirect("/login");
   }
 
-  return user;
+  // Obtener estado de 2FA
+  const twoFactorAuth = await db.twoFactorAuth.findUnique({
+    where: { userId: userId },
+    select: {
+      enabled: true,
+      lastUsedAt: true,
+    },
+  });
+
+  return {
+    ...user,
+    isTwoFactorEnabled: twoFactorAuth?.enabled || false,
+    lastTwoFactorUsed: twoFactorAuth?.lastUsedAt,
+  };
 }
 
 export default async function ProfilePage() {
@@ -90,9 +104,14 @@ export default async function ProfilePage() {
           />
         </div>
 
-        {/* Right Column - Password Change Form */}
+        {/* Right Column - Security Section */}
         <div className="space-y-6">
           <FormChangePassword />
+
+          <TwoFactorAuthSection
+            isTwoFactorEnabled={userData.isTwoFactorEnabled}
+            lastTwoFactorUsed={userData.lastTwoFactorUsed}
+          />
         </div>
       </div>
 

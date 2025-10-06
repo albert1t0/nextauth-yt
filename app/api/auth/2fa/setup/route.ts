@@ -57,8 +57,9 @@ export async function POST() {
       },
     });
 
-    // Retornar los datos necesarios para el cliente (excepto el secreto)
+    // Retornar los datos necesarios para el cliente (incluyendo el secreto para configuración manual)
     return NextResponse.json({
+      secret: totpSetup.secret, // Para configuración manual
       qrCodeDataURL: totpSetup.qrCodeDataURL,
       backupCodes: totpSetup.backupCodes, // Estos códigos se mostrarán solo una vez
       message: "Escanea el código QR con tu aplicación de autenticación",
