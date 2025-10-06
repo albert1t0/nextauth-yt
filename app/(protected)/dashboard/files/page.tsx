@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { formatFileSize, formatDate } from "@/lib/utils"
-import { ArrowLeft, Home, FolderOpen } from "lucide-react"
+import { ArrowLeft, Home, FolderOpen, Upload, File, CheckCircle, AlertCircle } from "lucide-react"
 import Link from "next/link"
 
 interface FileItem {
@@ -30,6 +30,7 @@ export default function FilesPage() {
   const [deletingFile, setDeletingFile] = useState<string | null>(null)
   const [renamingFile, setRenamingFile] = useState<string | null>(null)
   const [newFilename, setNewFilename] = useState("")
+  const [isDragOver, setIsDragOver] = useState(false)
 
   // Fetch files on component mount
   useEffect(() => {
@@ -40,13 +41,13 @@ export default function FilesPage() {
     try {
       const response = await fetch("/api/files")
       if (!response.ok) {
-        throw new Error("Failed to fetch files")
+        throw new Error("Error al obtener archivos")
       }
       const data = await response.json()
       setFiles(data)
       setError(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error")
+      setError(err instanceof Error ? err.message : "Error desconocido")
     } finally {
       setLoading(false)
     }
@@ -56,6 +57,26 @@ export default function FilesPage() {
     const file = event.target.files?.[0]
     if (file) {
       setSelectedFile(file)
+    }
+  }
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault()
+    setIsDragOver(false)
+  }
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault()
+    setIsDragOver(false)
+
+    const files = event.dataTransfer.files
+    if (files.length > 0) {
+      setSelectedFile(files[0])
     }
   }
 
@@ -76,14 +97,14 @@ export default function FilesPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || "Upload failed")
+        throw new Error(errorData.error || "Error al subir archivo")
       }
 
       setUploadStatus("success")
       setSelectedFile(null)
       await fetchFiles() // Refresh file list
     } catch (err) {
-      setUploadError(err instanceof Error ? err.message : "Upload failed")
+      setUploadError(err instanceof Error ? err.message : "Error al subir archivo")
       setUploadStatus("error")
     } finally {
       setTimeout(() => setUploadStatus("idle"), 3000)
@@ -98,12 +119,12 @@ export default function FilesPage() {
       })
 
       if (!response.ok) {
-        throw new Error("Delete failed")
+        throw new Error("Error al eliminar")
       }
 
       await fetchFiles() // Refresh file list
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Delete failed")
+      setError(err instanceof Error ? err.message : "Error al eliminar")
     } finally {
       setDeletingFile(null)
     }
@@ -123,13 +144,13 @@ export default function FilesPage() {
       })
 
       if (!response.ok) {
-        throw new Error("Rename failed")
+        throw new Error("Error al renombrar")
       }
 
       setNewFilename("")
       await fetchFiles() // Refresh file list
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Rename failed")
+      setError(err instanceof Error ? err.message : "Error al renombrar")
     } finally {
       setRenamingFile(null)
     }
@@ -183,68 +204,162 @@ export default function FilesPage() {
       {/* Upload Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Upload New File</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Upload className="h-5 w-5" />
+            Subir Nuevo Archivo
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="file">Select File</Label>
-              <Input
-                id="file"
-                type="file"
-                onChange={handleFileSelect}
-                disabled={uploadStatus === "uploading"}
-              />
-            </div>
+        <CardContent className="space-y-6">
+          {/* Drag & Drop Area */}
+          <div
+            className={`
+              relative border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200
+              ${isDragOver
+                ? 'border-blue-500 bg-blue-50 scale-[1.02]'
+                : 'border-gray-300 hover:border-gray-400 bg-gray-50/50'
+              }
+              ${selectedFile ? 'bg-green-50 border-green-300' : ''}
+            `}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <input
+              ref={(inputEl) => {
+                if (inputEl) {
+                  inputEl.style.display = 'none'
+                }
+              }}
+              id="file"
+              type="file"
+              onChange={handleFileSelect}
+              disabled={uploadStatus === "uploading"}
+            />
 
-            {selectedFile && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">
-                  {selectedFile.name} ({formatFileSize(selectedFile.size)})
-                </span>
+            <div className="space-y-4">
+              <div className="flex justify-center">
+                {selectedFile ? (
+                  <CheckCircle className="h-12 w-12 text-green-500" />
+                ) : (
+                  <Upload className="h-12 w-12 text-gray-400" />
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-lg font-medium text-gray-700">
+                  {selectedFile ? 'Archivo seleccionado' : 'Arrastra y suelta tu archivo aquí'}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {selectedFile
+                    ? selectedFile.name
+                    : 'o haz clic para seleccionarlo'
+                  }
+                </p>
+                {selectedFile && (
+                  <p className="text-xs text-gray-600">
+                    Tamaño: {formatFileSize(selectedFile.size)}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-center">
                 <Button
-                  onClick={handleUpload}
+                  onClick={() => document.getElementById('file')?.click()}
+                  variant="outline"
+                  className="px-6 py-2"
                   disabled={uploadStatus === "uploading"}
                 >
-                  {uploadStatus === "uploading" ? "Uploading..." : "Upload"}
+                  <File className="h-4 w-4 mr-2" />
+                  Examinar Archivos
                 </Button>
               </div>
-            )}
-
-            {uploadStatus === "success" && (
-              <Alert>
-                <AlertDescription>File uploaded successfully!</AlertDescription>
-              </Alert>
-            )}
-
-            {uploadStatus === "error" && uploadError && (
-              <Alert variant="destructive">
-                <AlertDescription>{uploadError}</AlertDescription>
-              </Alert>
-            )}
+            </div>
           </div>
+
+          {/* Selected File Actions */}
+          {selectedFile && (
+            <div className="space-y-4 p-4 bg-white rounded-lg border border-green-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <File className="h-5 w-5 text-blue-500" />
+                  <div>
+                    <p className="font-medium text-gray-900">{selectedFile.name}</p>
+                    <p className="text-sm text-gray-500">{formatFileSize(selectedFile.size)}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedFile(null)
+                      setUploadStatus("idle")
+                      setUploadError(null)
+                    }}
+                    >
+                    Cambiar
+                  </Button>
+                  <Button
+                    onClick={handleUpload}
+                    disabled={uploadStatus === "uploading"}
+                    className="min-w-[100px]"
+                  >
+                    {uploadStatus === "uploading" ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Subiendo...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Subir Archivo
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Status Messages */}
+          {uploadStatus === "success" && (
+            <Alert className="bg-green-50 border-green-200">
+              <CheckCircle className="h-4 w-4" />
+              <AlertDescription className="text-green-800">
+                ¡Archivo subido exitosamente!
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {uploadStatus === "error" && uploadError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{uploadError}</AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
 
       {/* Files List */}
       <Card>
         <CardHeader>
-          <CardTitle>Your Files</CardTitle>
+          <CardTitle>Tus Archivos</CardTitle>
         </CardHeader>
         <CardContent>
           {files.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              No files uploaded yet
+              Aún no hay archivos subidos
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Filename</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Size</TableHead>
-                  <TableHead>Upload Date</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>Nombre de Archivo</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Tamaño</TableHead>
+                  <TableHead>Fecha de Subida</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -264,7 +379,7 @@ export default function FilesPage() {
                           onClick={() => setRenamingFile(file.id)}
                           disabled={renamingFile === file.id}
                         >
-                          Rename
+                          Renombrar
                         </Button>
                         <Button
                           variant="destructive"
@@ -272,7 +387,7 @@ export default function FilesPage() {
                           onClick={() => handleDelete(file.id)}
                           disabled={deletingFile === file.id}
                         >
-                          {deletingFile === file.id ? "Deleting..." : "Delete"}
+                          {deletingFile === file.id ? "Eliminando..." : "Eliminar"}
                         </Button>
                       </div>
                     </TableCell>
@@ -309,15 +424,15 @@ export default function FilesPage() {
       {renamingFile && (
         <Card className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <CardContent className="bg-white p-6 rounded-lg w-96">
-            <h3 className="text-lg font-semibold mb-4">Rename File</h3>
+            <h3 className="text-lg font-semibold mb-4">Renombrar Archivo</h3>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="newFilename">New Filename</Label>
+                <Label htmlFor="newFilename">Nuevo Nombre de Archivo</Label>
                 <Input
                   id="newFilename"
                   value={newFilename}
                   onChange={(e) => setNewFilename(e.target.value)}
-                  placeholder="Enter new filename"
+                  placeholder="Ingresa el nuevo nombre del archivo"
                 />
               </div>
               <div className="flex justify-end space-x-2">
@@ -328,13 +443,13 @@ export default function FilesPage() {
                     setNewFilename("")
                   }}
                 >
-                  Cancel
+                  Cancelar
                 </Button>
                 <Button
                   onClick={() => handleRename(renamingFile)}
                   disabled={!newFilename.trim()}
                 >
-                  Save
+                  Guardar
                 </Button>
               </div>
             </div>
