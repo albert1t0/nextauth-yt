@@ -1375,7 +1375,7 @@
         "description": "Develop the necessary frontend components for managing TOTP-based 2FA. This includes a setup modal with a QR code, a verification form, a component to display backup codes, and a button to disable the feature.",
         "details": "This task involves creating the complete user interface for the TOTP two-factor authentication feature. All components should be built using React and shadcn/ui for a consistent look and feel.\n1. **2FA Status Component**: On the user's account settings page, create a section that displays the current 2FA status (Enabled/Disabled) and provides a button to either 'Enable 2FA' or 'Disable 2FA'.\n2. **Setup Modal**: When the 'Enable 2FA' button is clicked, a modal (`Dialog` from shadcn/ui) should appear. This modal will make a GET request to the `/api/auth/2fa/setup` endpoint (from Task 38) to fetch the QR code data URI and the secret key.\n   - Display the QR code as an image.\n   - Display the secret key as plain text for manual entry into an authenticator app.\n   - Include a form with a single input field for the 6-digit verification code.\n3. **Verification Form**: Use `react-hook-form` and `zod` (as established in Task 14) to validate the 6-digit code. On submission, this form will POST the code to the `/api/auth/2fa/verify` endpoint. Handle success and error responses from the API, showing appropriate feedback to the user.\n4. **Backup Codes Display**: Upon successful verification and enablement, the setup modal should be replaced with a view displaying the backup codes fetched from the `/api/auth/2fa/backup-codes` endpoint. This component must include a prominent warning to the user to store these codes securely. Implement 'Copy to Clipboard' and 'Download as .txt' functionality for the codes.\n5. **Disable 2FA Logic**: The 'Disable 2FA' button should trigger a confirmation modal. Upon confirmation, it will make a POST request to the `/api/auth/2fa/disable` endpoint to turn off 2FA for the user's account. The UI should update accordingly upon a successful response.",
         "testStrategy": "1. **Enablement Flow**: Navigate to the account settings page and click 'Enable 2FA'. Verify the setup modal appears and displays both a QR code and a secret key. Scan the QR code with an authenticator app. First, enter an incorrect 6-digit code and verify that an error message is displayed. Then, enter the correct code and verify that 2FA is enabled and the backup codes are shown.\n2. **Backup Codes Verification**: Confirm that the backup codes are displayed correctly. Test the 'Copy to Clipboard' button and the 'Download' button to ensure they function as expected.\n3. **Disablement Flow**: With 2FA enabled, click the 'Disable 2FA' button. Verify a confirmation prompt appears. After confirming, check that the UI updates to show 2FA as 'Disabled'.\n4. **API Interaction**: Use browser developer tools to monitor network requests. Ensure that the correct API endpoints (`/setup`, `/verify`, `/backup-codes`, `/disable`) are being called with the correct HTTP methods and that the frontend correctly handles both success (2xx) and error (4xx) responses.",
-        "status": "in-progress",
+        "status": "done",
         "dependencies": [
           38,
           14
@@ -1539,7 +1539,7 @@
     ],
     "metadata": {
       "created": "2025-06-21T22:19:07.747Z",
-      "updated": "2025-10-06T21:04:33.645Z",
+      "updated": "2025-10-06T21:15:18.273Z",
       "description": "Tasks for master context"
     }
   },
