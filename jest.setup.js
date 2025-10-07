@@ -18,11 +18,31 @@ jest.mock('next/navigation', () => ({
   },
 }))
 
-// Mock next-auth
-jest.mock('next-auth', () => ({
-  auth: jest.fn(() => Promise.resolve({ user: { id: 'test-user-id' } })),
-  signIn: jest.fn(),
-  signOut: jest.fn(),
+// Mock next-auth and its Prisma adapter integration
+jest.mock('next-auth', () => {
+  const authFn = jest.fn(() => Promise.resolve({ user: { id: 'test-user-id' } }))
+  const signIn = jest.fn()
+  const signOut = jest.fn()
+
+  const mockNextAuth = jest.fn(() => ({
+    handlers: { GET: jest.fn(), POST: jest.fn() },
+    auth: authFn,
+    signIn,
+    signOut,
+  }))
+
+  return {
+    __esModule: true,
+    default: mockNextAuth,
+    auth: authFn,
+    signIn,
+    signOut,
+  }
+})
+
+jest.mock('@auth/prisma-adapter', () => ({
+  __esModule: true,
+  PrismaAdapter: jest.fn(() => ({})),
 }))
 
 // Mock bcrypt

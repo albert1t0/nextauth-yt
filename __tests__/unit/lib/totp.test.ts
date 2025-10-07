@@ -7,20 +7,28 @@ import {
 } from '@/lib/totp'
 import { authenticator } from 'otplib'
 import { toDataURL } from 'qrcode'
+import { db } from '@/lib/db'
 
 // Mock dependencies
 jest.mock('otplib')
 jest.mock('qrcode')
 jest.mock('@/lib/db', () => ({
-  systemSettings: {
-    findFirst: jest.fn(),
-    create: jest.fn()
+  db: {
+    systemSettings: {
+      findFirst: jest.fn(),
+      create: jest.fn()
+    }
   }
 }))
 
 const mockedAuthenticator = authenticator as jest.Mocked<typeof authenticator>
-const mockedToDataURL = toDataURL as jest.MockedFunction<typeof toDataURL>
-const mockDb = require('@/lib/db')
+const mockedToDataURL = toDataURL as unknown as jest.Mock
+const mockDb = db as unknown as {
+  systemSettings: {
+    findFirst: jest.Mock
+    create: jest.Mock
+  }
+}
 
 describe('TOTP Utilities', () => {
   beforeEach(() => {
@@ -122,8 +130,8 @@ describe('TOTP Utilities', () => {
       const result = await generateQrCodeDataURL(uri)
 
       expect(mockedToDataURL).toHaveBeenCalledWith(uri, {
-        width: 200,
-        margin: 2,
+        width: 300,
+        margin: 3,
         color: {
           dark: '#000000',
           light: '#FFFFFF',

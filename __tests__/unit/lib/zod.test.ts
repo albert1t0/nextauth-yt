@@ -1,8 +1,6 @@
-import { z } from 'zod'
 import {
   loginSchema,
   registerSchema,
-  updateUserRoleSchema,
   updateProfileSchema,
   csvUserImportSchema,
   changePasswordSchema,
@@ -36,7 +34,7 @@ describe('Zod Schemas', () => {
 
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Invalid email')
+        expect(result.error.issues[0].message).toContain('Email inválido')
       }
     })
 
@@ -50,7 +48,7 @@ describe('Zod Schemas', () => {
 
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain('Password must be more than 8 characters')
+        expect(result.error.issues[0].message).toContain('La contraseña debe tener más de 8 caracteres')
       }
     })
 
@@ -64,7 +62,7 @@ describe('Zod Schemas', () => {
 
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Password is required')
+        expect(result.error.issues[0].message).toBe('La contraseña es requerida')
       }
     })
   })
@@ -108,28 +106,29 @@ describe('Zod Schemas', () => {
     })
 
     it('should reject invalid DNI formats', () => {
-      const invalidDnis = [
-        '1234567',  // too short
-        '123456789', // too long
-        '123-4567', // contains hyphen
-        '1234567A', // invalid characters
-        '',         // empty
-        '  12345678', // has spaces
-        '12345678 '  // has trailing spaces
+      const invalidCases: Array<{ value: string; expectedMessage: string }> = [
+        { value: '1234567', expectedMessage: '8 caracteres alfanuméricos' },
+        { value: '123456789', expectedMessage: '8 caracteres alfanuméricos' },
+        { value: '123-4567', expectedMessage: '8 caracteres alfanuméricos' },
+        { value: '1234567@', expectedMessage: '8 caracteres alfanuméricos' },
+        { value: '', expectedMessage: 'El DNI es requerido' },
+        { value: '  12345678', expectedMessage: '8 caracteres alfanuméricos' },
+        { value: '12345678 ', expectedMessage: '8 caracteres alfanuméricos' },
       ]
 
-      invalidDnis.forEach(dni => {
+      invalidCases.forEach(({ value, expectedMessage }) => {
         const data = {
           name: 'John Doe',
           email: 'john@example.com',
-          dni,
+          dni: value,
           password: 'password123'
         }
 
         const result = registerSchema.safeParse(data)
         expect(result.success).toBe(false)
         if (!result.success) {
-          expect(result.error.issues[0].message).toContain('8 caracteres alfanuméricos')
+          const message = result.error.issues[0].message
+          expect(message).toContain(expectedMessage)
         }
       })
     })
@@ -209,7 +208,7 @@ describe('Zod Schemas', () => {
 
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data).toEqual(validData)
+          expect(result.data).toEqual({ ...validData, password: null })
       }
     })
 

@@ -16,6 +16,10 @@ const customJestConfig = {
     '<rootDir>/.next/',
     '<rootDir>/node_modules/',
     '<rootDir>/.taskmaster/',
+    '<rootDir>/__tests__/e2e/',
+  ],
+  transformIgnorePatterns: [
+    '/node_modules/(?!(@auth/prisma-adapter|@auth/core|next-auth)/)',
   ],
   collectCoverageFrom: [
     'lib/**/*.{js,ts,tsx}',
