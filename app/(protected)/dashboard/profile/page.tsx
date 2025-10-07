@@ -5,7 +5,8 @@ import { AccountInfo } from "@/components/dashboard/profile/account-info";
 import { FormProfile } from "@/components/dashboard/profile/form-profile";
 import { FormChangePassword } from "@/components/dashboard/profile/form-change-password";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Home, Settings } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Home, Settings, AlertTriangle, UserCheck } from "lucide-react";
 import Link from "next/link";
 import { Metadata } from "next";
 
@@ -73,6 +74,33 @@ export default async function ProfilePage() {
         </p>
       </div>
 
+      {/* DNI Required Alert */}
+      {!userData.dni && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-amber-800">
+              <AlertTriangle className="h-5 w-5" />
+              Información de DNI Requerida
+            </CardTitle>
+            <CardDescription className="text-amber-700">
+              Para continuar usando la aplicación, es necesario que proporciones tu número de DNI.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <p className="text-sm text-amber-600">
+                Por motivos de seguridad y cumplimiento normativo, todos los usuarios deben tener registrado su DNI.
+                No podrás acceder a otras secciones de la aplicación hasta completes esta información.
+              </p>
+              <div className="flex items-center gap-2 text-sm text-amber-700 font-medium">
+                <UserCheck className="h-4 w-4" />
+                Por favor, completa tu DNI en el formulario a continuación.
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Profile Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Account Info and Profile Form */}
@@ -80,7 +108,7 @@ export default async function ProfilePage() {
           <AccountInfo
             email={userData.email}
             name={userData.name || "Usuario"}
-            dni={userData.dni}
+            dni={userData.dni || undefined}
             role={userData.role}
             emailVerified={userData.emailVerified}
             createdAt={userData.createdAt}
@@ -88,7 +116,7 @@ export default async function ProfilePage() {
 
           <FormProfile
             initialName={userData.name || ""}
-            initialDni={userData.dni || ""}
+            initialDni={userData.dni || undefined}
           />
         </div>
 

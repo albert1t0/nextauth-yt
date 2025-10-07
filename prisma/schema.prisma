@@ -21,6 +21,7 @@ model User {
   image         String?
   role          Role          @default(user) // 'user' or 'admin'
   dni           String?          @unique
+  isTwoFactorForced Boolean     @default(false)
 
   accounts      Account[]
   files         File[]

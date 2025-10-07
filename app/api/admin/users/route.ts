@@ -80,8 +80,14 @@ export async function GET(request: NextRequest) {
           email: true,
           role: true,
           emailVerified: true,
+          isTwoFactorForced: true,
           createdAt: true,
           updatedAt: true,
+          twoFactorAuth: {
+            select: {
+              enabled: true
+            }
+          }
         },
         orderBy: {
           createdAt: "desc",

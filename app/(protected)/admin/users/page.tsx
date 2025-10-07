@@ -28,8 +28,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Upload } from "lucide-react";
+import { Upload, Shield, ShieldOff } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 interface User {
   id: string;
@@ -37,6 +38,11 @@ interface User {
   email: string;
   role: string;
   emailVerified: string | null;
+  isTwoFactorForced: boolean;
+  dni: string | null;
+  twoFactorAuth?: {
+    enabled: boolean;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -68,6 +74,9 @@ export default function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+  const [updating2FAUserId, setUpdating2FAUserId] = useState<string | null>(null);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editingDNI, setEditingDNI] = useState<string>("");
 
   const updateUserRole = async (userId: string, newRole: string) => {
     try {
@@ -96,6 +105,108 @@ export default function AdminUsersPage() {
     } finally {
       setUpdatingUserId(null);
     }
+  };
+
+  const updateUser2FAStatus = async (userId: string, force2FA: boolean) => {
+    try {
+      setUpdating2FAUserId(userId);
+      const response = await fetch(`/api/admin/users/${userId}/force-2fa`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ isTwoFactorForced: force2FA }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al actualizar estado 2FA del usuario");
+      }
+
+      const updatedUser = await response.json();
+
+      setUsers(prevUsers =>
+        prevUsers.map(user =>
+          user.id === userId
+            ? {
+                ...user,
+                isTwoFactorForced: updatedUser.user.isTwoFactorForced,
+                twoFactorAuth: updatedUser.user.twoFactorAuth
+              }
+            : user
+        )
+      );
+
+      toast.success(
+        force2FA
+          ? "2FA forzado correctamente"
+          : "2FA forzado desactivado"
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setUpdating2FAUserId(null);
+    }
+  };
+
+  const updateUserDNI = async (userId: string, newDNI: string) => {
+    try {
+      setUpdatingUserId(userId);
+
+      // Validar formato del DNI
+      const dniRegex = /^[A-Za-z0-9]{8}$/;
+      if (newDNI && !dniRegex.test(newDNI)) {
+        toast.error("El DNI debe tener exactamente 8 caracteres alfanuméricos");
+        return;
+      }
+
+      // Verificar que el DNI no exista si se está actualizando
+      if (newDNI) {
+        const checkResponse = await fetch(`/api/admin/users/check-dni?dni=${encodeURIComponent(newDNI)}&userId=${userId}`);
+        if (!checkResponse.ok) {
+          const errorData = await checkResponse.json();
+          toast.error(errorData.error || "Error al validar DNI");
+          return;
+        }
+      }
+
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ dni: newDNI || null }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al actualizar el DNI del usuario");
+      }
+
+      const updatedUser = await response.json();
+
+      setUsers(prevUsers =>
+        prevUsers.map(user =>
+          user.id === userId ? { ...user, dni: updatedUser.user.dni } : user
+        )
+      );
+
+      toast.success("DNI actualizado correctamente");
+      setEditingUserId(null);
+      setEditingDNI("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setUpdatingUserId(null);
+    }
+  };
+
+  const startEditingDNI = (userId: string, currentDNI: string | null) => {
+    setEditingUserId(userId);
+    setEditingDNI(currentDNI || "");
+  };
+
+  const cancelEditingDNI = () => {
+    setEditingUserId(null);
+    setEditingDNI("");
   };
 
   const fetchUsers = async (page: number = 1, search: string = "", role: string = "all") => {
@@ -212,8 +323,10 @@ export default function AdminUsersPage() {
               <TableRow>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>DNI</TableHead>
                 <TableHead>Rol</TableHead>
                 <TableHead>Email Verificado</TableHead>
+                <TableHead>Autenticación 2FA</TableHead>
                 <TableHead>Fecha de Registro</TableHead>
                 <TableHead>Acciones</TableHead>
               </TableRow>
@@ -226,18 +339,90 @@ export default function AdminUsersPage() {
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                    <Badge 
+                    {editingUserId === user.id ? (
+                      <div className="flex items-center space-x-2">
+                        <Input
+                          value={editingDNI}
+                          onChange={(e) => setEditingDNI(e.target.value)}
+                          placeholder="00000000"
+                          className="w-24"
+                          maxLength={8}
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => updateUserDNI(user.id, editingDNI)}
+                          disabled={updatingUserId === user.id}
+                        >
+                          Guardar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={cancelEditingDNI}
+                          disabled={updatingUserId === user.id}
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <span className={user.dni ? "" : "text-gray-400 italic"}>
+                          {user.dni || "Sin DNI"}
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => startEditingDNI(user.id, user.dni)}
+                          disabled={updatingUserId === user.id}
+                        >
+                          Editar
+                        </Button>
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
                       variant={user.role === "admin" ? "default" : "secondary"}
                     >
                       {user.role === "admin" ? "Admin" : "Usuario"}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge 
+                    <Badge
                       variant={user.emailVerified ? "default" : "destructive"}
                     >
                       {user.emailVerified ? "Verificado" : "Pendiente"}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-2">
+                      <Badge
+                        variant={user.twoFactorAuth?.enabled ? "default" : "secondary"}
+                      >
+                        {user.twoFactorAuth?.enabled ? "Habilitado" : "Deshabilitado"}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant={user.isTwoFactorForced ? "default" : "outline"}
+                        onClick={() => updateUser2FAStatus(user.id, !user.isTwoFactorForced)}
+                        disabled={updating2FAUserId === user.id}
+                        className="w-full"
+                      >
+                        {updating2FAUserId === user.id ? (
+                          "Actualizando..."
+                        ) : user.isTwoFactorForced ? (
+                          <>
+                            <Shield className="h-3 w-3 mr-1" />
+                            Forzado
+                          </>
+                        ) : (
+                          <>
+                            <ShieldOff className="h-3 w-3 mr-1" />
+                            Forzar 2FA
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </TableCell>
                   <TableCell>
                     {new Date(user.createdAt).toLocaleDateString("es-ES", {

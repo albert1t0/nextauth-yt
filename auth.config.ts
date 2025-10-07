@@ -79,20 +79,24 @@ export default {
           );
         }
 
-        // Verificar si el usuario tiene 2FA habilitado
+        // Verificar si el usuario tiene 2FA habilitado o forzado
         const isTwoFactorEnabled = user.twoFactorAuth?.enabled || false;
+        const isTwoFactorForced = user.isTwoFactorForced || false;
+        const needsTwoFactor = isTwoFactorEnabled || (isTwoFactorForced && !isTwoFactorEnabled);
 
-        // Si el usuario tiene 2FA habilitado, retornamos un objeto parcial
-        // que indica que se necesita verificación de segundo factor
-        if (isTwoFactorEnabled) {
+        // Si el usuario tiene 2FA habilitado o está forzado a tenerlo,
+        // retornamos un objeto parcial que indica que se necesita verificación de segundo factor
+        if (needsTwoFactor) {
           return {
             id: user.id,
             email: user.email,
             name: user.name,
             dni: user.dni,
             role: user.role,
-            isTwoFactorEnabled: true,
-            requiresTwoFactor: true // Indicador claro de que se requiere 2FA
+            isTwoFactorEnabled: isTwoFactorEnabled,
+            isTwoFactorForced: isTwoFactorForced,
+            requiresTwoFactor: true, // Indicador claro de que se requiere 2FA
+            needs2FASetup: isTwoFactorForced && !isTwoFactorEnabled // Indica si necesita configurar 2FA
           };
         }
 
@@ -131,7 +135,7 @@ export default {
       // Actualizar el token cuando el usuario inicia sesión
       if (user) {
         token.id = user.id;
-        token.dni = user.dni;
+        token.dni = user.dni || null;
         token.role = user.role;
 
         // Manejar el estado de 2FA
@@ -139,10 +143,12 @@ export default {
           // Estado intermedio: contraseña verificada pero 2FA pendiente
           token.isTwoFactorAuthenticated = false;
           token.requiresTwoFactor = true;
+          token.needs2FASetup = user.needs2FASetup || false;
         } else {
           // Estado completamente autenticado
           token.isTwoFactorAuthenticated = true;
           token.requiresTwoFactor = false;
+          token.needs2FASetup = false;
         }
       }
 
@@ -158,12 +164,13 @@ export default {
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
-        session.user.dni = token.dni as string;
+        session.user.dni = token.dni as string | null;
         session.user.role = token.role as string;
 
         // Incluir información de 2FA en la sesión
         session.user.isTwoFactorAuthenticated = token.isTwoFactorAuthenticated as boolean;
         session.user.requiresTwoFactor = token.requiresTwoFactor as boolean;
+        session.user.needs2FASetup = token.needs2FASetup as boolean;
       }
       return session;
     },

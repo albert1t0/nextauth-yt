@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { updateUserRoleSchema } from "@/lib/zod";
+import { updateUserRoleSchema, updateProfileSchema } from "@/lib/zod";
 import { ZodError } from "zod";
 
 interface RouteParams {
@@ -43,13 +43,34 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Validate role data with Zod
-    const validatedData = updateUserRoleSchema.parse(body);
+    // Validate data with appropriate schema based on what's being updated
+    let validatedData: any = {};
+
+    if (body.role !== undefined) {
+      const roleData = updateUserRoleSchema.parse({ role: body.role });
+      validatedData.role = roleData.role;
+    }
+
+    if (body.dni !== undefined || body.name !== undefined) {
+      const profileData = updateProfileSchema.parse({
+        ...(body.name !== undefined && { name: body.name }),
+        ...(body.dni !== undefined && { dni: body.dni }),
+      });
+      if (profileData.name !== undefined) validatedData.name = profileData.name;
+      if (profileData.dni !== undefined) validatedData.dni = profileData.dni;
+    }
+
+    if (Object.keys(validatedData).length === 0) {
+      return NextResponse.json(
+        { error: "No valid fields to update" },
+        { status: 400 }
+      );
+    }
 
     // Check if user exists
     const existingUser = await db.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, role: true, name: true },
+      select: { id: true, email: true, role: true, name: true, dni: true },
     });
 
     if (!existingUser) {
@@ -67,24 +88,62 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Update user role
+    // Check for DNI uniqueness if updating DNI
+    if (validatedData.dni !== undefined) {
+      const dniCheck = await db.user.findFirst({
+        where: {
+          dni: validatedData.dni,
+          id: { not: userId },
+        },
+        select: { id: true, email: true },
+      });
+
+      if (dniCheck) {
+        return NextResponse.json(
+          { error: "El DNI ya está registrado por otro usuario" },
+          { status: 409 }
+        );
+      }
+    }
+
+    // Prepare update data
+    const updateData: any = {};
+    if (validatedData.role !== undefined) {
+      updateData.role = validatedData.role;
+    }
+    if (validatedData.name !== undefined) {
+      updateData.name = validatedData.name;
+    }
+    if (validatedData.dni !== undefined) {
+      updateData.dni = validatedData.dni;
+    }
+
+    // Update user
     const updatedUser = await db.user.update({
       where: { id: userId },
-      data: { role: validatedData.role },
+      data: updateData,
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
+        dni: true,
         emailVerified: true,
         createdAt: true,
         updatedAt: true,
       },
     });
 
+    let successMessage = "User updated successfully";
+    if (validatedData.role !== undefined) {
+      successMessage = `User role updated successfully to ${validatedData.role}`;
+    } else if (validatedData.dni !== undefined) {
+      successMessage = `User DNI updated successfully`;
+    }
+
     return NextResponse.json({
       success: true,
-      message: `User role updated successfully to ${validatedData.role}`,
+      message: successMessage,
       user: updatedUser,
     });
 

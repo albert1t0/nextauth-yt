@@ -10,6 +10,7 @@ export default auth((req) => {
   // Verificar estado de 2FA
   const requiresTwoFactor = auth?.user?.requiresTwoFactor === true;
   const isTwoFactorAuthenticated = auth?.user?.isTwoFactorAuthenticated === true;
+  const needs2FASetup = auth?.user?.needs2FASetup === true;
 
   // Rutas públicas que no requieren autenticación
   const publicRoutes = [
@@ -25,7 +26,9 @@ export default auth((req) => {
     "/api/auth/request-password-reset",
     "/reset-password",
     "/api/auth/reset-password",
-    "/auth/verify-totp" // Permitir acceso a la página de verificación TOTP
+    "/auth/verify-totp", // Permitir acceso a la página de verificación TOTP
+    "/profile/security/two-factor", // Permitir acceso a configuración 2FA cuando es forzado
+    "/dashboard/profile" // Permitir acceso a perfil para completar DNI
   ];
 
   // Rutas de API 2FA (siempre permitidas)
@@ -34,6 +37,11 @@ export default auth((req) => {
     "/api/auth/2fa/verify",
     "/api/auth/2fa/disable",
     "/api/auth/2fa/backup-codes"
+  ];
+
+  // Rutas de API de perfil (permitidas para completar DNI)
+  const profileApiRoutes = [
+    "/api/user/profile"
   ];
 
   // Permitir cualquier subruta de /reset-password y rutas públicas
@@ -47,11 +55,16 @@ export default auth((req) => {
     nextUrl.pathname.startsWith(route)
   );
 
+  // Permitir rutas de API de perfil
+  const isProfileApiRoute = profileApiRoutes.some(route =>
+    nextUrl.pathname.startsWith(route)
+  );
+
   // Detectar rutas de administración (panel y API)
   const isAdminRoute = nextUrl.pathname.startsWith("/admin") || nextUrl.pathname.startsWith("/api/admin");
 
-  // Si es una ruta de API 2FA, permitir acceso
-  if (isTwoFactorApiRoute) {
+  // Si es una ruta de API 2FA o de perfil, permitir acceso
+  if (isTwoFactorApiRoute || isProfileApiRoute) {
     return NextResponse.next();
   }
 
@@ -62,9 +75,19 @@ export default auth((req) => {
 
   // Si el usuario está autenticado pero requiere 2FA y no está en la página de verificación
   if (isLoggedIn && requiresTwoFactor && !isTwoFactorAuthenticated) {
+    // Si necesita configurar 2FA por primera vez (forzado), permitir solo acceso a configuración
+    if (needs2FASetup && nextUrl.pathname === "/profile/security/two-factor") {
+      return NextResponse.next();
+    }
+
     // Si ya está en la página de verificación, permitir acceso
     if (nextUrl.pathname === "/auth/verify-totp") {
       return NextResponse.next();
+    }
+
+    // Si necesita configurar 2FA, redirigir a la página de configuración
+    if (needs2FASetup) {
+      return NextResponse.redirect(new URL("/profile/security/two-factor", nextUrl));
     }
 
     // Si no, redirigir a la página de verificación TOTP
@@ -74,6 +97,23 @@ export default auth((req) => {
   // Si el usuario está completamente autenticado e intenta acceder a la página de verificación, redirigir al dashboard
   if (isLoggedIn && isTwoFactorAuthenticated && nextUrl.pathname === "/auth/verify-totp") {
     return NextResponse.redirect(new URL("/dashboard", nextUrl));
+  }
+
+  // Verificar si el usuario tiene DNI (después de verificar 2FA)
+  if (isLoggedIn && isTwoFactorAuthenticated) {
+    // El dni está en el token JWT pero como null/string, necesitamos verificarlo
+    const userDni = auth?.user?.dni;
+    const hasDni = userDni && userDni.trim() !== "";
+
+    // Si no tiene DNI y no está en la página de perfil, redirigir al perfil
+    if (!hasDni && nextUrl.pathname !== "/dashboard/profile") {
+      return NextResponse.redirect(new URL("/dashboard/profile", nextUrl));
+    }
+
+    // Si tiene DNI y está en la página de perfil solo por el DNI, redirigir al dashboard
+    if (hasDni && nextUrl.pathname === "/dashboard/profile") {
+      return NextResponse.redirect(new URL("/dashboard", nextUrl));
+    }
   }
 
   // Si es ruta de admin y el usuario no es admin, redirigir a inicio
