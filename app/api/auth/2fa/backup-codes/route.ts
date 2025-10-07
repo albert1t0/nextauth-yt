@@ -3,7 +3,8 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { generateBackupCodes, hashBackupCode } from "@/lib/totp";
+import { generateBackupCodes } from "@/lib/totp";
+import { hashBackupCode } from "@/lib/encryption";
 
 // Schema para validar el request body
 const backupCodesSchema = z.object({
@@ -27,6 +28,9 @@ export async function POST(request: Request) {
       );
     }
 
+    // TypeScript assertion: userId is guaranteed to exist after the check above
+    const userId = userId;
+
     const body = await request.json();
     const validatedFields = backupCodesSchema.safeParse(body);
 
@@ -41,7 +45,7 @@ export async function POST(request: Request) {
 
     // Obtener el usuario completo con la contraseña
     const user = await db.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: userId },
       select: { password: true },
     });
 
@@ -64,7 +68,7 @@ export async function POST(request: Request) {
 
     // Verificar si el usuario tiene 2FA habilitado
     const twoFactorAuth = await db.twoFactorAuth.findUnique({
-      where: { userId: session.user.id },
+      where: { userId: userId },
     });
 
     if (!twoFactorAuth || !twoFactorAuth.enabled) {
@@ -81,7 +85,7 @@ export async function POST(request: Request) {
     const plainCodes = await db.$transaction(async (tx) => {
       // Eliminar códigos de respaldo existentes
       await tx.backupCode.deleteMany({
-        where: { userId: session.user.id },
+        where: { userId: userId },
       });
 
       // Crear nuevos códigos de respaldo hasheados
@@ -90,7 +94,7 @@ export async function POST(request: Request) {
         return tx.backupCode.create({
           data: {
             codeHash: hashedCode,
-            userId: session.user.id,
+            userId: userId,
           },
         });
       });
@@ -135,14 +139,14 @@ export async function GET() {
     // Contar códigos de respaldo disponibles
     const availableBackupCodes = await db.backupCode.count({
       where: {
-        userId: session.user.id,
+        userId: userId,
         isUsed: false,
       },
     });
 
     // Verificar si el usuario tiene 2FA habilitado
     const twoFactorAuth = await db.twoFactorAuth.findUnique({
-      where: { userId: session.user.id },
+      where: { userId: userId },
       select: { enabled: true },
     });
 

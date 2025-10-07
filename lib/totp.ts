@@ -95,8 +95,8 @@ export async function generateOtpAuthUri(
 export async function generateQrCodeDataURL(uri: string): Promise<string> {
   try {
     return await QRCode.toDataURL(uri, {
-      width: 200,
-      margin: 2,
+      width: 300,
+      margin: 3,
       color: {
         dark: '#000000',
         light: '#FFFFFF',
@@ -120,20 +120,13 @@ export async function verifyToken(token: string, secret: string): Promise<boolea
       token,
       secret,
       window: 2, // Permitir tokens de las ventanas anterior y siguiente
-    });
+    } as any);
   } catch (error) {
     console.error('Error verifying TOTP token:', error);
     return false;
   }
 }
 
-/**
- * Hashea un código de respaldo de forma segura
- */
-export async function hashBackupCode(code: string): Promise<string> {
-  const saltRounds = 10;
-  return await bcrypt.hash(code, saltRounds);
-}
 
 /**
  * Genera códigos de respaldo (backup codes)

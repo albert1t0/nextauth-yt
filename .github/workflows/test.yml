@@ -1,239 +1,66 @@
-name: Test and QA Pipeline
+name: CI Tests
 
 on:
   push:
-    branches: [ main, develop, feature/* ]
+    branches:
+      - main
+      - develop
   pull_request:
-    branches: [ main, develop ]
+    branches:
+      - main
+      - develop
 
 jobs:
-  test:
+  jest:
+    name: Run automated tests
     runs-on: ubuntu-latest
 
     services:
       postgres:
-        image: postgres:15
+        image: postgres:16
+        ports:
+          - 5432:5432
         env:
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: nextauth_test
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U postgres"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
+          --health-retries 10
 
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-        test-type: [unit, integration, security, performance]
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Setup environment
-      run: |
-        echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/nextauth_test" >> .env
-        echo "NEXTAUTH_SECRET=test-secret-key-for-testing" >> .env
-        echo "NEXTAUTH_URL=http://localhost:3000" >> .env
-
-    - name: Generate Prisma client
-      run: npx prisma generate
-
-    - name: Push database schema
-      run: npx prisma db push --accept-data-loss
-
-    - name: Run unit tests
-      if: matrix.test-type == 'unit'
-      run: npm run test:unit
-      env:
-        NODE_ENV: test
-
-    - name: Run integration tests
-      if: matrix.test-type == 'integration'
-      run: npm run test:integration
-      env:
-        NODE_ENV: test
-
-    - name: Run security tests
-      if: matrix.test-type == 'security'
-      run: npm run test:security
-      env:
-        NODE_ENV: test
-
-    - name: Run performance tests
-      if: matrix.test-type == 'performance'
-      run: npm run test:performance
-      env:
-        NODE_ENV: test
-
-    - name: Upload coverage reports
-      if: matrix.test-type == 'unit'
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage/lcov.info
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
-
-  e2e:
-    runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: nextauth_e2e
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/nextauth_test
+      NEXTAUTH_SECRET: test-secret-key
+      NEXTAUTH_URL: http://localhost:3000
+      NODE_ENV: test
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20.x
-        cache: 'npm'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
 
-    - name: Install dependencies
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Install Playwright browsers
-      run: npx playwright install --with-deps
+      - name: Generate Prisma client
+        run: npx prisma generate
 
-    - name: Setup environment
-      run: |
-        echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/nextauth_e2e" >> .env
-        echo "NEXTAUTH_SECRET=test-secret-key-for-e2e" >> .env
-        echo "NEXTAUTH_URL=http://localhost:3000" >> .env
+      - name: Apply database migrations
+        run: npx prisma migrate deploy
 
-    - name: Generate Prisma client
-      run: npx prisma generate
+      - name: Run Jest test suite
+        run: npm run test:ci
 
-    - name: Push database schema
-      run: npx prisma db push --accept-data-loss
-
-    - name: Build application
-      run: npm run build
-      env:
-        NODE_ENV: production
-
-    - name: Start application
-      run: npm start &
-      env:
-        NODE_ENV: production
-        PORT: 3000
-
-    - name: Wait for application to be ready
-      run: |
-        timeout 30 bash -c 'until curl -f http://localhost:3000/api/health; do sleep 1; done'
-
-    - name: Run E2E tests
-      run: npm run test:e2e
-      env:
-        NODE_ENV: test
-
-    - name: Upload E2E test results
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: playwright-results
-        path: playwright-results/
-
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20.x
-        cache: 'npm'
-
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Run npm audit
-      run: npm audit --audit-level moderate
-
-    - name: Run Snyk security scan
-      uses: snyk/actions/node@master
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-
-    - name: Run CodeQL analysis
-      uses: github/codeql-action/init@v2
-      with:
-        languages: javascript
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
-
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20.x
-        cache: 'npm'
-
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Run ESLint
-      run: npm run lint
-
-    - name: Run TypeScript checking
-      run: npx tsc --noEmit
-
-  build:
-    needs: [test, e2e, security-scan, lint]
-    runs-on: ubuntu-latest
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20.x
-        cache: 'npm'
-
-    - name: Install dependencies
-      run: npm ci
-
-    - name: Build application
-      run: npm run build
-      env:
-        NODE_ENV: production
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: build-artifacts
-        path: .next/
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/

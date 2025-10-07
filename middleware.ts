@@ -106,13 +106,9 @@ export default auth((req) => {
     const hasDni = userDni && userDni.trim() !== "";
 
     // Si no tiene DNI y no está en la página de perfil, redirigir al perfil
-    if (!hasDni && nextUrl.pathname !== "/dashboard/profile") {
+    // Permitir acceso a la página de perfil en cualquier caso
+    if (!hasDni && !nextUrl.pathname.startsWith("/dashboard/profile") && !nextUrl.pathname.startsWith("/api/user/profile")) {
       return NextResponse.redirect(new URL("/dashboard/profile", nextUrl));
-    }
-
-    // Si tiene DNI y está en la página de perfil solo por el DNI, redirigir al dashboard
-    if (hasDni && nextUrl.pathname === "/dashboard/profile") {
-      return NextResponse.redirect(new URL("/dashboard", nextUrl));
     }
   }
 

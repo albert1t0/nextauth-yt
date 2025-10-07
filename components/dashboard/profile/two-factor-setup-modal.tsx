@@ -11,8 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Shield, QrCode, Copy, CheckCircle, AlertCircle, Key } from "lucide-react";
+import { Shield, QrCode, Copy, CheckCircle, AlertCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -127,7 +126,7 @@ export function TwoFactorSetupModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
@@ -154,16 +153,17 @@ export function TwoFactorSetupModal({
               {/* QR Code Section */}
               <div className="space-y-4">
                 <div className="flex justify-center">
-                  <div className="p-4 bg-white rounded-lg border">
+                  <div className="p-6 bg-white rounded-lg border shadow-sm">
                     {setupData.qrCodeDataURL ? (
                       <img
                         src={setupData.qrCodeDataURL}
                         alt="QR Code para 2FA"
-                        className="w-48 h-48"
+                        className="w-72 h-72 max-w-full"
+                        style={{ imageRendering: 'pixelated' }}
                       />
                     ) : (
-                      <div className="w-48 h-48 flex items-center justify-center bg-gray-100">
-                        <QrCode className="h-16 w-16 text-gray-400" />
+                      <div className="w-72 h-72 flex items-center justify-center bg-gray-100">
+                        <QrCode className="h-24 w-24 text-gray-400" />
                       </div>
                     )}
                   </div>
