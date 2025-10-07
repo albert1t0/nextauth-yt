@@ -128,6 +128,14 @@ export async function verifyToken(token: string, secret: string): Promise<boolea
 }
 
 /**
+ * Hashea un código de respaldo de forma segura
+ */
+export async function hashBackupCode(code: string): Promise<string> {
+  const saltRounds = 10;
+  return await bcrypt.hash(code, saltRounds);
+}
+
+/**
  * Genera códigos de respaldo (backup codes)
  */
 export function generateBackupCodes(count: number = 10): string[] {

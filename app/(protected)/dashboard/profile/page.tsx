@@ -4,9 +4,8 @@ import { redirect } from "next/navigation";
 import { AccountInfo } from "@/components/dashboard/profile/account-info";
 import { FormProfile } from "@/components/dashboard/profile/form-profile";
 import { FormChangePassword } from "@/components/dashboard/profile/form-change-password";
-import { TwoFactorAuthSection } from "@/components/dashboard/profile/two-factor-auth-section";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Home } from "lucide-react";
+import { ArrowLeft, Home, Settings } from "lucide-react";
 import Link from "next/link";
 import { Metadata } from "next";
 
@@ -34,19 +33,8 @@ async function getProfileData(userId: string) {
     redirect("/login");
   }
 
-  // Obtener estado de 2FA
-  const twoFactorAuth = await db.twoFactorAuth.findUnique({
-    where: { userId: userId },
-    select: {
-      enabled: true,
-      lastUsedAt: true,
-    },
-  });
-
   return {
     ...user,
-    isTwoFactorEnabled: twoFactorAuth?.enabled || false,
-    lastTwoFactorUsed: twoFactorAuth?.lastUsedAt,
   };
 }
 
@@ -107,24 +95,25 @@ export default async function ProfilePage() {
         {/* Right Column - Security Section */}
         <div className="space-y-6">
           <FormChangePassword />
-
-          <TwoFactorAuthSection
-            isTwoFactorEnabled={userData.isTwoFactorEnabled}
-            lastTwoFactorUsed={userData.lastTwoFactorUsed}
-          />
         </div>
       </div>
 
-      {/* Additional Info Section */}
+      {/* Security Settings Section */}
       <div className="mt-12 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-4">
           <h2 className="text-lg font-semibold text-blue-900">
-            Seguridad de tu Cuenta
+            Configuración de Seguridad Adicional
           </h2>
           <p className="text-blue-700">
-            Mantén tu información segura actualizando regularmente tu contraseña
-            y verificando que tu correo electrónico esté confirmado.
+            Para configurar la autenticación de dos factores y otras opciones de seguridad avanzadas,
+            visita la página de configuración.
           </p>
+          <Link href="/dashboard/settings">
+            <Button variant="outline" className="flex items-center space-x-2 mx-auto">
+              <Settings className="h-4 w-4" />
+              <span>Ir a Configuración de Seguridad</span>
+            </Button>
+          </Link>
         </div>
       </div>
 

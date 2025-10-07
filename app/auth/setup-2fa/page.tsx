@@ -13,7 +13,8 @@ import {
   CheckCircle,
   AlertCircle,
   QrCode,
-  Copy
+  Copy,
+  Key
 } from "lucide-react";
 import { verifyTotpSetupAction } from "@/action/totp-action";
 

@@ -5,10 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Shield, ShieldCheck, Key, AlertCircle, Clock, CheckCircle } from "lucide-react";
+import { Shield, ShieldCheck, Key, AlertCircle, CheckCircle } from "lucide-react";
 import { TwoFactorSetupModal } from "./two-factor-setup-modal";
 import { TwoFactorBackupCodes } from "./two-factor-backup-codes";
-import { DisableTwoFactorDialog } from "./two-factor-disable-dialog";
+import { TwoFactorDisableDialog } from "./two-factor-disable-dialog";
 import { formatDate } from "@/lib/utils";
 
 interface TwoFactorAuthSectionProps {
@@ -23,7 +23,7 @@ export function TwoFactorAuthSection({
   const [isSetupModalOpen, setIsSetupModalOpen] = useState(false);
   const [isBackupCodesOpen, setIsBackupCodesOpen] = useState(false);
   const [isDisableDialogOpen, setIsDisableDialogOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [isPending] = useTransition();
 
   const handleSetupComplete = () => {
     setIsSetupModalOpen(false);
@@ -147,7 +147,7 @@ export function TwoFactorAuthSection({
       />
 
       {/* Disable Confirmation Dialog */}
-      <DisableTwoFactorDialog
+      <TwoFactorDisableDialog
         isOpen={isDisableDialogOpen}
         onClose={() => setIsDisableDialogOpen(false)}
         onDisableSuccess={handleDisableSuccess}

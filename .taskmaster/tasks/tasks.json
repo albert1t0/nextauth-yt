@@ -1389,7 +1389,7 @@
         "description": "Modify the existing user profile page to include a security section for managing two-factor authentication (2FA). This section will display the current TOTP status and provide options to enable or disable it.",
         "details": "Locate and update the main user profile or account settings page component. Add a new 'Security' section that fetches and displays the user's current 2FA status. Conditionally render an 'Enable 2FA' button or a 'Disable 2FA' button based on this status. Integrate the UI components from Task #39: the 'Enable' button should launch the setup modal (with QR code and verification form), and the 'Disable' button should trigger a confirmation dialog before calling the disable API endpoint from Task #38. Ensure the UI state updates correctly upon successful completion of these actions without a page refresh.",
         "testStrategy": "1. Log in as a user with 2FA disabled and navigate to the profile page. Verify the security section shows 'Disabled' status and an 'Enable' button. 2. Click 'Enable', complete the setup flow using the modal, and verify the page updates to show 'Enabled' status. 3. Refresh the page to ensure the new status persists. 4. Click the 'Disable' button, confirm the action, and verify the page updates back to 'Disabled' status. 5. Log out and log back in to confirm the TOTP code is no longer required.",
-        "status": "pending",
+        "status": "done",
         "dependencies": [
           38,
           39
@@ -1539,7 +1539,7 @@
     ],
     "metadata": {
       "created": "2025-06-21T22:19:07.747Z",
-      "updated": "2025-10-06T21:15:18.273Z",
+      "updated": "2025-10-07T14:29:28.073Z",
       "description": "Tasks for master context"
     }
   },

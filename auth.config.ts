@@ -121,6 +121,10 @@ export default {
     updateAge: 24 * 60 * 60, // 24 horas
   },
 
+  // Configuración para optimizar el rendimiento
+  useSecureCookies: process.env.NODE_ENV === "production",
+
+  
   // Configuración de callbacks
   callbacks: {
     async jwt({ token, user, session, trigger }) {
@@ -167,4 +171,15 @@ export default {
 
   // Configuración adicional para evitar problemas de sesión
   trustHost: true,
+
+  // Optimizar el proceso de logout
+  events: {
+    async signOut({ session }) {
+      // Limpiar cualquier caché o estado adicional si es necesario
+      // Esto se ejecuta cuando el usuario cierra sesión
+      if (session?.user?.email) {
+        console.log("User signed out:", session.user.email);
+      }
+    },
+  },
 } satisfies NextAuthConfig;
