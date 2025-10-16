@@ -2,12 +2,22 @@ import { createMocks } from 'node-mocks-http'
 import { GET, PUT } from '@/app/api/admin/settings/totp/route'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { auth } from '@/auth'
 
 // Mock dependencies
 jest.mock('@/lib/db')
 jest.mock('@/auth')
 
-const mockDb = db as jest.Mocked<typeof db>
+const mockDb = db as any
+const mockAuth = auth as jest.MockedFunction<typeof auth>
+
+// Helper to create Next.js compatible request
+const createNextRequest = (options: any) => {
+  const { req } = createMocks(options)
+  // Add json method to request for Next.js App Router compatibility
+  req.json = jest.fn().mockResolvedValue(options.body || {})
+  return req
+}
 
 describe('Admin TOTP Settings API Endpoints', () => {
   const mockAdminUser = {
@@ -39,12 +49,11 @@ describe('Admin TOTP Settings API Endpoints', () => {
 
   describe('GET /api/admin/settings/totp', () => {
     it('should require admin role', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'GET'
       })
 
       // Mock auth to return regular user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: mockRegularUser
       })
@@ -57,12 +66,11 @@ describe('Admin TOTP Settings API Endpoints', () => {
     })
 
     it('should require authentication', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'GET'
       })
 
       // Mock auth to return no user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue(null)
 
       const response = await GET(req)
@@ -73,12 +81,11 @@ describe('Admin TOTP Settings API Endpoints', () => {
     })
 
     it('should return existing settings when they exist', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'GET'
       })
 
       // Mock admin user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: mockAdminUser
       })
@@ -101,12 +108,11 @@ describe('Admin TOTP Settings API Endpoints', () => {
     })
 
     it('should create default settings when none exist', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'GET'
       })
 
       // Mock admin user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: mockAdminUser
       })
@@ -144,12 +150,11 @@ describe('Admin TOTP Settings API Endpoints', () => {
     })
 
     it('should handle database errors', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'GET'
       })
 
       // Mock admin user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: mockAdminUser
       })
@@ -172,13 +177,12 @@ describe('Admin TOTP Settings API Endpoints', () => {
     }
 
     it('should require admin role', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'PUT',
         body: validUpdateData
       })
 
       // Mock auth to return regular user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: mockRegularUser
       })
@@ -191,13 +195,12 @@ describe('Admin TOTP Settings API Endpoints', () => {
     })
 
     it('should require authentication', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'PUT',
         body: validUpdateData
       })
 
       // Mock auth to return no user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue(null)
 
       const response = await PUT(req)
@@ -208,7 +211,7 @@ describe('Admin TOTP Settings API Endpoints', () => {
     })
 
     it('should validate request body', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'PUT',
         body: {
           totpIssuer: '', // invalid: empty
@@ -218,7 +221,6 @@ describe('Admin TOTP Settings API Endpoints', () => {
       })
 
       // Mock admin user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: mockAdminUser
       })
@@ -231,13 +233,12 @@ describe('Admin TOTP Settings API Endpoints', () => {
     })
 
     it('should update existing settings', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'PUT',
         body: validUpdateData
       })
 
       // Mock admin user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: mockAdminUser
       })
@@ -266,13 +267,12 @@ describe('Admin TOTP Settings API Endpoints', () => {
     })
 
     it('should create settings when none exist', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'PUT',
         body: validUpdateData
       })
 
       // Mock admin user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: mockAdminUser
       })
@@ -301,13 +301,12 @@ describe('Admin TOTP Settings API Endpoints', () => {
     })
 
     it('should handle database errors during update', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'PUT',
         body: validUpdateData
       })
 
       // Mock admin user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: mockAdminUser
       })
@@ -323,13 +322,12 @@ describe('Admin TOTP Settings API Endpoints', () => {
     })
 
     it('should handle database errors during creation', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'PUT',
         body: validUpdateData
       })
 
       // Mock admin user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: mockAdminUser
       })
@@ -345,7 +343,7 @@ describe('Admin TOTP Settings API Endpoints', () => {
     })
 
     it('should transform string numbers to actual numbers', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'PUT',
         body: {
           totpIssuer: 'TestApp',
@@ -355,7 +353,6 @@ describe('Admin TOTP Settings API Endpoints', () => {
       })
 
       // Mock admin user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: mockAdminUser
       })

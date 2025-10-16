@@ -19,7 +19,7 @@ const customJestConfig = {
     '<rootDir>/__tests__/e2e/',
   ],
   transformIgnorePatterns: [
-    '/node_modules/(?!(@auth/prisma-adapter|@auth/core|next-auth)/)',
+    '/node_modules/(?!(@auth/prisma-adapter|@auth/core|next-auth|@auth/*))/',
   ],
   collectCoverageFrom: [
     'lib/**/*.{js,ts,tsx}',

@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     }
 
     // TypeScript assertion: userId is guaranteed to exist after the check above
-    const userId = userId;
+    const userId = session.user.id;
 
     const body = await request.json();
     const validatedFields = backupCodesSchema.safeParse(body);
@@ -135,6 +135,8 @@ export async function GET() {
         { status: 401 }
       );
     }
+
+    const userId = session.user.id;
 
     // Contar códigos de respaldo disponibles
     const availableBackupCodes = await db.backupCode.count({

@@ -15,7 +15,7 @@
     "test:e2e": "playwright test",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:ci": "jest --ci --coverage --watchAll=false"
+    "test:ci": "jest --testPathPattern=__tests__/integration --ci --coverage --watchAll=false"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.9.1",

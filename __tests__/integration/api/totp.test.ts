@@ -5,15 +5,21 @@ import { POST as DISABLE_POST } from '@/app/api/auth/2fa/disable/route'
 import { POST as BACKUP_CODES_POST } from '@/app/api/auth/2fa/backup-codes/route'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { encrypt } from '@/lib/encryption'
+import { encrypt, decrypt } from '@/lib/encryption'
+import { auth } from '@/auth'
+import bcrypt from 'bcryptjs'
 
 // Mock dependencies
 jest.mock('@/lib/db')
 jest.mock('@/lib/encryption')
 jest.mock('@/auth')
+jest.mock('bcryptjs')
 
-const mockDb = db as jest.Mocked<typeof db>
+const mockDb = db as any
 const mockEncrypt = encrypt as jest.MockedFunction<typeof encrypt>
+const mockDecrypt = decrypt as jest.MockedFunction<typeof decrypt>
+const mockAuth = auth as jest.MockedFunction<typeof auth>
+const mockBcrypt = bcrypt as any
 
 describe('TOTP API Endpoints', () => {
   const mockUser = {
@@ -34,6 +40,14 @@ describe('TOTP API Endpoints', () => {
     user: mockUser
   }
 
+  // Helper to create Next.js compatible request
+  const createNextRequest = (options: any) => {
+    const { req } = createMocks(options)
+    // Add json method to request for Next.js App Router compatibility
+    req.json = jest.fn().mockResolvedValue(options.body || {})
+    return req
+  }
+
   beforeEach(() => {
     jest.clearAllMocks()
     mockEncrypt.mockReturnValue('encrypted-secret')
@@ -41,13 +55,12 @@ describe('TOTP API Endpoints', () => {
 
   describe('POST /api/auth/2fa/setup', () => {
     it('should require authentication', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'POST',
         body: {}
       })
 
       // Mock auth to return no user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue(null)
 
       const response = await POST(req)
@@ -58,13 +71,12 @@ describe('TOTP API Endpoints', () => {
     })
 
     it('should return error if 2FA already enabled', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'POST',
         body: {}
       })
 
       // Mock authenticated user with 2FA enabled
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: { id: 'user-123', requiresTwoFactor: true }
       })
@@ -82,13 +94,12 @@ describe('TOTP API Endpoints', () => {
     })
 
     it('should generate TOTP setup for user', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'POST',
         body: {}
       })
 
       // Mock authenticated user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: { id: 'user-123', email: 'test@example.com' }
       })
@@ -124,13 +135,12 @@ describe('TOTP API Endpoints', () => {
     })
 
     it('should handle database errors', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'POST',
         body: {}
       })
 
       // Mock authenticated user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: { id: 'user-123', email: 'test@example.com' }
       })
@@ -152,13 +162,12 @@ describe('TOTP API Endpoints', () => {
     }
 
     it('should require authentication', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'POST',
         body: verifyData
       })
 
       // Mock auth to return no user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue(null)
 
       const response = await VERIFY_POST(req)
@@ -167,13 +176,12 @@ describe('TOTP API Endpoints', () => {
     })
 
     it('should validate request body', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'POST',
         body: { invalid: 'data' }
       })
 
       // Mock authenticated user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: { id: 'user-123' }
       })
@@ -186,13 +194,12 @@ describe('TOTP API Endpoints', () => {
     })
 
     it('should reject if 2FA not found', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'POST',
         body: verifyData
       })
 
       // Mock authenticated user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: { id: 'user-123' }
       })
@@ -207,13 +214,12 @@ describe('TOTP API Endpoints', () => {
     })
 
     it('should handle decryption errors', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'POST',
         body: verifyData
       })
 
       // Mock authenticated user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: { id: 'user-123' }
       })
@@ -224,8 +230,7 @@ describe('TOTP API Endpoints', () => {
       })
 
       // Mock decrypt to throw error
-      const { decrypt } = await import('@/lib/encryption')
-      ;(decrypt as jest.Mock).mockImplementation(() => {
+      mockDecrypt.mockImplementation(() => {
         throw new Error('Decryption failed')
       })
 
@@ -243,13 +248,12 @@ describe('TOTP API Endpoints', () => {
     }
 
     it('should require authentication', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'POST',
         body: disableData
       })
 
       // Mock auth to return no user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue(null)
 
       const response = await DISABLE_POST(req)
@@ -258,13 +262,12 @@ describe('TOTP API Endpoints', () => {
     })
 
     it('should validate password', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'POST',
         body: disableData
       })
 
       // Mock authenticated user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: { id: 'user-123' }
       })
@@ -274,8 +277,7 @@ describe('TOTP API Endpoints', () => {
       })
 
       // Mock bcrypt compare to return false
-      const bcrypt = await import('bcryptjs')
-      ;(bcrypt.compare as jest.Mock).mockResolvedValue(false)
+      mockBcrypt.compare.mockResolvedValue(false)
 
       const response = await DISABLE_POST(req)
 
@@ -285,13 +287,12 @@ describe('TOTP API Endpoints', () => {
     })
 
     it('should disable 2FA and clean up data', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'POST',
         body: disableData
       })
 
       // Mock authenticated user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: { id: 'user-123' }
       })
@@ -301,13 +302,15 @@ describe('TOTP API Endpoints', () => {
       })
 
       // Mock successful password verification
-      const bcrypt = await import('bcryptjs')
-      ;(bcrypt.compare as jest.Mock).mockResolvedValue(true)
+      mockBcrypt.compare.mockResolvedValue(true)
 
-      mockDb.twoFactorAuth.findUnique.mockResolvedValue(mockTwoFactorAuth)
+      mockDb.twoFactorAuth.findUnique.mockResolvedValue({
+        ...mockTwoFactorAuth,
+        enabled: true
+      })
 
       // Mock successful operations
-      mockDb.$transaction.mockImplementation(async (callback) => {
+      mockDb.$transaction.mockImplementation(async (callback: any) => {
         await callback({
           twoFactorAuth: {
             update: jest.fn().mockResolvedValue({})
@@ -315,7 +318,7 @@ describe('TOTP API Endpoints', () => {
           backupCode: {
             deleteMany: jest.fn().mockResolvedValue({})
           }
-        } as any)
+        })
       })
 
       const response = await DISABLE_POST(req)
@@ -335,13 +338,12 @@ describe('TOTP API Endpoints', () => {
     }
 
     it('should generate new backup codes', async () => {
-      const { req } = createMocks({
+      const req = createNextRequest({
         method: 'POST',
         body: backupData
       })
 
       // Mock authenticated user
-      const { auth: mockAuth } = await import('@/auth')
       ;(mockAuth as jest.Mock).mockResolvedValue({
         user: { id: 'user-123' }
       })
@@ -351,8 +353,7 @@ describe('TOTP API Endpoints', () => {
       })
 
       // Mock successful password verification
-      const bcrypt = await import('bcryptjs')
-      ;(bcrypt.compare as jest.Mock).mockResolvedValue(true)
+      mockBcrypt.compare.mockResolvedValue(true)
 
       mockDb.twoFactorAuth.findUnique.mockResolvedValue({
         ...mockTwoFactorAuth,
@@ -361,13 +362,13 @@ describe('TOTP API Endpoints', () => {
 
       // Mock successful transaction
       const newBackupCodes = ['code1', 'code2', 'code3']
-      mockDb.$transaction.mockImplementation(async (callback) => {
+      mockDb.$transaction.mockImplementation(async (callback: any) => {
         await callback({
           backupCode: {
             deleteMany: jest.fn().mockResolvedValue({}),
             create: jest.fn().mockResolvedValue({})
           }
-        } as any)
+        })
         return newBackupCodes
       })
 
