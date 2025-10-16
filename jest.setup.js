@@ -123,15 +123,33 @@ jest.mock('@sendgrid/mail', () => ({
   send: jest.fn(() => Promise.resolve([{ statusCode: 200 }]))
 }))
 
-// Global test setup
-global.console = {
-  ...console,
-  // Uncomment to ignore a specific log level
-  // log: jest.fn(),
-  // debug: jest.fn(),
-  // info: jest.fn(),
-  // warn: jest.fn(),
-  // error: jest.fn(),
+// Global test setup - Silenciar logs específicos en tests para reducir ruido en CI
+const originalError = console.error
+console.error = (...args) => {
+  // Silenciar errores específicos que son parte de los tests
+  const message = args[0]
+  if (
+    typeof message === 'string' && (
+      message.includes('[2FA_SETUP_ERROR]') ||
+      message.includes('[2FA_DECRYPT_ERROR]') ||
+      message.includes('[2FA_BACKUP_CODES_ERROR]') ||
+      message.includes('Error fetching TOTP settings:') ||
+      message.includes('Error updating TOTP settings:')
+    )
+  ) {
+    return // Silenciar estos errores específicos
+  }
+  originalError.call(console, ...args)
+}
+
+// Silenciar también console.log para reducir ruido en CI
+const originalLog = console.log
+console.log = (...args) => {
+  const message = args[0]
+  if (typeof message === 'string' && message.includes('RUNS')) {
+    return // Silenciar logs de Jest sobre qué tests está ejecutando
+  }
+  originalLog.call(console, ...args)
 }
 
 // Setup global test utilities
